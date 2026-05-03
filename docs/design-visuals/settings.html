@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Manager — Settings</title>
+</head>
+<body style="margin:0;padding:0;background:#11111b;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:13px;color:#cdd6f4;min-height:100vh;display:flex;flex-direction:column">
+
+<!-- Title Bar -->
+<div style="background:#11111b;padding:8px 16px;display:flex;align-items:center;border-bottom:1px solid #313244;user-select:none">
+  <span style="color:#cba6f7;font-weight:600;font-size:13px">Claude Manager</span>
+  <span style="color:#45475a;margin:0 8px">—</span>
+  <span style="color:#6c7086;font-size:13px">Settings</span>
+  <span style="flex:1"></span>
+  <span style="color:#6c7086;font-size:11px;display:flex;gap:12px">
+    <span style="cursor:pointer">&#x2014;</span>
+    <span style="cursor:pointer">&#x25A1;</span>
+    <span style="cursor:pointer;color:#f38ba8">&#x2715;</span>
+  </span>
+</div>
+
+<!-- Main Layout -->
+<div style="display:flex;flex:1;min-height:0">
+
+  <!-- Icon Sidebar Rail (48px) -->
+  <div style="width:48px;min-width:48px;background:#11111b;display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:4px;border-right:1px solid #313244">
+    <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px" title="Home">&#x1F3E0;</div>
+    <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px" title="Sessions">&#x1F4CB;</div>
+    <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px" title="Plugins">&#x1F9E9;</div>
+    <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px" title="MCP Servers">&#x1F50C;</div>
+    <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;background:#313244;box-shadow:inset 2px 0 0 #cba6f7" title="Settings">&#x2699;&#xFE0F;</div>
+  </div>
+
+  <!-- Settings Navigation Sidebar (200px) -->
+  <div style="width:200px;min-width:200px;background:#1e1e2e;border-right:1px solid #313244;padding:16px 0;display:flex;flex-direction:column;gap:2px">
+    <div style="padding:6px 16px;margin-bottom:8px;color:#6c7086;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Settings</div>
+
+    <!-- Selected item -->
+    <div style="padding:8px 12px;margin:0 8px;background:#313244;border-radius:6px;border-left:3px solid #cba6f7;color:#cdd6f4;cursor:pointer;font-size:13px">General / API</div>
+
+    <div style="padding:8px 12px;margin:0 8px;border-left:3px solid transparent;color:#a6adc8;cursor:pointer;font-size:13px;border-radius:6px">Permissions</div>
+    <div style="padding:8px 12px;margin:0 8px;border-left:3px solid transparent;color:#a6adc8;cursor:pointer;font-size:13px;border-radius:6px">Plugins</div>
+    <div style="padding:8px 12px;margin:0 8px;border-left:3px solid transparent;color:#a6adc8;cursor:pointer;font-size:13px;border-radius:6px">Environment</div>
+    <div style="padding:8px 12px;margin:0 8px;border-left:3px solid transparent;color:#a6adc8;cursor:pointer;font-size:13px;border-radius:6px">Appearance</div>
+    <div style="padding:8px 12px;margin:0 8px;border-left:3px solid transparent;color:#a6adc8;cursor:pointer;font-size:13px;border-radius:6px">Usage &amp; Stats</div>
+    <div style="padding:8px 12px;margin:0 8px;border-left:3px solid transparent;color:#a6adc8;cursor:pointer;font-size:13px;border-radius:6px">Advanced</div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div style="flex:1;background:#181825;padding:32px 40px;overflow-y:auto">
+
+    <!-- Section Header -->
+    <div style="margin-bottom:8px">
+      <h1 style="margin:0;font-size:22px;font-weight:600;color:#cba6f7">General / API</h1>
+    </div>
+    <div style="margin-bottom:28px;color:#6c7086;font-size:12px">Source: <span style="font-family:'Cascadia Code','Fira Code',Consolas,monospace;color:#6c7086">settings.json</span>, <span style="font-family:'Cascadia Code','Fira Code',Consolas,monospace;color:#6c7086">config.json</span></div>
+
+    <!-- Form Fields -->
+    <div style="max-width:560px;display:flex;flex-direction:column;gap:20px">
+
+      <!-- API Base URL -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="color:#a6adc8;font-size:12px;font-weight:500">API Base URL</label>
+        <div style="position:relative">
+          <div style="background:#181825;border:1px solid #313244;border-radius:6px;padding:9px 12px;font-size:13px;color:#89b4fa;font-family:'Cascadia Code','Fira Code',Consolas,monospace;outline:none">https://api.anthropic.com</div>
+        </div>
+      </div>
+
+      <!-- Auth Token -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="color:#a6adc8;font-size:12px;font-weight:500">Auth Token</label>
+        <div style="position:relative;display:flex;align-items:center">
+          <div style="flex:1;background:#181825;border:1px solid #313244;border-radius:6px;padding:9px 12px;font-size:13px;color:#cdd6f4;font-family:'Cascadia Code','Fira Code',Consolas,monospace;display:flex;align-items:center;justify-content:space-between">
+            <span>sk-ant-&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;</span>
+            <span style="cursor:pointer;font-size:15px;color:#6c7086;margin-left:8px;flex-shrink:0" title="Reveal token">&#x1F441;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Default Model -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="color:#a6adc8;font-size:12px;font-weight:500">Default Model</label>
+        <div style="background:#181825;border:1px solid #313244;border-radius:6px;padding:9px 12px;font-size:13px;color:#cdd6f4;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+          <span>claude-opus-4.6-1m</span>
+          <span style="color:#6c7086;font-size:10px">&#x25BC;</span>
+        </div>
+      </div>
+
+      <!-- Small/Fast Model -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="color:#a6adc8;font-size:12px;font-weight:500">Small/Fast Model</label>
+        <div style="background:#181825;border:1px solid #313244;border-radius:6px;padding:9px 12px;font-size:13px;color:#cdd6f4;display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+          <span>claude-sonnet-4-6</span>
+          <span style="color:#6c7086;font-size:10px">&#x25BC;</span>
+        </div>
+      </div>
+
+      <!-- Primary API Key -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="color:#a6adc8;font-size:12px;font-weight:500">Primary API Key</label>
+        <div style="position:relative;display:flex;align-items:center">
+          <div style="flex:1;background:#181825;border:1px solid #313244;border-radius:6px;padding:9px 12px;font-size:13px;color:#cdd6f4;font-family:'Cascadia Code','Fira Code',Consolas,monospace;display:flex;align-items:center;justify-content:space-between">
+            <span>&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;</span>
+            <span style="cursor:pointer;font-size:14px;color:#6c7086;margin-left:8px;flex-shrink:0" title="Edit key">&#x270F;&#xFE0F;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="border-top:1px solid #313244;margin:8px 0"></div>
+
+      <!-- Buttons Row -->
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="background:#cba6f7;color:#11111b;padding:9px 20px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;display:inline-block">Save Changes</div>
+        <div style="background:#313244;color:#a6adc8;padding:9px 20px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;display:inline-block;border:1px solid #45475a">Reset to Defaults</div>
+      </div>
+
+      <!-- Warning Hint -->
+      <div style="margin-top:8px;background:rgba(249,226,175,0.08);border:1px solid rgba(249,226,175,0.2);border-radius:6px;padding:10px 14px;display:flex;align-items:flex-start;gap:8px">
+        <span style="color:#f9e2af;font-size:14px;flex-shrink:0">&#x26A0;</span>
+        <span style="color:#f9e2af;font-size:12px;line-height:1.5">Changes to API settings require restarting active sessions</span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

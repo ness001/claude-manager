@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Manager — Plugin List View</title>
+</head>
+<body style="margin:0;padding:0;background:#1e1e2e;color:#cdd6f4;font-family:'Segoe UI','Inter',system-ui,sans-serif;font-size:13px;display:flex;height:100vh;overflow:hidden;">
+
+<!-- LEFT SIDEBAR RAIL -->
+<nav style="width:48px;min-width:48px;background:#11111b;display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:6px;border-right:1px solid #313244;">
+  <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;color:#6c7086;" title="Dashboard">&#127968;</div>
+  <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;color:#6c7086;" title="Sessions">&#128203;</div>
+  <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;background:rgba(203,166,247,0.12);color:#cba6f7;" title="Plugins">&#129513;</div>
+  <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;color:#6c7086;" title="MCP Servers">&#128268;</div>
+  <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;font-size:18px;color:#6c7086;" title="Settings">&#9881;&#65039;</div>
+  <!-- Active indicator bar -->
+  <div style="position:absolute;left:0;top:0;">
+    <div style="position:fixed;left:0;top:102px;width:3px;height:28px;background:#cba6f7;border-radius:0 3px 3px 0;"></div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+
+  <!-- HEADER BAR -->
+  <header style="padding:20px 24px 16px 24px;border-bottom:1px solid #313244;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;">
+    <div>
+      <h1 style="margin:0;font-size:22px;font-weight:700;color:#cba6f7;letter-spacing:-0.3px;">Plugins</h1>
+      <p style="margin:4px 0 0 0;font-size:12px;color:#6c7086;">5 installed &middot; 4 active &middot; 1 disabled</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="position:relative;">
+        <input type="text" placeholder="Search plugins..." style="background:#313244;border:1px solid #45475a;border-radius:6px;padding:7px 12px 7px 32px;color:#cdd6f4;font-size:12px;width:200px;outline:none;" />
+        <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:#6c7086;">&#128269;</span>
+      </div>
+      <button style="background:#cba6f7;color:#11111b;border:none;border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;">Install Plugin</button>
+    </div>
+  </header>
+
+  <!-- SCROLLABLE CONTENT -->
+  <div style="flex:1;overflow-y:auto;padding:16px 24px 24px 24px;">
+
+    <!-- PLUGIN CARD 1 — ACTIVE -->
+    <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;">
+      <!-- Status dot -->
+      <div style="width:8px;height:8px;min-width:8px;border-radius:50%;background:#a6e3a1;"></div>
+      <!-- Info -->
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:14px;font-weight:600;color:#cdd6f4;">superpowers</span>
+          <span style="font-size:11px;color:#6c7086;">claude-plugins-official</span>
+        </div>
+        <p style="margin:4px 0 0 0;font-size:12px;color:#6c7086;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Enhanced skills, agents, and hooks for Claude Code</p>
+      </div>
+      <!-- Right side meta -->
+      <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+        <span style="font-size:11px;color:#a6adc8;background:#313244;padding:2px 8px;border-radius:10px;">5.0.7</span>
+        <span style="font-size:11px;color:#6c7086;">12 skills &middot; 3 agents &middot; 2 hooks</span>
+        <!-- Toggle ON -->
+        <div style="width:36px;height:20px;background:#a6e3a1;border-radius:10px;position:relative;cursor:pointer;">
+          <div style="width:16px;height:16px;background:#11111b;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLUGIN CARD 2 — ACTIVE with UPDATE -->
+    <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;">
+      <div style="width:8px;height:8px;min-width:8px;border-radius:50%;background:#a6e3a1;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:14px;font-weight:600;color:#cdd6f4;">document-skills</span>
+          <span style="font-size:11px;color:#6c7086;">claude-plugins-official</span>
+        </div>
+        <p style="margin:4px 0 0 0;font-size:12px;color:#6c7086;">Document analysis and generation capabilities</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+        <span style="font-size:11px;color:#a6adc8;background:#313244;padding:2px 8px;border-radius:10px;font-family:'Consolas','Courier New',monospace;">a5bcdd7e58cd</span>
+        <span style="font-size:11px;color:#11111b;background:#f9e2af;padding:2px 8px;border-radius:10px;font-weight:600;">Update Available</span>
+        <div style="width:36px;height:20px;background:#a6e3a1;border-radius:10px;position:relative;cursor:pointer;">
+          <div style="width:16px;height:16px;background:#11111b;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLUGIN CARD 3 — ACTIVE -->
+    <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;">
+      <div style="width:8px;height:8px;min-width:8px;border-radius:50%;background:#a6e3a1;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:14px;font-weight:600;color:#cdd6f4;">ado-tools</span>
+          <span style="font-size:11px;color:#6c7086;">custom-marketplace</span>
+        </div>
+        <p style="margin:4px 0 0 0;font-size:12px;color:#6c7086;">Azure DevOps integration tools</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+        <span style="font-size:11px;color:#a6adc8;background:#313244;padding:2px 8px;border-radius:10px;">1.2.0</span>
+        <span style="font-size:11px;color:#6c7086;">4 skills &middot; 1 hook</span>
+        <div style="width:36px;height:20px;background:#a6e3a1;border-radius:10px;position:relative;cursor:pointer;">
+          <div style="width:16px;height:16px;background:#11111b;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLUGIN CARD 4 — DISABLED -->
+    <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;opacity:0.7;">
+      <div style="width:8px;height:8px;min-width:8px;border-radius:50%;background:#6c7086;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:14px;font-weight:600;color:#cdd6f4;">experimental-features</span>
+          <span style="font-size:11px;color:#6c7086;">claude-plugins-official</span>
+        </div>
+        <p style="margin:4px 0 0 0;font-size:12px;color:#6c7086;">Beta features and experimental workflows</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+        <span style="font-size:11px;color:#a6adc8;background:#313244;padding:2px 8px;border-radius:10px;">0.9.1</span>
+        <!-- Toggle OFF -->
+        <div style="width:36px;height:20px;background:#45475a;border-radius:10px;position:relative;cursor:pointer;">
+          <div style="width:16px;height:16px;background:#6c7086;border-radius:50%;position:absolute;top:2px;left:2px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLUGIN CARD 5 — BROKEN -->
+    <div style="background:#181825;border:1px solid rgba(243,139,168,0.35);border-radius:8px;padding:16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;">
+      <div style="width:8px;height:8px;min-width:8px;border-radius:50%;background:#f38ba8;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:14px;font-weight:600;color:#cdd6f4;">legacy-commands</span>
+          <span style="font-size:11px;color:#6c7086;">claude-plugins-official</span>
+        </div>
+        <p style="margin:4px 0 0 0;font-size:12px;color:#f38ba8;">&#9888; Plugin files not found at install path</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+        <button style="background:#313244;color:#cdd6f4;border:1px solid #45475a;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;">Reinstall</button>
+        <button style="background:transparent;color:#f38ba8;border:1px solid #f38ba8;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;">Remove</button>
+        <!-- Toggle DISABLED -->
+        <div style="width:36px;height:20px;background:#313244;border-radius:10px;position:relative;cursor:not-allowed;opacity:0.4;">
+          <div style="width:16px;height:16px;background:#45475a;border-radius:50%;position:absolute;top:2px;left:2px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div style="border-top:1px solid #313244;margin:20px 0 16px 0;"></div>
+
+    <!-- CUSTOM SKILLS SECTION -->
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px;">
+        <span style="font-size:13px;font-weight:600;color:#a6adc8;">Custom Skills</span>
+        <span style="font-size:11px;color:#6c7086;font-family:'Consolas','Courier New',monospace;">~/.claude/skills/</span>
+      </div>
+
+      <!-- Skill item 1 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-radius:4px;margin-bottom:2px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;color:#6c7086;">&#128221;</span>
+          <span style="font-size:12px;color:#cdd6f4;">ado-pr-review</span>
+        </div>
+        <span style="font-size:11px;color:#6c7086;cursor:pointer;">Open in File Browser</span>
+      </div>
+
+      <!-- Skill item 2 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-radius:4px;margin-bottom:2px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;color:#6c7086;">&#128221;</span>
+          <span style="font-size:12px;color:#cdd6f4;">pr-review</span>
+        </div>
+        <span style="font-size:11px;color:#6c7086;cursor:pointer;">Open in File Browser</span>
+      </div>
+
+      <!-- Skill item 3 -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-radius:4px;margin-bottom:2px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;color:#6c7086;">&#128221;</span>
+          <span style="font-size:12px;color:#cdd6f4;">skill-creator</span>
+        </div>
+        <span style="font-size:11px;color:#6c7086;cursor:pointer;">Open in File Browser</span>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="padding-top:12px;border-top:1px solid #313244;">
+      <p style="margin:0;font-size:11px;color:#45475a;font-family:'Consolas','Courier New',monospace;">Plugin data from ~/.claude/plugins/installed_plugins.json</p>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

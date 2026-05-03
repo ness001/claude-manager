@@ -1,0 +1,298 @@
+<div style="max-width:1100px;margin:20px auto;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:13px;color:#cdd6f4;border-radius:10px;overflow:hidden;border:1px solid #313244;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+
+  <!-- Window title bar -->
+  <div style="background:#11111b;padding:10px 16px;display:flex;align-items:center;border-bottom:1px solid #313244">
+    <div style="display:flex;gap:7px;margin-right:14px">
+      <span style="width:12px;height:12px;border-radius:50%;background:#f38ba8;display:inline-block"></span>
+      <span style="width:12px;height:12px;border-radius:50%;background:#f9e2af;display:inline-block"></span>
+      <span style="width:12px;height:12px;border-radius:50%;background:#a6e3a1;display:inline-block"></span>
+    </div>
+    <span style="color:#6c7086;font-size:12px;letter-spacing:0.5px">Claude Manager &mdash; Dashboard</span>
+  </div>
+
+  <!-- App body -->
+  <div style="display:flex;min-height:760px;background:#1e1e2e">
+
+    <!-- Icon sidebar rail -->
+    <div style="width:48px;min-width:48px;background:#11111b;padding:12px 6px;text-align:center;border-right:1px solid #313244;display:flex;flex-direction:column;gap:4px">
+      <div style="color:#cba6f7;font-size:16px;background:#313244;border-radius:6px;padding:6px 0;margin-bottom:2px" title="Dashboard">&#127968;</div>
+      <div style="color:#6c7086;font-size:16px;padding:6px 0" title="Sessions">&#128203;</div>
+      <div style="color:#6c7086;font-size:16px;padding:6px 0" title="Plugins">&#129513;</div>
+      <div style="color:#6c7086;font-size:16px;padding:6px 0" title="MCP">&#128268;</div>
+      <div style="color:#6c7086;font-size:16px;padding:6px 0;margin-top:auto" title="Settings">&#9881;&#65039;</div>
+    </div>
+
+    <!-- Main content area -->
+    <div style="flex:1;background:#1e1e2e;padding:24px 28px;overflow-y:auto">
+
+      <!-- Page heading -->
+      <div style="margin-bottom:20px">
+        <div style="color:#cdd6f4;font-size:20px;font-weight:700;margin-bottom:4px">Dashboard</div>
+        <div style="color:#6c7086;font-size:12px">Overview of your Claude Code usage</div>
+      </div>
+
+      <!-- ===== ROW 1: Stat Cards ===== -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+
+        <!-- Sessions -->
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px 18px">
+          <div style="color:#a6e3a1;font-size:28px;font-weight:700;line-height:1.2">31</div>
+          <div style="color:#6c7086;font-size:11px;margin-top:4px;text-transform:uppercase;letter-spacing:0.8px">Sessions</div>
+        </div>
+
+        <!-- Messages -->
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px 18px">
+          <div style="color:#89b4fa;font-size:28px;font-weight:700;line-height:1.2">18,760</div>
+          <div style="color:#6c7086;font-size:11px;margin-top:4px;text-transform:uppercase;letter-spacing:0.8px">Messages</div>
+        </div>
+
+        <!-- Longest -->
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px 18px">
+          <div style="color:#f9e2af;font-size:28px;font-weight:700;line-height:1.2">923</div>
+          <div style="color:#6c7086;font-size:11px;margin-top:4px;text-transform:uppercase;letter-spacing:0.8px">Longest (msgs)</div>
+        </div>
+
+        <!-- Since -->
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px 18px">
+          <div style="color:#cba6f7;font-size:28px;font-weight:700;line-height:1.2">Feb 3</div>
+          <div style="color:#6c7086;font-size:11px;margin-top:4px;text-transform:uppercase;letter-spacing:0.8px">Since</div>
+        </div>
+      </div>
+
+      <!-- ===== ROW 2: Activity Chart + Model Usage ===== -->
+      <div style="display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:20px">
+
+        <!-- LEFT: Activity Chart -->
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:18px 20px">
+          <!-- Header with period toggles -->
+          <div style="display:flex;align-items:center;margin-bottom:14px">
+            <div style="color:#cdd6f4;font-size:14px;font-weight:600">Activity</div>
+            <div style="margin-left:auto;display:flex;gap:2px;background:#11111b;border-radius:6px;padding:2px">
+              <span style="color:#6c7086;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer">7d</span>
+              <span style="color:#cdd6f4;font-size:11px;padding:4px 10px;border-radius:4px;background:#89b4fa;color:#11111b;font-weight:600;cursor:pointer">30d</span>
+              <span style="color:#6c7086;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer">90d</span>
+              <span style="color:#6c7086;font-size:11px;padding:4px 10px;border-radius:4px;cursor:pointer">All</span>
+            </div>
+          </div>
+
+          <!-- SVG Area Chart -->
+          <div style="width:100%;height:160px;position:relative">
+            <svg viewBox="0 0 500 140" style="width:100%;height:100%" preserveAspectRatio="none">
+              <!-- Grid lines -->
+              <line x1="0" y1="35" x2="500" y2="35" stroke="#313244" stroke-width="0.5" stroke-dasharray="4,4"/>
+              <line x1="0" y1="70" x2="500" y2="70" stroke="#313244" stroke-width="0.5" stroke-dasharray="4,4"/>
+              <line x1="0" y1="105" x2="500" y2="105" stroke="#313244" stroke-width="0.5" stroke-dasharray="4,4"/>
+
+              <!-- Blue area (Tool Calls - behind) -->
+              <polygon points="0,130 30,118 60,110 90,95 120,100 150,85 180,78 210,90 240,82 270,65 300,72 330,55 360,60 390,48 420,55 450,42 480,50 500,45 500,140 0,140" fill="#89b4fa" opacity="0.25"/>
+              <polyline points="0,130 30,118 60,110 90,95 120,100 150,85 180,78 210,90 240,82 270,65 300,72 330,55 360,60 390,48 420,55 450,42 480,50 500,45" fill="none" stroke="#89b4fa" stroke-width="1.5" opacity="0.6"/>
+
+              <!-- Mauve area (Messages - front) -->
+              <polygon points="0,125 30,115 60,108 90,100 120,105 150,90 180,85 210,95 240,78 270,60 300,68 330,50 360,55 390,40 420,48 450,32 480,38 500,30 500,140 0,140" fill="#cba6f7" opacity="0.3"/>
+              <polyline points="0,125 30,115 60,108 90,100 120,105 150,90 180,85 210,95 240,78 270,60 300,68 330,50 360,55 390,40 420,48 450,32 480,38 500,30" fill="none" stroke="#cba6f7" stroke-width="2"/>
+            </svg>
+            <!-- Y-axis labels -->
+            <div style="position:absolute;left:0;top:0;color:#45475a;font-size:9px">800</div>
+            <div style="position:absolute;left:0;top:22%;color:#45475a;font-size:9px">600</div>
+            <div style="position:absolute;left:0;top:47%;color:#45475a;font-size:9px">400</div>
+            <div style="position:absolute;left:0;top:72%;color:#45475a;font-size:9px">200</div>
+          </div>
+
+          <!-- Chart legend / toggle -->
+          <div style="display:flex;align-items:center;gap:16px;margin-top:8px;padding-top:10px;border-top:1px solid #313244">
+            <div style="display:flex;align-items:center;gap:5px;cursor:pointer">
+              <span style="width:10px;height:10px;background:#cba6f7;border-radius:2px;display:inline-block"></span>
+              <span style="color:#a6adc8;font-size:11px">Messages</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;cursor:pointer">
+              <span style="width:10px;height:10px;background:#89b4fa;border-radius:2px;display:inline-block"></span>
+              <span style="color:#a6adc8;font-size:11px">Tool Calls</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Model Usage Donut -->
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:18px 20px">
+          <div style="color:#cdd6f4;font-size:14px;font-weight:600;margin-bottom:14px">Model Usage</div>
+
+          <!-- Donut chart using conic-gradient -->
+          <div style="display:flex;justify-content:center;margin-bottom:16px">
+            <div style="position:relative;width:130px;height:130px">
+              <div style="width:130px;height:130px;border-radius:50%;background:conic-gradient(#cba6f7 0deg 358.9deg, #89b4fa 358.9deg 360deg)"></div>
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:76px;height:76px;border-radius:50%;background:#181825;display:flex;align-items:center;justify-content:center;flex-direction:column">
+                <div style="color:#cdd6f4;font-size:14px;font-weight:700">185.3M</div>
+                <div style="color:#6c7086;font-size:9px">tokens</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;background:#cba6f7;border-radius:2px;display:inline-block"></span>
+                <span style="color:#a6adc8;font-size:12px">opus-4.6</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#cdd6f4;font-size:12px;font-weight:600">184.7M</span>
+                <span style="color:#6c7086;font-size:10px">99.7%</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;background:#89b4fa;border-radius:2px;display:inline-block"></span>
+                <span style="color:#a6adc8;font-size:12px">sonnet-4-6</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#cdd6f4;font-size:12px;font-weight:600">587K</span>
+                <span style="color:#6c7086;font-size:10px">0.3%</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="width:8px;height:8px;background:#45475a;border-radius:2px;display:inline-block"></span>
+                <span style="color:#a6adc8;font-size:12px">opus-4.5</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#cdd6f4;font-size:12px;font-weight:600">53K</span>
+                <span style="color:#6c7086;font-size:10px">&lt;0.1%</span>
+              </div>
+            </div>
+            <div style="border-top:1px solid #313244;padding-top:8px;margin-top:4px;display:flex;justify-content:space-between">
+              <span style="color:#6c7086;font-size:11px">Total</span>
+              <span style="color:#a6e3a1;font-size:12px;font-weight:700">185.3M</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ROW 3: Recent Sessions + Quick Actions / System Health ===== -->
+      <div style="display:grid;grid-template-columns:3fr 2fr;gap:16px">
+
+        <!-- LEFT: Recent Sessions -->
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:18px 20px">
+          <div style="color:#cdd6f4;font-size:14px;font-weight:600;margin-bottom:14px">Recent Sessions</div>
+
+          <!-- Session list -->
+          <div style="display:flex;flex-direction:column;gap:2px">
+
+            <!-- Session 1 - alive -->
+            <div style="display:flex;align-items:center;padding:10px 12px;border-radius:6px;background:#1e1e2e;gap:10px">
+              <span style="width:8px;height:8px;background:#a6e3a1;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+              <div style="flex:1;min-width:0">
+                <div style="color:#cdd6f4;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Claude Manager brainstorm</div>
+              </div>
+              <span style="color:#6c7086;font-size:11px;flex-shrink:0">2h</span>
+              <span style="color:#45475a;font-size:11px;flex-shrink:0">|</span>
+              <span style="color:#a6adc8;font-size:11px;flex-shrink:0">142 msgs</span>
+            </div>
+
+            <!-- Session 2 - ended -->
+            <div style="display:flex;align-items:center;padding:10px 12px;border-radius:6px;gap:10px">
+              <span style="width:8px;height:8px;background:#45475a;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+              <div style="flex:1;min-width:0">
+                <div style="color:#a6adc8;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Code analysis deep dive</div>
+              </div>
+              <span style="color:#6c7086;font-size:11px;flex-shrink:0">4d</span>
+              <span style="color:#45475a;font-size:11px;flex-shrink:0">|</span>
+              <span style="color:#a6adc8;font-size:11px;flex-shrink:0">923 msgs</span>
+            </div>
+
+            <!-- Session 3 - ended -->
+            <div style="display:flex;align-items:center;padding:10px 12px;border-radius:6px;gap:10px">
+              <span style="width:8px;height:8px;background:#45475a;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+              <div style="flex:1;min-width:0">
+                <div style="color:#a6adc8;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">PR review sprint</div>
+              </div>
+              <span style="color:#6c7086;font-size:11px;flex-shrink:0">34m</span>
+              <span style="color:#45475a;font-size:11px;flex-shrink:0">|</span>
+              <span style="color:#a6adc8;font-size:11px;flex-shrink:0">47 msgs</span>
+            </div>
+
+            <!-- Session 4 - ended -->
+            <div style="display:flex;align-items:center;padding:10px 12px;border-radius:6px;gap:10px">
+              <span style="width:8px;height:8px;background:#45475a;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+              <div style="flex:1;min-width:0">
+                <div style="color:#a6adc8;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Pipeline config</div>
+              </div>
+              <span style="color:#6c7086;font-size:11px;flex-shrink:0">2d</span>
+              <span style="color:#45475a;font-size:11px;flex-shrink:0">|</span>
+              <span style="color:#a6adc8;font-size:11px;flex-shrink:0">89 msgs</span>
+            </div>
+
+            <!-- Session 5 - ended -->
+            <div style="display:flex;align-items:center;padding:10px 12px;border-radius:6px;gap:10px">
+              <span style="width:8px;height:8px;background:#45475a;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+              <div style="flex:1;min-width:0">
+                <div style="color:#a6adc8;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Learning /loop skill</div>
+              </div>
+              <span style="color:#6c7086;font-size:11px;flex-shrink:0">5d</span>
+              <span style="color:#45475a;font-size:11px;flex-shrink:0">|</span>
+              <span style="color:#a6adc8;font-size:11px;flex-shrink:0">23 msgs</span>
+            </div>
+          </div>
+
+          <!-- View all link -->
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #313244">
+            <span style="color:#89b4fa;font-size:12px;cursor:pointer">View All Sessions &#8594;</span>
+          </div>
+        </div>
+
+        <!-- RIGHT: Quick Actions + System Health -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <!-- Quick Actions -->
+          <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:18px 20px">
+            <div style="color:#cdd6f4;font-size:14px;font-weight:600;margin-bottom:12px">Quick Actions</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="background:#cba6f7;color:#11111b;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:700;text-align:center;cursor:pointer">+ New Session</div>
+              <div style="background:#313244;color:#a6adc8;padding:9px 14px;border-radius:6px;font-size:12px;text-align:center;cursor:pointer">Resume Latest</div>
+              <div style="background:#313244;color:#a6adc8;padding:9px 14px;border-radius:6px;font-size:12px;text-align:center;cursor:pointer">Open CWD</div>
+              <div style="background:#313244;color:#a6adc8;padding:9px 14px;border-radius:6px;font-size:12px;text-align:center;cursor:pointer">Rebuild Stats</div>
+            </div>
+          </div>
+
+          <!-- System Health -->
+          <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:18px 20px">
+            <div style="color:#cdd6f4;font-size:14px;font-weight:600;margin-bottom:12px">System Health</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:7px;height:7px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+                  <span style="color:#a6adc8;font-size:12px">MCP</span>
+                </div>
+                <span style="color:#cdd6f4;font-size:12px">4/4 connected</span>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:7px;height:7px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+                  <span style="color:#a6adc8;font-size:12px">Plugins</span>
+                </div>
+                <span style="color:#cdd6f4;font-size:12px">5 installed</span>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:7px;height:7px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+                  <span style="color:#a6adc8;font-size:12px">API</span>
+                </div>
+                <span style="color:#cdd6f4;font-size:12px">reachable</span>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:7px;height:7px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+                  <span style="color:#a6adc8;font-size:12px">CLI</span>
+                </div>
+                <span style="color:#cdd6f4;font-size:12px;font-family:monospace">v2.1.98</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end main content -->
+  </div><!-- end app body -->
+</div>

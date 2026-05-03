@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Manager — Command Palette (Ctrl+K)</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:13px;background:#11111b;color:#cdd6f4;overflow:hidden;height:100vh;width:100vw;">
+
+<!-- ===== FULL APP WINDOW (simplified dashboard behind overlay) ===== -->
+<div style="position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;">
+
+  <!-- Title bar -->
+  <div style="height:32px;background:#11111b;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid #313244;flex-shrink:0;">
+    <span style="color:#cba6f7;font-weight:600;font-size:12px;margin-right:16px;">Claude Manager</span>
+    <span style="color:#45475a;font-size:11px;">v0.1.0</span>
+    <div style="flex:1;"></div>
+    <span style="color:#45475a;font-size:11px;margin-right:8px;">─</span>
+    <span style="color:#45475a;font-size:11px;margin-right:8px;">□</span>
+    <span style="color:#45475a;font-size:11px;">✕</span>
+  </div>
+
+  <!-- Main layout -->
+  <div style="flex:1;display:flex;overflow:hidden;">
+
+    <!-- Sidebar -->
+    <div style="width:200px;background:#1e1e2e;border-right:1px solid #313244;padding:12px 8px;flex-shrink:0;">
+      <div style="padding:8px 10px;margin-bottom:2px;background:#313244;border-radius:6px;color:#cdd6f4;display:flex;align-items:center;gap:8px;border-left:3px solid #cba6f7;">
+        <span>🏠</span><span>Dashboard</span>
+      </div>
+      <div style="padding:8px 10px;margin-bottom:2px;border-radius:6px;color:#a6adc8;display:flex;align-items:center;gap:8px;border-left:3px solid transparent;">
+        <span>📋</span><span>Sessions</span>
+      </div>
+      <div style="padding:8px 10px;margin-bottom:2px;border-radius:6px;color:#a6adc8;display:flex;align-items:center;gap:8px;border-left:3px solid transparent;">
+        <span>🧩</span><span>Plugins</span>
+      </div>
+      <div style="padding:8px 10px;margin-bottom:2px;border-radius:6px;color:#a6adc8;display:flex;align-items:center;gap:8px;border-left:3px solid transparent;">
+        <span>🔌</span><span>MCP Servers</span>
+      </div>
+      <div style="padding:8px 10px;margin-bottom:2px;border-radius:6px;color:#a6adc8;display:flex;align-items:center;gap:8px;border-left:3px solid transparent;">
+        <span>⚙️</span><span>Settings</span>
+      </div>
+    </div>
+
+    <!-- Content area: Dashboard -->
+    <div style="flex:1;background:#181825;padding:24px 32px;overflow:auto;">
+      <div style="font-size:18px;font-weight:600;color:#cdd6f4;margin-bottom:4px;">Dashboard</div>
+      <div style="font-size:12px;color:#6c7086;margin-bottom:24px;">Overview of your Claude Code ecosystem</div>
+
+      <!-- Stats row -->
+      <div style="display:flex;gap:16px;margin-bottom:24px;">
+        <div style="flex:1;background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;">
+          <div style="font-size:11px;color:#6c7086;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Total Sessions</div>
+          <div style="font-size:22px;font-weight:700;color:#cba6f7;">47</div>
+        </div>
+        <div style="flex:1;background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;">
+          <div style="font-size:11px;color:#6c7086;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Active Sessions</div>
+          <div style="font-size:22px;font-weight:700;color:#a6e3a1;">3</div>
+        </div>
+        <div style="flex:1;background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;">
+          <div style="font-size:11px;color:#6c7086;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Plugins Installed</div>
+          <div style="font-size:22px;font-weight:700;color:#89b4fa;">8</div>
+        </div>
+        <div style="flex:1;background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;">
+          <div style="font-size:11px;color:#6c7086;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">MCP Servers</div>
+          <div style="font-size:22px;font-weight:700;color:#f9e2af;">5</div>
+        </div>
+      </div>
+
+      <!-- Recent sessions placeholder -->
+      <div style="font-size:14px;font-weight:600;color:#cdd6f4;margin-bottom:12px;">Recent Sessions</div>
+      <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;overflow:hidden;">
+        <div style="padding:12px 16px;border-bottom:1px solid #313244;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <span style="color:#cdd6f4;">Refactor auth module</span>
+            <span style="color:#6c7086;margin-left:8px;font-size:11px;">2 min ago</span>
+          </div>
+          <span style="background:#313244;color:#a6e3a1;padding:2px 8px;border-radius:4px;font-size:11px;">Active</span>
+        </div>
+        <div style="padding:12px 16px;border-bottom:1px solid #313244;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <span style="color:#cdd6f4;">Fix API error handling</span>
+            <span style="color:#6c7086;margin-left:8px;font-size:11px;">18 min ago</span>
+          </div>
+          <span style="background:#313244;color:#a6e3a1;padding:2px 8px;border-radius:4px;font-size:11px;">Active</span>
+        </div>
+        <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <span style="color:#a6adc8;">Write unit tests for parser</span>
+            <span style="color:#6c7086;margin-left:8px;font-size:11px;">1 hr ago</span>
+          </div>
+          <span style="background:#313244;color:#6c7086;padding:2px 8px;border-radius:4px;font-size:11px;">Completed</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DIMMED OVERLAY ===== -->
+<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:100;"></div>
+
+<!-- ===== COMMAND PALETTE ===== -->
+<div style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;display:flex;justify-content:center;padding-top:25vh;">
+
+  <div style="width:520px;max-height:420px;background:#1e1e2e;border:1px solid #313244;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5);display:flex;flex-direction:column;align-self:flex-start;">
+
+    <!-- ===== SEARCH BAR ===== -->
+    <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid #313244;flex-shrink:0;">
+      <span style="color:#6c7086;font-size:15px;margin-right:10px;">🔍</span>
+      <span style="flex:1;color:#6c7086;font-size:14px;">Type a command...</span>
+      <span style="background:#45475a;color:#6c7086;font-size:11px;padding:3px 8px;border-radius:4px;font-family:'Segoe UI',monospace;">Ctrl+K</span>
+    </div>
+
+    <!-- ===== RESULTS LIST (scrollable) ===== -->
+    <div style="flex:1;overflow-y:auto;padding:6px 0;max-height:300px;">
+
+      <!-- ── Section: Navigation ── -->
+      <div style="padding:8px 16px 4px;font-size:11px;font-weight:600;color:#6c7086;text-transform:uppercase;letter-spacing:0.6px;">Navigation</div>
+
+      <!-- Item 1 — SELECTED/HOVERED -->
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;background:#313244;border-left:3px solid #cba6f7;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">🏠</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Go to Dashboard</span>
+        <span style="background:#45475a;color:#6c7086;font-size:11px;padding:2px 8px;border-radius:4px;">Ctrl+1</span>
+      </div>
+
+      <!-- Item 2 -->
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">📋</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Go to Sessions</span>
+        <span style="background:#45475a;color:#6c7086;font-size:11px;padding:2px 8px;border-radius:4px;">Ctrl+2</span>
+      </div>
+
+      <!-- Item 3 -->
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">🧩</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Go to Plugins</span>
+        <span style="background:#45475a;color:#6c7086;font-size:11px;padding:2px 8px;border-radius:4px;">Ctrl+3</span>
+      </div>
+
+      <!-- Item 4 -->
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">🔌</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Go to MCP Servers</span>
+        <span style="background:#45475a;color:#6c7086;font-size:11px;padding:2px 8px;border-radius:4px;">Ctrl+4</span>
+      </div>
+
+      <!-- Item 5 -->
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">⚙️</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Go to Settings</span>
+        <span style="background:#45475a;color:#6c7086;font-size:11px;padding:2px 8px;border-radius:4px;">Ctrl+5</span>
+      </div>
+
+      <!-- ── Section: Sessions ── -->
+      <div style="padding:12px 16px 4px;font-size:11px;font-weight:600;color:#6c7086;text-transform:uppercase;letter-spacing:0.6px;">Sessions</div>
+
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">➕</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">New Session</span>
+        <span style="background:#45475a;color:#6c7086;font-size:11px;padding:2px 8px;border-radius:4px;">Ctrl+N</span>
+      </div>
+
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">⚡</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Quick Session (defaults)</span>
+        <span style="background:#45475a;color:#6c7086;font-size:11px;padding:2px 8px;border-radius:4px;">Ctrl+Shift+N</span>
+      </div>
+
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">▶️</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Resume Latest Session</span>
+      </div>
+
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">🔍</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Search Sessions...</span>
+      </div>
+
+      <!-- ── Section: Actions ── -->
+      <div style="padding:12px 16px 4px;font-size:11px;font-weight:600;color:#6c7086;text-transform:uppercase;letter-spacing:0.6px;">Actions</div>
+
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">🔄</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Rebuild Stats</span>
+      </div>
+
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">📥</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Check Plugin Updates</span>
+      </div>
+
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">📊</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Export Stats (CSV/JSON)</span>
+      </div>
+
+      <div style="display:flex;align-items:center;padding:8px 16px;margin:0 6px;border-radius:6px;border-left:3px solid transparent;cursor:pointer;">
+        <span style="margin-right:10px;font-size:14px;">📁</span>
+        <span style="flex:1;color:#cdd6f4;font-size:13px;">Open Config Directory</span>
+      </div>
+
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <div style="padding:10px 16px;border-top:1px solid #313244;display:flex;align-items:center;gap:16px;flex-shrink:0;">
+      <span style="color:#6c7086;font-size:11px;">↑↓ Navigate</span>
+      <span style="color:#45475a;font-size:11px;">•</span>
+      <span style="color:#6c7086;font-size:11px;">↵ Select</span>
+      <span style="color:#45475a;font-size:11px;">•</span>
+      <span style="color:#6c7086;font-size:11px;">Esc Close</span>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

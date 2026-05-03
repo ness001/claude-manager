@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Manager — First Launch Flow</title>
+</head>
+<body style="margin:0; padding:40px 0; background:#11111b; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:#cdd6f4;">
+
+<!-- ============================================================ -->
+<!-- STEP 1 — Prerequisites Check                                  -->
+<!-- ============================================================ -->
+<div style="max-width:700px; margin:0 auto 80px auto; padding:0 20px;">
+  <div style="font-size:13px; color:#6c7086; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:16px;">Step 1 — Prerequisites Check</div>
+
+  <div style="background:#1e1e2e; border:1px solid #313244; border-radius:16px; padding:48px 40px 40px 40px; width:500px; margin:0 auto; box-sizing:border-box;">
+
+    <div style="text-align:center; margin-bottom:32px;">
+      <div style="font-size:26px; font-weight:700; color:#cba6f7; margin-bottom:8px;">Welcome to Claude Manager</div>
+      <div style="font-size:15px; color:#6c7086;">Let's make sure everything is set up</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:36px;">
+
+      <div style="display:flex; align-items:center; gap:12px; background:#181825; border:1px solid #313244; border-radius:10px; padding:14px 16px;">
+        <div style="width:24px; height:24px; border-radius:50%; background:#a6e3a1; display:flex; align-items:center; justify-content:center; font-size:13px; color:#1e1e2e; font-weight:700; flex-shrink:0;">&#10003;</div>
+        <div style="flex:1;">
+          <div style="font-size:14px; color:#a6e3a1; font-weight:600;">Claude Code CLI installed</div>
+          <div style="font-size:12px; color:#6c7086; margin-top:2px;">v2.1.98</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; background:#181825; border:1px solid #313244; border-radius:10px; padding:14px 16px;">
+        <div style="width:24px; height:24px; border-radius:50%; background:#a6e3a1; display:flex; align-items:center; justify-content:center; font-size:13px; color:#1e1e2e; font-weight:700; flex-shrink:0;">&#10003;</div>
+        <div style="flex:1;">
+          <div style="font-size:14px; color:#a6e3a1; font-weight:600;">Config directory found</div>
+          <div style="font-size:12px; color:#6c7086; margin-top:2px;">~/.claude/</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; background:#181825; border:1px solid #313244; border-radius:10px; padding:14px 16px;">
+        <div style="width:24px; height:24px; border-radius:50%; background:#a6e3a1; display:flex; align-items:center; justify-content:center; font-size:13px; color:#1e1e2e; font-weight:700; flex-shrink:0;">&#10003;</div>
+        <div style="flex:1;">
+          <div style="font-size:14px; color:#a6e3a1; font-weight:600;">API key configured</div>
+          <div style="font-size:12px; color:#6c7086; margin-top:2px;">sk-ant-...7f3x</div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; background:#181825; border:1px solid #313244; border-radius:10px; padding:14px 16px;">
+        <div style="width:24px; height:24px; border-radius:50%; background:#f9e2af; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; animation-name:none;">
+          <span style="display:inline-block; width:16px; height:16px; border:2px solid #f9e2af; border-top-color:transparent; border-radius:50%; background:transparent; box-sizing:border-box;"></span>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:14px; color:#f9e2af; font-weight:600;">Checking API connectivity...</div>
+          <div style="font-size:12px; color:#6c7086; margin-top:2px;">Verifying connection to Anthropic API</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="display:flex; justify-content:center; gap:8px; margin-bottom:24px;">
+      <div style="width:10px; height:10px; border-radius:50%; background:#cba6f7;"></div>
+      <div style="width:10px; height:10px; border-radius:50%; background:#313244;"></div>
+      <div style="width:10px; height:10px; border-radius:50%; background:#313244;"></div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+      <div style="width:100%; background:#45475a; color:#6c7086; font-size:15px; font-weight:600; text-align:center; padding:12px 0; border-radius:10px; cursor:not-allowed; opacity:0.5;">Continue</div>
+      <div style="font-size:13px; color:#6c7086; cursor:pointer;">Skip</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- STEP 2 — Auto-Import                                          -->
+<!-- ============================================================ -->
+<div style="max-width:700px; margin:0 auto 80px auto; padding:0 20px;">
+  <div style="font-size:13px; color:#6c7086; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:16px;">Step 2 — Auto-Import</div>
+
+  <div style="background:#1e1e2e; border:1px solid #313244; border-radius:16px; padding:48px 40px 40px 40px; width:500px; margin:0 auto; box-sizing:border-box;">
+
+    <div style="text-align:center; margin-bottom:32px;">
+      <div style="font-size:26px; font-weight:700; color:#cba6f7; margin-bottom:8px;">Importing Your Sessions</div>
+      <div style="font-size:15px; color:#6c7086;">Scanning your Claude Code data...</div>
+    </div>
+
+    <!-- Progress bar section -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:14px; color:#a6adc8; margin-bottom:10px;">Importing 19 of 31 sessions...</div>
+      <div style="height:10px; background:#313244; border-radius:6px; overflow:hidden;">
+        <div style="width:60%; height:100%; background:linear-gradient(90deg, #cba6f7, #89b4fa); border-radius:6px;"></div>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:flex; justify-content:space-around; margin-bottom:28px; background:#181825; border:1px solid #313244; border-radius:10px; padding:16px 12px;">
+      <div style="text-align:center;">
+        <div style="font-size:20px; margin-bottom:4px;">&#128193;</div>
+        <div style="font-size:18px; font-weight:700; color:#cdd6f4;">5</div>
+        <div style="font-size:11px; color:#6c7086;">projects discovered</div>
+      </div>
+      <div style="width:1px; background:#313244;"></div>
+      <div style="text-align:center;">
+        <div style="font-size:20px; margin-bottom:4px;">&#128172;</div>
+        <div style="font-size:18px; font-weight:700; color:#cdd6f4;">31</div>
+        <div style="font-size:11px; color:#6c7086;">sessions found</div>
+      </div>
+      <div style="width:1px; background:#313244;"></div>
+      <div style="text-align:center;">
+        <div style="font-size:20px; margin-bottom:4px;">&#128202;</div>
+        <div style="font-size:18px; font-weight:700; color:#cdd6f4;">18,760</div>
+        <div style="font-size:11px; color:#6c7086;">messages indexed</div>
+      </div>
+    </div>
+
+    <!-- Log-style list -->
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:32px;">
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:#181825; border:1px solid #313244; border-radius:8px; font-size:13px;">
+        <div style="width:18px; height:18px; border-radius:50%; background:#a6e3a1; display:flex; align-items:center; justify-content:center; font-size:10px; color:#1e1e2e; font-weight:700; flex-shrink:0;">&#10003;</div>
+        <span style="color:#a6e3a1; font-family:monospace;">claude-manager/</span>
+        <span style="color:#6c7086; margin-left:auto;">3 sessions</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:#181825; border:1px solid #313244; border-radius:8px; font-size:13px;">
+        <div style="width:18px; height:18px; border-radius:50%; background:#a6e3a1; display:flex; align-items:center; justify-content:center; font-size:10px; color:#1e1e2e; font-weight:700; flex-shrink:0;">&#10003;</div>
+        <span style="color:#a6e3a1; font-family:monospace;">my-api-project/</span>
+        <span style="color:#6c7086; margin-left:auto;">8 sessions</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:#181825; border:1px solid #313244; border-radius:8px; font-size:13px;">
+        <div style="width:18px; height:18px; border-radius:50%; background:#f9e2af; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <span style="display:inline-block; width:12px; height:12px; border:2px solid #f9e2af; border-top-color:transparent; border-radius:50%; background:transparent; box-sizing:border-box;"></span>
+        </div>
+        <span style="color:#f9e2af; font-family:monospace;">work-scripts/</span>
+        <span style="color:#6c7086; margin-left:auto;">scanning...</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:#181825; border:1px solid #313244; border-radius:8px; font-size:13px;">
+        <div style="width:18px; height:18px; border-radius:4px; border:2px solid #45475a; background:transparent; flex-shrink:0; box-sizing:border-box;"></div>
+        <span style="color:#6c7086; font-family:monospace;">personal-site/</span>
+        <span style="color:#6c7086; margin-left:auto;">pending</span>
+      </div>
+    </div>
+
+    <!-- Progress dots -->
+    <div style="display:flex; justify-content:center; gap:8px; margin-bottom:24px;">
+      <div style="width:10px; height:10px; border-radius:50%; background:#313244;"></div>
+      <div style="width:10px; height:10px; border-radius:50%; background:#cba6f7;"></div>
+      <div style="width:10px; height:10px; border-radius:50%; background:#313244;"></div>
+    </div>
+
+    <!-- Buttons -->
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:14px; color:#6c7086; cursor:pointer; padding:10px 20px; border:1px solid #313244; border-radius:10px;">Back</div>
+      <div style="font-size:15px; font-weight:600; color:#1e1e2e; background:#cba6f7; padding:12px 32px; border-radius:10px; cursor:pointer;">Continue</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- STEP 3 — Tour (Spotlight Overlay)                             -->
+<!-- ============================================================ -->
+<div style="max-width:900px; margin:0 auto 60px auto; padding:0 20px;">
+  <div style="font-size:13px; color:#6c7086; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:16px;">Step 3 — Tour</div>
+
+  <!-- Full app frame -->
+  <div style="position:relative; background:#1e1e2e; border:1px solid #313244; border-radius:16px; overflow:hidden; height:520px;">
+
+    <!-- Dimmed app content at 40% opacity -->
+    <div style="position:absolute; inset:0; opacity:0.4; display:flex;">
+
+      <!-- Icon sidebar -->
+      <div style="width:56px; background:#11111b; display:flex; flex-direction:column; align-items:center; padding-top:16px; gap:6px; flex-shrink:0; border-right:1px solid #313244;">
+        <!-- App logo -->
+        <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #cba6f7, #89b4fa); display:flex; align-items:center; justify-content:center; font-size:16px; color:#1e1e2e; font-weight:800; margin-bottom:12px;">CM</div>
+        <!-- Nav icons -->
+        <div style="width:40px; height:40px; border-radius:10px; background:#313244; display:flex; align-items:center; justify-content:center; font-size:16px;" title="Dashboard">&#127968;</div>
+        <div style="width:40px; height:40px; border-radius:10px; background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;" title="Sessions">&#128203;</div>
+        <div style="width:40px; height:40px; border-radius:10px; background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;" title="Plugins">&#128268;</div>
+        <div style="width:40px; height:40px; border-radius:10px; background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;" title="MCP Servers">&#9881;</div>
+        <div style="width:40px; height:40px; border-radius:10px; background:transparent; display:flex; align-items:center; justify-content:center; font-size:16px;" title="Settings">&#128736;</div>
+      </div>
+
+      <!-- Main content area (dashboard) -->
+      <div style="flex:1; padding:24px 28px;">
+        <div style="font-size:22px; font-weight:700; color:#cdd6f4; margin-bottom:4px;">Dashboard</div>
+        <div style="font-size:13px; color:#6c7086; margin-bottom:24px;">Overview of your Claude Code activity</div>
+
+        <!-- Stat cards row -->
+        <div style="display:flex; gap:16px; margin-bottom:24px;">
+          <div style="flex:1; background:#181825; border:1px solid #313244; border-radius:12px; padding:18px;">
+            <div style="font-size:12px; color:#6c7086; margin-bottom:6px;">Active Sessions</div>
+            <div style="font-size:28px; font-weight:700; color:#a6e3a1;">3</div>
+          </div>
+          <div style="flex:1; background:#181825; border:1px solid #313244; border-radius:12px; padding:18px;">
+            <div style="font-size:12px; color:#6c7086; margin-bottom:6px;">Total Sessions</div>
+            <div style="font-size:28px; font-weight:700; color:#cdd6f4;">31</div>
+          </div>
+          <div style="flex:1; background:#181825; border:1px solid #313244; border-radius:12px; padding:18px;">
+            <div style="font-size:12px; color:#6c7086; margin-bottom:6px;">Projects</div>
+            <div style="font-size:28px; font-weight:700; color:#89b4fa;">5</div>
+          </div>
+          <div style="flex:1; background:#181825; border:1px solid #313244; border-radius:12px; padding:18px;">
+            <div style="font-size:12px; color:#6c7086; margin-bottom:6px;">Messages Today</div>
+            <div style="font-size:28px; font-weight:700; color:#cba6f7;">142</div>
+          </div>
+        </div>
+
+        <!-- Recent sessions list placeholder -->
+        <div style="font-size:15px; font-weight:600; color:#cdd6f4; margin-bottom:12px;">Recent Sessions</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="background:#181825; border:1px solid #313244; border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+            <div style="width:8px; height:8px; border-radius:50%; background:#a6e3a1;"></div>
+            <div style="font-size:13px; color:#cdd6f4; font-weight:500;">claude-manager/ — Design review session</div>
+            <div style="font-size:11px; color:#6c7086; margin-left:auto;">2 min ago</div>
+          </div>
+          <div style="background:#181825; border:1px solid #313244; border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+            <div style="width:8px; height:8px; border-radius:50%; background:#a6e3a1;"></div>
+            <div style="font-size:13px; color:#cdd6f4; font-weight:500;">my-api-project/ — Fix auth middleware</div>
+            <div style="font-size:11px; color:#6c7086; margin-left:auto;">18 min ago</div>
+          </div>
+          <div style="background:#181825; border:1px solid #313244; border-radius:10px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+            <div style="width:8px; height:8px; border-radius:50%; background:#6c7086;"></div>
+            <div style="font-size:13px; color:#cdd6f4; font-weight:500;">work-scripts/ — Refactor deploy pipeline</div>
+            <div style="font-size:11px; color:#6c7086; margin-left:auto;">3 hours ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spotlight highlight on Sessions icon (not dimmed) -->
+    <div style="position:absolute; top:76px; left:6px; width:44px; height:44px; border-radius:12px; border:2px solid #cba6f7; box-shadow:0 0 0 4px rgba(203,166,247,0.25), 0 0 30px 8px rgba(203,166,247,0.15); z-index:10; background:rgba(203,166,247,0.08);"></div>
+
+    <!-- The actual Sessions icon at full opacity inside spotlight -->
+    <div style="position:absolute; top:78px; left:8px; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; z-index:11;">&#128203;</div>
+
+    <!-- Tooltip / Callout box -->
+    <div style="position:absolute; top:60px; left:68px; z-index:12;">
+      <!-- Arrow -->
+      <div style="position:absolute; left:-8px; top:18px; width:0; height:0; border-top:8px solid transparent; border-bottom:8px solid transparent; border-right:8px solid #313244;"></div>
+      <!-- Box -->
+      <div style="background:#1e1e2e; border:1px solid #313244; border-radius:14px; padding:20px 22px; width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="font-size:17px; font-weight:700; color:#cdd6f4; margin-bottom:8px;">&#128203; Sessions</div>
+        <div style="font-size:13px; color:#a6adc8; line-height:1.6; margin-bottom:16px;">Browse, search, and manage all your Claude Code sessions. Resume ended sessions or view live conversations.</div>
+        <div style="font-size:12px; color:#6c7086; margin-bottom:16px;">Step 2 of 5</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:13px; color:#6c7086; cursor:pointer;">Skip Tour</div>
+          <div style="font-size:14px; font-weight:600; color:#1e1e2e; background:#cba6f7; padding:8px 20px; border-radius:8px; cursor:pointer;">Next &#8594;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Semi-transparent overlay (covers everything except spotlight area) -->
+    <div style="position:absolute; inset:0; background:rgba(17,17,27,0.55); z-index:5; pointer-events:none;"></div>
+
+    <!-- Cut-out for spotlight (re-render the spotlight border above the overlay) -->
+    <div style="position:absolute; top:76px; left:6px; width:44px; height:44px; border-radius:12px; border:2px solid #cba6f7; box-shadow:0 0 0 4px rgba(203,166,247,0.3), 0 0 40px 10px rgba(203,166,247,0.2); z-index:15; background:rgba(30,30,46,0.95);"></div>
+    <div style="position:absolute; top:78px; left:8px; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; z-index:16;">&#128203;</div>
+
+    <!-- Tooltip re-rendered above overlay -->
+    <div style="position:absolute; top:60px; left:68px; z-index:16;">
+      <div style="position:absolute; left:-8px; top:18px; width:0; height:0; border-top:8px solid transparent; border-bottom:8px solid transparent; border-right:8px solid #313244;"></div>
+      <div style="background:#1e1e2e; border:1px solid #313244; border-radius:14px; padding:20px 22px; width:320px; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="font-size:17px; font-weight:700; color:#cdd6f4; margin-bottom:8px;">&#128203; Sessions</div>
+        <div style="font-size:13px; color:#a6adc8; line-height:1.6; margin-bottom:16px;">Browse, search, and manage all your Claude Code sessions. Resume ended sessions or view live conversations.</div>
+        <div style="font-size:12px; color:#6c7086; margin-bottom:16px;">Step 2 of 5</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:13px; color:#6c7086; cursor:pointer;">Skip Tour</div>
+          <div style="font-size:14px; font-weight:600; color:#1e1e2e; background:#cba6f7; padding:8px 20px; border-radius:8px; cursor:pointer;">Next &#8594;</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

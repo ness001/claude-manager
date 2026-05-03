@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Manager — New Session Dialog</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; font-size: 13px; background: #1e1e2e; color: #cdd6f4; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     FAKE APP WINDOW BEHIND THE MODAL (dimmed)
+     ============================================================ -->
+<div style="position: fixed; inset: 0; background: #1e1e2e;">
+  <!-- Title bar -->
+  <div style="height: 38px; background: #11111b; display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid #313244;">
+    <span style="font-size: 13px; color: #cba6f7; font-weight: 600;">Claude Manager</span>
+    <span style="margin-left: 24px; font-size: 12px; color: #6c7086;">Sessions</span>
+    <span style="margin-left: 16px; font-size: 12px; color: #6c7086;">MCP Servers</span>
+    <span style="margin-left: 16px; font-size: 12px; color: #6c7086;">Plugins</span>
+    <span style="margin-left: 16px; font-size: 12px; color: #6c7086;">Settings</span>
+    <span style="margin-left: auto; font-size: 11px; color: #45475a;">&#9866; &#9723; &#10005;</span>
+  </div>
+  <!-- Fake content area -->
+  <div style="padding: 32px 48px;">
+    <div style="font-size: 18px; color: #45475a; font-weight: 600; margin-bottom: 16px;">Active Sessions</div>
+    <div style="height: 48px; background: #181825; border: 1px solid #313244; border-radius: 8px; margin-bottom: 8px;"></div>
+    <div style="height: 48px; background: #181825; border: 1px solid #313244; border-radius: 8px; margin-bottom: 8px;"></div>
+    <div style="height: 48px; background: #181825; border: 1px solid #313244; border-radius: 8px; margin-bottom: 8px;"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     OVERLAY (dims the app behind)
+     ============================================================ -->
+<div style="position: fixed; inset: 0; background: rgba(0,0,0,0.50); z-index: 100;"></div>
+
+<!-- ============================================================
+     MODAL DIALOG
+     ============================================================ -->
+<div style="
+  position: fixed; z-index: 200;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 500px; max-height: 88vh; overflow-y: auto;
+  background: #1e1e2e;
+  border: 1px solid #313244;
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(203,166,247,0.08);
+">
+
+  <!-- ── HEADER ───────────────────────────────────────────────── -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 12px 24px; border-bottom: 1px solid #313244;">
+    <span style="font-size: 17px; font-weight: 700; color: #cba6f7;">New Session</span>
+    <button style="background: none; border: none; color: #6c7086; font-size: 18px; cursor: pointer; padding: 4px 6px; border-radius: 6px; line-height: 1;" title="Close">&times;</button>
+  </div>
+
+  <!-- ── FORM BODY ────────────────────────────────────────────── -->
+  <div style="padding: 20px 24px 8px 24px;">
+
+    <!-- 1. Working Directory ────────────────────────────────── -->
+    <div style="margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <label style="font-size: 12px; font-weight: 600; color: #a6adc8;">Working Directory</label>
+        <span style="font-size: 11px; color: #6c7086; font-family: 'Cascadia Code', 'Consolas', monospace;">--cwd</span>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <input type="text" value="C:\Users\lianli\project" readonly style="
+          flex: 1; padding: 8px 10px; font-size: 13px;
+          background: #181825; border: 1px solid #313244; border-radius: 6px;
+          color: #89b4fa; font-family: 'Cascadia Code', 'Consolas', monospace;
+          outline: none;
+        ">
+        <button style="
+          padding: 8px 12px; font-size: 12px;
+          background: #313244; border: 1px solid #45475a; border-radius: 6px;
+          color: #cdd6f4; cursor: pointer; white-space: nowrap;
+        ">Browse...</button>
+      </div>
+      <!-- Recent CWDs -->
+      <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+        <span style="font-size: 11px; color: #6c7086;">Recent:</span>
+        <select style="
+          flex: 1; padding: 4px 8px; font-size: 11px;
+          background: #181825; border: 1px solid #313244; border-radius: 4px;
+          color: #a6adc8; outline: none; font-family: 'Cascadia Code', 'Consolas', monospace;
+        ">
+          <option>C:\Users\lianli\project</option>
+          <option>C:\Users\lianli\claude-manager</option>
+          <option>C:\Users\lianli\docs\specs</option>
+          <option>D:\repos\backend-api</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 2. Session Name ─────────────────────────────────────── -->
+    <div style="margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <label style="font-size: 12px; font-weight: 600; color: #a6adc8;">Session Name <span style="font-weight: 400; color: #6c7086;">(optional)</span></label>
+        <span style="font-size: 11px; color: #6c7086; font-family: 'Cascadia Code', 'Consolas', monospace;">--name</span>
+      </div>
+      <input type="text" placeholder="e.g., PR review sprint" style="
+        width: 100%; padding: 8px 10px; font-size: 13px;
+        background: #181825; border: 1px solid #313244; border-radius: 6px;
+        color: #cdd6f4; outline: none;
+      ">
+    </div>
+
+    <!-- 3. Model ─────────────────────────────────────────────── -->
+    <div style="margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <label style="font-size: 12px; font-weight: 600; color: #a6adc8;">Model</label>
+        <span style="font-size: 11px; color: #6c7086; font-family: 'Cascadia Code', 'Consolas', monospace;">--model</span>
+      </div>
+      <select style="
+        width: 100%; padding: 8px 10px; font-size: 13px;
+        background: #181825; border: 1px solid #313244; border-radius: 6px;
+        color: #cdd6f4; outline: none;
+        -webkit-appearance: none; appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg fill=\"%236c7086\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z\"/></svg>');
+        background-repeat: no-repeat; background-position: right 10px center; background-size: 14px;
+      ">
+        <option selected>claude-opus-4.6-1m</option>
+        <option>claude-sonnet-4-20250514</option>
+        <option>claude-haiku-4-20250414</option>
+        <option>sonnet</option>
+        <option>opus</option>
+        <option>haiku</option>
+      </select>
+      <div style="font-size: 11px; color: #6c7086; margin-top: 4px;">Supports aliases: sonnet, opus or full names</div>
+    </div>
+
+    <!-- 4. Permission Mode ──────────────────────────────────── -->
+    <div style="margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <label style="font-size: 12px; font-weight: 600; color: #a6adc8;">Permission Mode</label>
+        <span style="font-size: 11px; color: #6c7086; font-family: 'Cascadia Code', 'Consolas', monospace;">--permission-mode</span>
+      </div>
+      <div style="
+        background: #181825; border: 1px solid #313244; border-radius: 6px;
+        padding: 10px 12px;
+        display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 16px;
+      ">
+        <!-- Row 1 -->
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cdd6f4; cursor: pointer;">
+          <input type="radio" name="perm" checked style="accent-color: #cba6f7;"> default
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cdd6f4; cursor: pointer;">
+          <input type="radio" name="perm" style="accent-color: #cba6f7;"> auto
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cdd6f4; cursor: pointer;">
+          <input type="radio" name="perm" style="accent-color: #cba6f7;"> plan
+        </label>
+        <!-- Row 2 -->
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cdd6f4; cursor: pointer;">
+          <input type="radio" name="perm" style="accent-color: #cba6f7;"> acceptEdits
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cdd6f4; cursor: pointer;">
+          <input type="radio" name="perm" style="accent-color: #cba6f7;"> dontAsk
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #f38ba8; cursor: pointer; background: rgba(243,139,168,0.06); border-radius: 4px; padding: 2px 4px; margin: -2px -4px;">
+          <input type="radio" name="perm" style="accent-color: #f38ba8;"> bypassPermissions
+        </label>
+      </div>
+    </div>
+
+    <!-- 5. Effort Level ──────────────────────────────────────── -->
+    <div style="margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <label style="font-size: 12px; font-weight: 600; color: #a6adc8;">Effort Level</label>
+        <span style="font-size: 11px; color: #6c7086; font-family: 'Cascadia Code', 'Consolas', monospace;">--effort</span>
+      </div>
+      <select style="
+        width: 100%; padding: 8px 10px; font-size: 13px;
+        background: #181825; border: 1px solid #313244; border-radius: 6px;
+        color: #cdd6f4; outline: none;
+        -webkit-appearance: none; appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg fill=\"%236c7086\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z\"/></svg>');
+        background-repeat: no-repeat; background-position: right 10px center; background-size: 14px;
+      ">
+        <option>low</option>
+        <option>medium</option>
+        <option selected>high</option>
+        <option>max</option>
+      </select>
+    </div>
+
+    <!-- 6. Initial Prompt ────────────────────────────────────── -->
+    <div style="margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <label style="font-size: 12px; font-weight: 600; color: #a6adc8;">Initial Prompt <span style="font-weight: 400; color: #6c7086;">(optional)</span></label>
+        <span style="font-size: 11px; color: #6c7086; font-family: 'Cascadia Code', 'Consolas', monospace;">-p</span>
+      </div>
+      <textarea rows="3" placeholder="Enter initial prompt..." style="
+        width: 100%; padding: 8px 10px; font-size: 13px;
+        background: #181825; border: 1px solid #313244; border-radius: 6px;
+        color: #cdd6f4; outline: none; resize: vertical;
+        font-family: 'Segoe UI', -apple-system, sans-serif;
+      "></textarea>
+    </div>
+
+    <!-- 7. Tags ──────────────────────────────────────────────── -->
+    <div style="margin-bottom: 18px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <label style="font-size: 12px; font-weight: 600; color: #a6adc8;">Tags <span style="font-weight: 400; color: #6c7086;">(optional)</span></label>
+        <span style="font-size: 11px; color: #6c7086; font-style: italic;">App-local</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+        <span style="
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 3px 10px; font-size: 11px; font-weight: 500;
+          background: rgba(203,166,247,0.12); color: #cba6f7;
+          border: 1px solid rgba(203,166,247,0.25); border-radius: 12px;
+        ">work <span style="cursor: pointer; opacity: 0.5; margin-left: 2px;">&times;</span></span>
+        <span style="
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 3px 10px; font-size: 11px; font-weight: 500;
+          background: rgba(166,227,161,0.12); color: #a6e3a1;
+          border: 1px solid rgba(166,227,161,0.25); border-radius: 12px;
+        ">ai <span style="cursor: pointer; opacity: 0.5; margin-left: 2px;">&times;</span></span>
+        <span style="
+          display: inline-flex; align-items: center;
+          padding: 3px 10px; font-size: 11px; font-weight: 500;
+          background: rgba(108,112,134,0.10); color: #6c7086;
+          border: 1px dashed #45475a; border-radius: 12px;
+          cursor: pointer;
+        ">+ New</span>
+      </div>
+    </div>
+
+    <!-- 8. Advanced (collapsed) ──────────────────────────────── -->
+    <div style="margin-bottom: 8px;">
+      <details>
+        <summary style="
+          cursor: pointer; font-size: 12px; color: #6c7086;
+          list-style: none; display: flex; align-items: center; gap: 6px;
+          padding: 8px 0;
+          user-select: none;
+        ">
+          <span style="font-size: 10px; transition: transform 0.15s;">&#9654;</span>
+          <span style="font-weight: 600;">Advanced</span>
+          <span style="font-size: 11px; color: #45475a; margin-left: 4px; font-family: 'Cascadia Code', 'Consolas', monospace;">
+            --fallback-model, --max-budget-usd, --add-dir, --worktree, --bare
+          </span>
+        </summary>
+        <div style="
+          padding: 12px; margin-top: 4px;
+          background: #181825; border: 1px solid #313244; border-radius: 8px;
+        ">
+          <!-- Fallback Model -->
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <label style="font-size: 11px; color: #a6adc8;">Fallback Model</label>
+              <span style="font-size: 10px; color: #45475a; font-family: monospace;">--fallback-model</span>
+            </div>
+            <input type="text" placeholder="e.g., sonnet" style="
+              width: 100%; padding: 6px 8px; font-size: 12px;
+              background: #11111b; border: 1px solid #313244; border-radius: 4px;
+              color: #cdd6f4; outline: none;
+            ">
+          </div>
+          <!-- Max Budget -->
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <label style="font-size: 11px; color: #a6adc8;">Max Budget (USD)</label>
+              <span style="font-size: 10px; color: #45475a; font-family: monospace;">--max-budget-usd</span>
+            </div>
+            <input type="number" placeholder="e.g., 5.00" style="
+              width: 100%; padding: 6px 8px; font-size: 12px;
+              background: #11111b; border: 1px solid #313244; border-radius: 4px;
+              color: #f9e2af; outline: none;
+            ">
+          </div>
+          <!-- Additional Directories -->
+          <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+              <label style="font-size: 11px; color: #a6adc8;">Additional Directories</label>
+              <span style="font-size: 10px; color: #45475a; font-family: monospace;">--add-dir</span>
+            </div>
+            <input type="text" placeholder="Path to additional directory" style="
+              width: 100%; padding: 6px 8px; font-size: 12px;
+              background: #11111b; border: 1px solid #313244; border-radius: 4px;
+              color: #89b4fa; outline: none;
+            ">
+          </div>
+          <!-- Checkboxes row -->
+          <div style="display: flex; gap: 20px;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #a6adc8; cursor: pointer;">
+              <input type="checkbox" style="accent-color: #cba6f7;"> Use worktree
+              <span style="font-size: 10px; color: #45475a; font-family: monospace;">--worktree</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #a6adc8; cursor: pointer;">
+              <input type="checkbox" style="accent-color: #cba6f7;"> Bare mode
+              <span style="font-size: 10px; color: #45475a; font-family: monospace;">--bare</span>
+            </label>
+          </div>
+        </div>
+      </details>
+    </div>
+
+  </div><!-- end form body -->
+
+  <!-- ── FOOTER ───────────────────────────────────────────────── -->
+  <div style="
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px 18px 24px;
+    border-top: 1px solid #313244;
+  ">
+    <span style="font-size: 11px; color: #6c7086;">
+      <kbd style="
+        display: inline-block; padding: 1px 5px; font-size: 10px;
+        background: #313244; border: 1px solid #45475a; border-radius: 3px;
+        color: #a6adc8; font-family: 'Cascadia Code', 'Consolas', monospace;
+      ">Ctrl</kbd>+<kbd style="
+        display: inline-block; padding: 1px 5px; font-size: 10px;
+        background: #313244; border: 1px solid #45475a; border-radius: 3px;
+        color: #a6adc8; font-family: 'Cascadia Code', 'Consolas', monospace;
+      ">Shift</kbd>+<kbd style="
+        display: inline-block; padding: 1px 5px; font-size: 10px;
+        background: #313244; border: 1px solid #45475a; border-radius: 3px;
+        color: #a6adc8; font-family: 'Cascadia Code', 'Consolas', monospace;
+      ">N</kbd>
+      <span style="margin-left: 4px;">for quick start</span>
+    </span>
+    <div style="display: flex; gap: 8px;">
+      <button style="
+        padding: 8px 18px; font-size: 13px; font-weight: 500;
+        background: #313244; border: 1px solid #45475a; border-radius: 6px;
+        color: #cdd6f4; cursor: pointer;
+      ">Cancel</button>
+      <button style="
+        padding: 8px 22px; font-size: 13px; font-weight: 600;
+        background: #a6e3a1; border: 1px solid #a6e3a1; border-radius: 6px;
+        color: #11111b; cursor: pointer;
+      ">Start Session</button>
+    </div>
+  </div>
+
+</div><!-- end modal -->
+
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversation Viewer — Claude Manager</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#11111b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color:#cdd6f4; }
+</style>
+</head>
+<body>
+
+<h2 style="color:#cdd6f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;padding:16px 20px 4px;font-size:16px">Conversation Viewer — Ended Session</h2>
+<p style="color:#6c7086;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;padding:0 20px 16px;font-size:12px">JSONL message rendering for a completed session</p>
+
+<div style="display:flex;min-height:700px;font-size:13px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;border:1px solid #313244;border-radius:8px;margin:0 16px 16px;overflow:hidden;position:relative">
+
+  <!-- ===== ICON SIDEBAR RAIL (48px) ===== -->
+  <div style="width:48px;min-width:48px;background:#11111b;padding:10px 6px;text-align:center;border-right:1px solid #313244;display:flex;flex-direction:column;gap:10px">
+    <div style="color:#6c7086;font-size:16px;padding:4px 0">🏠</div>
+    <div style="color:#cba6f7;font-size:16px;background:#313244;border-radius:6px;padding:4px 0">📋</div>
+    <div style="color:#6c7086;font-size:16px;padding:4px 0">🧩</div>
+    <div style="color:#6c7086;font-size:16px;padding:4px 0">🔌</div>
+    <div style="color:#6c7086;font-size:16px;padding:4px 0;margin-top:auto">⚙️</div>
+  </div>
+
+  <!-- ===== SESSION LIST SIDEBAR (260px) ===== -->
+  <div style="width:260px;min-width:260px;background:#1e1e2e;border-right:1px solid #313244;display:flex;flex-direction:column">
+    <!-- Search -->
+    <div style="padding:10px 12px;border-bottom:1px solid #313244">
+      <div style="background:#181825;border:1px solid #313244;border-radius:4px;padding:5px 8px;color:#6c7086;font-size:11px">🔍 Search sessions...</div>
+    </div>
+
+    <!-- Session list -->
+    <div style="flex:1;overflow-y:auto;padding:8px">
+      <div style="color:#a6adc8;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:4px 8px;margin-bottom:4px">Today</div>
+
+      <!-- Session 1 — selected, ended -->
+      <div style="background:#313244;border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer;border-left:3px solid #cba6f7">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="width:8px;height:8px;background:#6c7086;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+          <span style="color:#cdd6f4;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Fix auth middleware</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-left:14px">
+          <span style="color:#6c7086;font-size:10px">VS Code</span>
+          <span style="color:#6c7086;font-size:10px">·</span>
+          <span style="color:#6c7086;font-size:10px">47 msgs</span>
+          <span style="color:#6c7086;font-size:10px">·</span>
+          <span style="color:#6c7086;font-size:10px">2:34 PM</span>
+        </div>
+      </div>
+
+      <!-- Session 2 — active -->
+      <div style="border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="width:8px;height:8px;background:#a6e3a1;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+          <span style="color:#cdd6f4;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Refactor database layer</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-left:14px">
+          <span style="color:#6c7086;font-size:10px">CLI</span>
+          <span style="color:#6c7086;font-size:10px">·</span>
+          <span style="color:#6c7086;font-size:10px">12 msgs</span>
+          <span style="color:#6c7086;font-size:10px">·</span>
+          <span style="color:#6c7086;font-size:10px">1:15 PM</span>
+        </div>
+      </div>
+
+      <!-- Session 3 — ended -->
+      <div style="border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="width:8px;height:8px;background:#6c7086;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+          <span style="color:#a6adc8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Write unit tests for API</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-left:14px">
+          <span style="color:#6c7086;font-size:10px">VS Code</span>
+          <span style="color:#6c7086;font-size:10px">·</span>
+          <span style="color:#6c7086;font-size:10px">23 msgs</span>
+          <span style="color:#6c7086;font-size:10px">·</span>
+          <span style="color:#6c7086;font-size:10px">11:02 AM</span>
+        </div>
+      </div>
+
+      <div style="color:#a6adc8;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:4px 8px;margin:8px 0 4px">Yesterday</div>
+
+      <!-- Session 4 — ended -->
+      <div style="border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="width:8px;height:8px;background:#6c7086;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+          <span style="color:#a6adc8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Setup CI/CD pipeline</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-left:14px">
+          <span style="color:#6c7086;font-size:10px">CLI</span>
+          <span style="color:#6c7086;font-size:10px">·</span>
+          <span style="color:#6c7086;font-size:10px">31 msgs</span>
+          <span style="color:#6c7086;font-size:10px">·</span>
+          <span style="color:#6c7086;font-size:10px">4:50 PM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN CONTENT AREA ===== -->
+  <div style="flex:1;background:#1e1e2e;display:flex;flex-direction:column;min-width:0;position:relative">
+
+    <!-- SESSION INFO BAR -->
+    <div style="padding:12px 16px;border-bottom:1px solid #313244;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#1e1e2e">
+      <!-- Session name -->
+      <span style="color:#cdd6f4;font-size:14px;font-weight:700">Fix auth middleware</span>
+
+      <!-- Status dot + badges -->
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="display:inline-flex;align-items:center;gap:4px;background:#313244;padding:2px 8px;border-radius:10px;font-size:11px;color:#a6adc8">
+          <span style="width:6px;height:6px;background:#6c7086;border-radius:50%;display:inline-block"></span>
+          ended
+        </span>
+        <span style="background:#313244;padding:2px 8px;border-radius:10px;font-size:11px;color:#a6adc8">VS Code</span>
+        <span style="background:#313244;padding:2px 8px;border-radius:10px;font-size:11px;color:#a6adc8">opus-4.6</span>
+        <span style="background:#313244;padding:2px 8px;border-radius:10px;font-size:11px;color:#a6adc8">47 messages</span>
+      </div>
+
+      <!-- Spacer -->
+      <div style="flex:1"></div>
+
+      <!-- Action buttons -->
+      <div style="display:flex;align-items:center;gap:6px">
+        <button style="background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">Resume</button>
+        <button style="background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">Fork</button>
+        <button style="background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">Open in VS Code</button>
+        <button style="background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">Open in File Browser</button>
+      </div>
+    </div>
+
+    <!-- CONVERSATION AREA (scrollable) -->
+    <div style="flex:1;overflow-y:auto;padding:16px 24px 80px;position:relative">
+
+      <!-- ===== TURN SEPARATOR: Turn 1 ===== -->
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0 16px;padding:0 40px">
+        <div style="flex:1;height:1px;background:#313244"></div>
+        <span style="color:#6c7086;font-size:11px;white-space:nowrap">— Turn 1 — 2.3s —</span>
+        <div style="flex:1;height:1px;background:#313244"></div>
+      </div>
+
+      <!-- ===== USER MESSAGE ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:13px">👤</span>
+          <span style="color:#6c7086;font-size:11px;font-weight:600">You</span>
+        </div>
+        <div style="background:#2a2b3d;border:1px solid #313244;border-radius:8px;padding:12px 14px;line-height:1.6">
+          <span style="color:#cdd6f4;font-size:13px">Fix the authentication bug in the login middleware. The session token isn't being validated properly against the new compliance requirements.</span>
+          <div style="text-align:right;margin-top:6px">
+            <span style="color:#6c7086;font-size:10px">2:34 PM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ASSISTANT MESSAGE 1 ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:13px">🤖</span>
+          <span style="color:#6c7086;font-size:11px;font-weight:600">Claude</span>
+          <span style="background:#2a2040;color:#cba6f7;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600">opus-4.6</span>
+        </div>
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:12px 14px;line-height:1.6">
+          <span style="color:#cdd6f4;font-size:13px">I'll investigate the authentication middleware. Let me start by reading the relevant files.</span>
+
+          <!-- Inline code block -->
+          <div style="margin-top:10px;background:#11111b;border:1px solid #313244;border-radius:6px;overflow:hidden">
+            <div style="padding:6px 10px;background:#11111b;border-bottom:1px solid #313244;display:flex;align-items:center;gap:6px">
+              <span style="color:#6c7086;font-size:10px;font-family:monospace">src/middleware/auth.ts</span>
+            </div>
+            <div style="padding:10px 12px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;line-height:1.5;overflow-x:auto">
+              <div><span style="color:#cba6f7">export</span> <span style="color:#cba6f7">async</span> <span style="color:#cba6f7">function</span> <span style="color:#89b4fa">validateToken</span><span style="color:#6c7086">(</span><span style="color:#f9e2af">token</span><span style="color:#89b4fa">:</span> <span style="color:#a6e3a1">string</span><span style="color:#6c7086">)</span> <span style="color:#6c7086">{</span></div>
+              <div><span style="color:#6c7086">  </span><span style="color:#cba6f7">const</span> <span style="color:#cdd6f4">decoded</span> <span style="color:#89b4fa">=</span> <span style="color:#89b4fa">jwt</span><span style="color:#6c7086">.</span><span style="color:#89b4fa">verify</span><span style="color:#6c7086">(</span><span style="color:#f9e2af">token</span><span style="color:#6c7086">,</span> <span style="color:#cdd6f4">SECRET</span><span style="color:#6c7086">);</span></div>
+              <div><span style="color:#6c7086">  </span><span style="color:#cba6f7">return</span> <span style="color:#cdd6f4">decoded</span><span style="color:#6c7086">;</span> <span style="color:#6c7086">// missing expiry check!</span></div>
+              <div><span style="color:#6c7086">}</span></div>
+            </div>
+          </div>
+
+          <div style="text-align:right;margin-top:6px">
+            <span style="color:#6c7086;font-size:10px">2:34 PM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TOOL USE BLOCK: Read ===== -->
+      <div style="margin-bottom:6px;max-width:780px">
+        <div style="background:#11111b;border:1px solid #313244;border-left:3px solid #89b4fa;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <span style="color:#45475a;font-size:10px">▶</span>
+          <span style="font-size:12px">🔧</span>
+          <span style="color:#89b4fa;font-size:12px;font-weight:600">Read</span>
+          <span style="color:#6c7086;font-size:12px">—</span>
+          <span style="color:#a6adc8;font-size:12px;font-family:monospace">src/middleware/auth.ts</span>
+        </div>
+      </div>
+
+      <!-- ===== TOOL RESULT BLOCK ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="background:#11111b;border:1px solid #313244;border-left:3px solid #a6e3a1;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <span style="color:#45475a;font-size:10px">▶</span>
+          <span style="font-size:12px">📄</span>
+          <span style="color:#a6e3a1;font-size:12px;font-weight:600">Result</span>
+          <span style="color:#6c7086;font-size:12px">—</span>
+          <span style="color:#a6adc8;font-size:12px">File content (142 lines)</span>
+        </div>
+      </div>
+
+      <!-- ===== ASSISTANT MESSAGE 2 (with bullet list) ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:13px">🤖</span>
+          <span style="color:#6c7086;font-size:11px;font-weight:600">Claude</span>
+          <span style="background:#2a2040;color:#cba6f7;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600">opus-4.6</span>
+        </div>
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:12px 14px;line-height:1.6">
+          <div style="color:#cdd6f4;font-size:13px;margin-bottom:8px">I found the issue. The <code style="background:#11111b;padding:1px 5px;border-radius:3px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;color:#f9e2af;border:1px solid #313244">validateToken()</code> function is:</div>
+          <ul style="margin:0 0 8px 20px;color:#cdd6f4;font-size:13px">
+            <li style="margin-bottom:4px">Not checking token expiry</li>
+            <li style="margin-bottom:4px">Storing raw tokens instead of hashed values</li>
+          </ul>
+          <div style="color:#cdd6f4;font-size:13px">Let me fix both issues.</div>
+          <div style="text-align:right;margin-top:6px">
+            <span style="color:#6c7086;font-size:10px">2:35 PM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TOOL USE BLOCK: Edit ===== -->
+      <div style="margin-bottom:6px;max-width:780px">
+        <div style="background:#11111b;border:1px solid #313244;border-left:3px solid #89b4fa;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <span style="color:#45475a;font-size:10px">▶</span>
+          <span style="font-size:12px">🔧</span>
+          <span style="color:#89b4fa;font-size:12px;font-weight:600">Edit</span>
+          <span style="color:#6c7086;font-size:12px">—</span>
+          <span style="color:#a6adc8;font-size:12px;font-family:monospace">src/middleware/auth.ts</span>
+        </div>
+      </div>
+
+      <!-- ===== TOOL RESULT: ERROR ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="background:#2a1520;border:1px solid #45272e;border-left:3px solid #f38ba8;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <span style="color:#45475a;font-size:10px">▶</span>
+          <span style="font-size:12px">❌</span>
+          <span style="color:#f38ba8;font-size:12px;font-weight:600">Error</span>
+          <span style="color:#6c7086;font-size:12px">—</span>
+          <span style="color:#f38ba8;font-size:12px">File is locked by another process</span>
+        </div>
+      </div>
+
+      <!-- ===== TURN SEPARATOR: Turn 2 ===== -->
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0 16px;padding:0 40px">
+        <div style="flex:1;height:1px;background:#313244"></div>
+        <span style="color:#6c7086;font-size:11px;white-space:nowrap">— Turn 2 — 5.1s —</span>
+        <div style="flex:1;height:1px;background:#313244"></div>
+      </div>
+
+      <!-- ===== USER MESSAGE 2 ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:13px">👤</span>
+          <span style="color:#6c7086;font-size:11px;font-weight:600">You</span>
+        </div>
+        <div style="background:#2a2b3d;border:1px solid #313244;border-radius:8px;padding:12px 14px;line-height:1.6">
+          <span style="color:#cdd6f4;font-size:13px">The file should be unlocked now. Try again and also add input sanitization for the token parameter.</span>
+          <div style="text-align:right;margin-top:6px">
+            <span style="color:#6c7086;font-size:10px">2:36 PM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ASSISTANT MESSAGE 3 ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:13px">🤖</span>
+          <span style="color:#6c7086;font-size:11px;font-weight:600">Claude</span>
+          <span style="background:#2a2040;color:#cba6f7;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600">opus-4.6</span>
+        </div>
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:12px 14px;line-height:1.6">
+          <span style="color:#cdd6f4;font-size:13px">Got it. I'll retry the edit and add input sanitization as well.</span>
+          <div style="text-align:right;margin-top:6px">
+            <span style="color:#6c7086;font-size:10px">2:36 PM</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TOOL USE BLOCK: Edit (retry) ===== -->
+      <div style="margin-bottom:6px;max-width:780px">
+        <div style="background:#11111b;border:1px solid #313244;border-left:3px solid #89b4fa;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <span style="color:#45475a;font-size:10px">▶</span>
+          <span style="font-size:12px">🔧</span>
+          <span style="color:#89b4fa;font-size:12px;font-weight:600">Edit</span>
+          <span style="color:#6c7086;font-size:12px">—</span>
+          <span style="color:#a6adc8;font-size:12px;font-family:monospace">src/middleware/auth.ts</span>
+        </div>
+      </div>
+
+      <!-- ===== TOOL RESULT: Success ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="background:#11111b;border:1px solid #313244;border-left:3px solid #a6e3a1;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:8px;cursor:pointer">
+          <span style="color:#45475a;font-size:10px">▶</span>
+          <span style="font-size:12px">📄</span>
+          <span style="color:#a6e3a1;font-size:12px;font-weight:600">Result</span>
+          <span style="color:#6c7086;font-size:12px">—</span>
+          <span style="color:#a6adc8;font-size:12px">Applied 2 edits to auth.ts</span>
+        </div>
+      </div>
+
+      <!-- ===== CONTEXT COMPACTED DIVIDER ===== -->
+      <div style="display:flex;align-items:center;gap:12px;margin:20px 0;padding:0 40px">
+        <div style="flex:1;height:1px;border-top:1px dashed #45475a"></div>
+        <span style="color:#6c7086;font-size:11px;white-space:nowrap;font-style:italic">--- Context compacted ---</span>
+        <div style="flex:1;height:1px;border-top:1px dashed #45475a"></div>
+      </div>
+
+      <!-- ===== TURN SEPARATOR: Turn 3 ===== -->
+      <div style="display:flex;align-items:center;gap:12px;margin:8px 0 16px;padding:0 40px">
+        <div style="flex:1;height:1px;background:#313244"></div>
+        <span style="color:#6c7086;font-size:11px;white-space:nowrap">— Turn 3 — 1.8s —</span>
+        <div style="flex:1;height:1px;background:#313244"></div>
+      </div>
+
+      <!-- ===== ASSISTANT MESSAGE 4 (final summary) ===== -->
+      <div style="margin-bottom:16px;max-width:780px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:13px">🤖</span>
+          <span style="color:#6c7086;font-size:11px;font-weight:600">Claude</span>
+          <span style="background:#2a2040;color:#cba6f7;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600">opus-4.6</span>
+        </div>
+        <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:12px 14px;line-height:1.6">
+          <div style="color:#cdd6f4;font-size:13px;margin-bottom:8px">Done. Here's what I changed in <code style="background:#11111b;padding:1px 5px;border-radius:3px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;color:#f9e2af;border:1px solid #313244">src/middleware/auth.ts</code>:</div>
+          <ol style="margin:0 0 8px 20px;color:#cdd6f4;font-size:13px">
+            <li style="margin-bottom:4px">Added token expiry validation using <code style="background:#11111b;padding:1px 5px;border-radius:3px;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;color:#f9e2af;border:1px solid #313244">exp</code> claim check</li>
+            <li style="margin-bottom:4px">Replaced raw token storage with SHA-256 hashed values</li>
+            <li style="margin-bottom:4px">Added input sanitization to reject malformed tokens before processing</li>
+          </ol>
+          <div style="color:#cdd6f4;font-size:13px">The middleware now complies with the new security requirements.</div>
+          <div style="text-align:right;margin-top:6px">
+            <span style="color:#6c7086;font-size:10px">2:37 PM</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end conversation area -->
+
+    <!-- ===== JUMP-TO-TURN NAV (floating right edge) ===== -->
+    <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;z-index:10">
+      <div style="background:#313244;color:#cba6f7;font-size:10px;font-weight:700;padding:4px 6px;border-radius:6px;text-align:center;cursor:pointer;border:1px solid #45475a;min-width:26px">T1</div>
+      <div style="background:#313244;color:#a6adc8;font-size:10px;font-weight:600;padding:4px 6px;border-radius:6px;text-align:center;cursor:pointer;border:1px solid #45475a;min-width:26px">T2</div>
+      <div style="background:#313244;color:#a6adc8;font-size:10px;font-weight:600;padding:4px 6px;border-radius:6px;text-align:center;cursor:pointer;border:1px solid #45475a;min-width:26px">T3</div>
+    </div>
+
+  </div><!-- end main content area -->
+
+</div><!-- end full app window -->
+
+</body>
+</html>
