@@ -1,4 +1,11 @@
+mod db;
+
 use tauri::Manager;
+
+#[tauri::command]
+fn get_db_path(app: tauri::AppHandle) -> Result<String, String> {
+    db::resolve_db_path(&app)
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,6 +21,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
+        .invoke_handler(tauri::generate_handler![get_db_path])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
