@@ -1,0 +1,43 @@
+# Phase 1: Foundation — DAG Task Decomposition
+# 8 tasks, Levels 0-2
+# Dependencies: None (this is the first phase)
+
+- subject: "[T1.1] scaffold Tauri v2 + React 19 + Vite project"
+  level: 0
+  blockedBy: []
+  notes: "Phase 1, Task 1 — npm create tauri-app, package.json, vite.config, tsconfig, Cargo.toml, lib.rs, tauri.conf.json, capabilities"
+
+- subject: "[T1.2] Tailwind CSS v4 + theme system (dark/light/system)"
+  level: 1
+  blockedBy: ["[T1.1] scaffold Tauri v2 + React 19 + Vite project"]
+  notes: "Phase 1, Task 2 — index.css with @import tailwindcss, @theme block, theme-store (Zustand), vitest setup, matchMedia mock"
+
+- subject: "[T1.3] navigation store (6 sections)"
+  level: 1
+  blockedBy: ["[T1.1] scaffold Tauri v2 + React 19 + Vite project"]
+  notes: "Phase 1, Task 3 — Section union type, useNavigationStore, activeSection + navigateTo"
+
+- subject: "[T1.4] SidebarRail component"
+  level: 2
+  blockedBy: ["[T1.2] Tailwind CSS v4 + theme system (dark/light/system)", "[T1.3] navigation store (6 sections)"]
+  notes: "Phase 1, Task 4 — 48px icon sidebar, 6 nav items with lucide-react, active indicator"
+
+- subject: "[T1.5] ContentArea + 6 section placeholders"
+  level: 2
+  blockedBy: ["[T1.3] navigation store (6 sections)"]
+  notes: "Phase 1, Task 5 — Section router, DashboardSection/SessionsSection/PluginsSection/SkillsSection/McpSection/SettingsSection placeholders"
+
+- subject: "[T1.6] wire up App.tsx — layout + theme + keyboard shortcuts"
+  level: 2
+  blockedBy: ["[T1.4] SidebarRail component", "[T1.5] ContentArea + 6 section placeholders"]
+  notes: "Phase 1, Task 6 — Flex layout, dark class toggling, matchMedia listener, Ctrl+1-6 shortcuts"
+
+- subject: "[T1.7] SQLite database initialization (schema v1)"
+  level: 1
+  blockedBy: ["[T1.1] scaffold Tauri v2 + React 19 + Vite project"]
+  notes: "Phase 1, Task 7 — db.rs path helper, db.ts singleton, CREATE TABLE IF NOT EXISTS, schema migration framework"
+
+- subject: "[T1.8] full build verification"
+  level: 2
+  blockedBy: ["[T1.6] wire up App.tsx — layout + theme + keyboard shortcuts", "[T1.7] SQLite database initialization (schema v1)"]
+  notes: "Phase 1, Task 8 — vitest run, cargo check, npx tauri dev, final commit"

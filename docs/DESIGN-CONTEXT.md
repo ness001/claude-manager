@@ -34,11 +34,11 @@ A **single-window desktop app** called "Claude Manager" to manage the entire Cla
 
 ### App Layout (Decided)
 
-- **Icon sidebar rail** (left): Dashboard, Sessions, Plugins, MCP, Settings
+- **Icon sidebar rail** (left): Dashboard, Sessions, Plugins, Skills, MCP Servers, Settings
 - **Content area** fills rest of window
 - Panels have list + detail split view
 - Command palette: `Ctrl+K`
-- Keyboard nav: `Ctrl+1-5` for sections
+- Keyboard nav: `Ctrl+1-6` for sections
 
 ---
 

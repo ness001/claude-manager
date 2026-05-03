@@ -1,0 +1,68 @@
+# Phase 2: Sessions & Dashboard — DAG Task Decomposition
+# 13 tasks, Levels 0-4
+# Dependencies: Phase 1 must be complete
+
+- subject: "[T2.1] TypeScript types for session data model"
+  level: 0
+  blockedBy: []
+  notes: "Phase 2, Task 1 — SessionMeta, JsonlMessage, JsonlContent, ConversationEntry, PidFileData, ActivityPeriod, SKIP_TYPES"
+
+- subject: "[T2.2] JSONL parser (frontend)"
+  level: 1
+  blockedBy: ["[T2.1] TypeScript types for session data model"]
+  notes: "Phase 2, Task 2 — parseJsonlLine, parseJsonlMetadata, jsonlToConversationEntries, handle string|array content"
+
+- subject: "[T2.3] shared utilities (timeAgo)"
+  level: 0
+  blockedBy: []
+  notes: "Phase 2, Task 3 — timeAgo(timestamp) → relative time string, shared by SessionCard + RecentSessions"
+
+- subject: "[T2.4] Rust backend — session discovery & JSONL parsing & PID detection"
+  level: 0
+  blockedBy: []
+  notes: "Phase 2, Task 4 — discovery.rs, parser.rs, pid.rs, commands.rs; batch discover_sessions IPC command"
+
+- subject: "[T2.5] session loader (frontend orchestrator)"
+  level: 2
+  blockedBy: ["[T2.2] JSONL parser (frontend)", "[T2.4] Rust backend — session discovery & JSONL parsing & PID detection"]
+  notes: "Phase 2, Task 5 — loadAllSessions pipeline, SQLite upsert with ON CONFLICT, loadSingleSession for conversation viewer"
+
+- subject: "[T2.6] session store (Zustand)"
+  level: 3
+  blockedBy: ["[T2.5] session loader (frontend orchestrator)"]
+  notes: "Phase 2, Task 6 — sessions[], selectedId, viewMode, searchQuery, filteredSessions selector"
+
+- subject: "[T2.7] stats reader (stats-cache.json)"
+  level: 0
+  blockedBy: []
+  notes: "Phase 2, Task 7 — Read ~/.claude/stats-cache.json via Tauri FS, shape data for charts"
+
+- subject: "[T2.8] dashboard store (Zustand)"
+  level: 1
+  blockedBy: ["[T2.7] stats reader (stats-cache.json)"]
+  notes: "Phase 2, Task 8 — totalSessions, totalMessages, activityData, modelUsage, recentSessions, loadDashboard()"
+
+- subject: "[T2.9] session list UI (SessionCard, Search, ViewModeToggle, SessionListPanel)"
+  level: 4
+  blockedBy: ["[T2.6] session store (Zustand)", "[T2.3] shared utilities (timeAgo)"]
+  notes: "Phase 2, Task 9 — SessionCard with status dot, SessionSearch with 200ms debounce, ViewModeToggle, SessionListPanel with virtual scrolling"
+
+- subject: "[T2.10] session detail panel (SessionInfoBar + SessionDetailPanel)"
+  level: 4
+  blockedBy: ["[T2.6] session store (Zustand)"]
+  notes: "Phase 2, Task 10 — SessionInfoBar with state-dependent actions, Dead CWD handling"
+
+- subject: "[T2.11] conversation viewer (virtual-scrolled message list)"
+  level: 4
+  blockedBy: ["[T2.6] session store (Zustand)", "[T2.2] JSONL parser (frontend)"]
+  notes: "Phase 2, Task 11 — ConversationViewer with @tanstack/react-virtual, UserMessage, AssistantMessage, ToolCallBlock, SystemDivider, SummaryBanner"
+
+- subject: "[T2.12] dashboard UI (StatCard, ActivityChart, ModelDonut, RecentSessions, QuickActions, SystemHealth)"
+  level: 2
+  blockedBy: ["[T2.8] dashboard store (Zustand)", "[T2.3] shared utilities (timeAgo)"]
+  notes: "Phase 2, Task 12 — Recharts area chart, CSS conic-gradient donut, stat cards, quick actions, system health"
+
+- subject: "[T2.13] section integration & wiring (Dashboard + Sessions)"
+  level: 4
+  blockedBy: ["[T2.9] session list UI (SessionCard, Search, ViewModeToggle, SessionListPanel)", "[T2.10] session detail panel (SessionInfoBar + SessionDetailPanel)", "[T2.11] conversation viewer (virtual-scrolled message list)", "[T2.12] dashboard UI (StatCard, ActivityChart, ModelDonut, RecentSessions, QuickActions, SystemHealth)"]
+  notes: "Phase 2, Task 13 — Replace placeholders, wire loading/empty states, dev build verification"
