@@ -1,0 +1,215 @@
+<h2>Session Panel with Embedded Terminal</h2>
+<p class="subtitle">Sessions in sidebar, click to open with full properties + embedded terminal for resuming</p>
+
+<div class="mockup">
+  <div class="mockup-header">Claude Manager — Session View</div>
+  <div class="mockup-body" style="display:flex;min-height:520px;font-size:13px">
+    <!-- Icon rail -->
+    <div style="width:48px;background:#11111b;padding:10px 6px;text-align:center;border-right:1px solid #313244">
+      <div style="color:#6c7086;margin-bottom:14px;font-size:16px">🏠</div>
+      <div style="color:#cba6f7;margin-bottom:14px;font-size:16px;background:#313244;border-radius:6px;padding:4px 0">📋</div>
+      <div style="color:#6c7086;margin-bottom:14px;font-size:16px">🧩</div>
+      <div style="color:#6c7086;margin-bottom:14px;font-size:16px">🔌</div>
+      <div style="color:#6c7086;margin-bottom:14px;font-size:16px">⚙️</div>
+    </div>
+
+    <!-- Session list sidebar -->
+    <div style="width:260px;background:#1e1e2e;border-right:1px solid #313244;display:flex;flex-direction:column">
+      <!-- View switcher -->
+      <div style="padding:10px 12px;border-bottom:1px solid #313244">
+        <div style="display:flex;gap:2px;background:#181825;padding:3px;border-radius:6px">
+          <div style="padding:4px 10px;background:#cba6f7;color:#1e1e2e;border-radius:4px;font-size:11px;font-weight:bold;flex:1;text-align:center">My View</div>
+          <div style="padding:4px 10px;color:#6c7086;font-size:11px;flex:1;text-align:center">Project</div>
+          <div style="padding:4px 10px;color:#6c7086;font-size:11px;flex:1;text-align:center">Timeline</div>
+        </div>
+      </div>
+      <!-- Search -->
+      <div style="padding:8px 12px;border-bottom:1px solid #313244">
+        <div style="background:#181825;border:1px solid #313244;border-radius:4px;padding:5px 8px;color:#6c7086;font-size:11px">🔍 Search sessions...</div>
+      </div>
+      <!-- Session list -->
+      <div style="flex:1;overflow-y:auto;padding:8px">
+        <!-- Group -->
+        <div style="color:#a6adc8;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:4px 8px;margin-bottom:4px">Active Projects</div>
+
+        <!-- Active session (selected) -->
+        <div style="background:#313244;border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer;border-left:3px solid #cba6f7">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="width:8px;height:8px;background:#a6e3a1;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+            <span style="color:#cdd6f4;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Claude Manager brainstorm</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;padding-left:14px">
+            <span style="background:#45475a;color:#a6adc8;padding:0px 5px;border-radius:3px;font-size:9px">CLI</span>
+            <span style="background:#cba6f7;color:#1e1e2e;padding:0px 5px;border-radius:3px;font-size:9px">design</span>
+            <span style="color:#6c7086;font-size:10px;margin-left:auto">2m ago</span>
+          </div>
+        </div>
+
+        <!-- Alive session -->
+        <div style="background:#181825;border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="width:8px;height:8px;background:#a6e3a1;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+            <span style="color:#cdd6f4;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Plugin update check</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;padding-left:14px">
+            <span style="background:#45475a;color:#a6adc8;padding:0px 5px;border-radius:3px;font-size:9px">CLI</span>
+            <span style="background:#89b4fa;color:#1e1e2e;padding:0px 5px;border-radius:3px;font-size:9px">learning</span>
+            <span style="color:#6c7086;font-size:10px;margin-left:auto">15m ago</span>
+          </div>
+        </div>
+
+        <!-- Ended session -->
+        <div style="background:#181825;border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="width:8px;height:8px;background:#6c7086;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+            <span style="color:#a6adc8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Fix auth middleware</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;padding-left:14px">
+            <span style="background:#45475a;color:#a6adc8;padding:0px 5px;border-radius:3px;font-size:9px">VS Code</span>
+            <span style="background:#f38ba8;color:#1e1e2e;padding:0px 5px;border-radius:3px;font-size:9px">bugfix</span>
+            <span style="color:#6c7086;font-size:10px;margin-left:auto">yesterday</span>
+          </div>
+        </div>
+
+        <div style="color:#a6adc8;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:4px 8px;margin-top:8px;margin-bottom:4px">Learning</div>
+
+        <div style="background:#181825;border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="width:8px;height:8px;background:#6c7086;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+            <span style="color:#a6adc8;font-size:12px">Learning /loop skill</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;padding-left:14px">
+            <span style="background:#45475a;color:#a6adc8;padding:0px 5px;border-radius:3px;font-size:9px">CLI</span>
+            <span style="background:#89b4fa;color:#1e1e2e;padding:0px 5px;border-radius:3px;font-size:9px">learning</span>
+            <span style="color:#6c7086;font-size:10px;margin-left:auto">today</span>
+          </div>
+        </div>
+
+        <div style="background:#181825;border-radius:6px;padding:8px 10px;margin-bottom:4px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="width:8px;height:8px;background:#6c7086;border-radius:50%;display:inline-block;flex-shrink:0"></span>
+            <span style="color:#a6adc8;font-size:12px">MCP server setup</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;padding-left:14px">
+            <span style="background:#45475a;color:#a6adc8;padding:0px 5px;border-radius:3px;font-size:9px">CLI</span>
+            <span style="background:#f9e2af;color:#1e1e2e;padding:0px 5px;border-radius:3px;font-size:9px">mcp</span>
+            <span style="color:#6c7086;font-size:10px;margin-left:auto">3d ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content: session detail + terminal -->
+    <div style="flex:1;background:#181825;display:flex;flex-direction:column">
+      <!-- Session header with all properties -->
+      <div style="padding:12px 16px;border-bottom:1px solid #313244;background:#1e1e2e">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="width:10px;height:10px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+          <span style="color:#cdd6f4;font-size:15px;font-weight:bold">Claude Manager brainstorm</span>
+          <span style="background:#a6e3a1;color:#1e1e2e;padding:1px 8px;border-radius:10px;font-size:10px">alive</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <span style="background:#313244;color:#a6adc8;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer">📁 Open CWD</span>
+            <span style="background:#313244;color:#a6adc8;padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer"><span style="color:#89b4fa">⟨⟩</span> Open in VS Code</span>
+          </div>
+        </div>
+        <!-- Property chips row -->
+        <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#6c7086">ID:</span>
+            <span style="color:#a6adc8;font-family:monospace;font-size:10px">ed977c3d</span>
+          </div>
+          <div style="color:#313244">|</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#6c7086">PID:</span>
+            <span style="color:#a6adc8">1960</span>
+          </div>
+          <div style="color:#313244">|</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#6c7086">Entrypoint:</span>
+            <span style="background:#45475a;color:#a6adc8;padding:0px 6px;border-radius:3px">CLI</span>
+          </div>
+          <div style="color:#313244">|</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#6c7086">Mode:</span>
+            <span style="background:#f38ba8;color:#1e1e2e;padding:0px 6px;border-radius:3px">bypassPermissions</span>
+          </div>
+          <div style="color:#313244">|</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#6c7086">CWD:</span>
+            <span style="color:#89b4fa;font-family:monospace;font-size:10px;cursor:pointer">C:\Users\lianli</span>
+          </div>
+          <div style="color:#313244">|</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#6c7086">Started:</span>
+            <span style="color:#a6adc8">May 3, 2026 3:20 PM</span>
+          </div>
+          <div style="color:#313244">|</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#6c7086">Duration:</span>
+            <span style="color:#a6adc8">36 min</span>
+          </div>
+          <div style="color:#313244">|</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="color:#6c7086">Subagents:</span>
+            <span style="color:#a6adc8">1</span>
+          </div>
+        </div>
+        <!-- Tags row -->
+        <div style="display:flex;gap:4px;margin-top:8px;align-items:center">
+          <span style="color:#6c7086;font-size:11px">Tags:</span>
+          <span style="background:#cba6f7;color:#1e1e2e;padding:1px 8px;border-radius:10px;font-size:10px">design</span>
+          <span style="background:#a6e3a1;color:#1e1e2e;padding:1px 8px;border-radius:10px;font-size:10px">active</span>
+          <span style="background:#313244;color:#6c7086;padding:1px 8px;border-radius:10px;font-size:10px;cursor:pointer">+ add tag</span>
+        </div>
+      </div>
+
+      <!-- Embedded terminal -->
+      <div style="flex:1;background:#11111b;padding:12px;font-family:'Cascadia Code',monospace;font-size:12px;overflow-y:auto">
+        <div style="color:#6c7086;margin-bottom:8px;font-size:10px;text-transform:uppercase;letter-spacing:1px">Terminal — Session ed977c3d</div>
+        <div style="margin-bottom:6px">
+          <span style="color:#cba6f7">❯</span>
+          <span style="color:#cdd6f4"> i want to learn and use ralph loop in claude</span>
+        </div>
+        <div style="color:#a6adc8;margin-bottom:6px;padding-left:8px;border-left:2px solid #313244">
+          It sounds like you're asking about the /loop skill — a way to run a prompt or slash command on a recurring interval.
+        </div>
+        <div style="margin-bottom:6px">
+          <span style="color:#cba6f7">❯</span>
+          <span style="color:#cdd6f4"> superpowers brainstorming i want to create a desktop app...</span>
+        </div>
+        <div style="color:#a6adc8;margin-bottom:6px;padding-left:8px;border-left:2px solid #313244">
+          Using superpowers brainstorming to explore this idea...
+        </div>
+        <div style="margin-bottom:6px">
+          <span style="color:#cba6f7">❯</span>
+          <span style="color:#cdd6f4"> D, some additions thoughts: plugins is a logical concept...</span>
+        </div>
+        <div style="color:#a6adc8;margin-bottom:12px;padding-left:8px;border-left:2px solid #313244">
+          Great insights. Let me capture those before moving on...
+        </div>
+        <!-- Input area -->
+        <div style="display:flex;align-items:center;gap:6px;border-top:1px solid #313244;padding-top:10px;margin-top:8px">
+          <span style="color:#cba6f7">❯</span>
+          <span style="color:#6c7086">Type a message...</span>
+          <span style="width:8px;height:16px;background:#cba6f7;display:inline-block;animation:blink 1s infinite"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:16px;padding:14px;background:#1e1e2e;border:1px solid #313244;border-radius:8px">
+  <h3 style="color:#cdd6f4;margin-bottom:8px;font-size:14px">All Session Properties Shown</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+    <div><span style="color:#a6e3a1">●</span> <span style="color:#a6adc8">Status dot</span> <span style="color:#6c7086">— alive (green) / ended (gray)</span></div>
+    <div><span style="color:#a6adc8">🏷️ Tags</span> <span style="color:#6c7086">— user-applied, editable inline</span></div>
+    <div><span style="color:#a6adc8">Session ID</span> <span style="color:#6c7086">— truncated, copy on click</span></div>
+    <div><span style="color:#a6adc8">PID</span> <span style="color:#6c7086">— process ID, shows liveness</span></div>
+    <div><span style="color:#a6adc8">Entrypoint</span> <span style="color:#6c7086">— CLI / VS Code / Web badge</span></div>
+    <div><span style="color:#a6adc8">Permission mode</span> <span style="color:#6c7086">— bypass / default / plan</span></div>
+    <div><span style="color:#a6adc8">CWD</span> <span style="color:#6c7086">— clickable path, opens Explorer</span></div>
+    <div><span style="color:#a6adc8">Started at</span> <span style="color:#6c7086">— absolute timestamp</span></div>
+    <div><span style="color:#a6adc8">Duration</span> <span style="color:#6c7086">— elapsed or total time</span></div>
+    <div><span style="color:#a6adc8">Subagents</span> <span style="color:#6c7086">— count of spawned agents</span></div>
+  </div>
+</div>

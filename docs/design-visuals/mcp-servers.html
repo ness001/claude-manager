@@ -1,0 +1,160 @@
+<h2>MCP Servers View</h2>
+<p class="subtitle">How should we display and manage MCP servers?</p>
+
+<div class="mockup">
+  <div class="mockup-header">Claude Manager — MCP Servers</div>
+  <div class="mockup-body" style="display:flex;min-height:480px;font-size:13px">
+    <!-- Icon rail -->
+    <div style="width:48px;background:#11111b;padding:10px 6px;text-align:center;border-right:1px solid #313244">
+      <div style="color:#6c7086;margin-bottom:14px;font-size:16px">🏠</div>
+      <div style="color:#6c7086;margin-bottom:14px;font-size:16px">📋</div>
+      <div style="color:#6c7086;margin-bottom:14px;font-size:16px">🧩</div>
+      <div style="color:#cba6f7;margin-bottom:14px;font-size:16px;background:#313244;border-radius:6px;padding:4px 0">🔌</div>
+      <div style="color:#6c7086;margin-bottom:14px;font-size:16px">⚙️</div>
+    </div>
+
+    <!-- Main content -->
+    <div style="flex:1;background:#181825;padding:20px">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;margin-bottom:16px">
+        <div style="color:#cdd6f4;font-size:18px;font-weight:bold">MCP Servers</div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <span style="background:#cba6f7;color:#1e1e2e;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer">+ Add Server</span>
+          <span style="background:#313244;color:#a6adc8;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer">🔄 Refresh Status</span>
+        </div>
+      </div>
+
+      <!-- Scope grouping -->
+      <div style="color:#a6adc8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">User Scope <span style="color:#6c7086">(available in all projects)</span></div>
+
+      <!-- MCP Card: pencil -->
+      <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:14px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="width:10px;height:10px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+          <span style="color:#cdd6f4;font-size:14px;font-weight:bold">pencil</span>
+          <span style="background:#a6e3a1;color:#1e1e2e;padding:1px 8px;border-radius:10px;font-size:10px">connected</span>
+          <span style="background:#45475a;color:#a6adc8;padding:1px 8px;border-radius:10px;font-size:10px">stdio</span>
+          <span style="background:#45475a;color:#a6adc8;padding:1px 8px;border-radius:10px;font-size:10px">user</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <span style="background:#313244;color:#a6adc8;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer">Edit</span>
+            <span style="background:#313244;color:#f38ba8;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer">Remove</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:4px;font-size:12px;padding-left:20px">
+          <div style="color:#6c7086">Command</div>
+          <div style="color:#89b4fa;font-family:monospace;font-size:11px">C:\Users\lianli\.pencil\mcp\...\mcp-server-windows-x64.exe</div>
+          <div style="color:#6c7086">Args</div>
+          <div style="color:#a6adc8;font-family:monospace;font-size:11px">--app visual_studio_code</div>
+          <div style="color:#6c7086">Tools</div>
+          <div style="color:#a6adc8">get_editor_state, batch_design, batch_get, export_nodes <span style="color:#6c7086">+12 more</span></div>
+        </div>
+      </div>
+
+      <!-- MCP Card: playwright -->
+      <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:14px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="width:10px;height:10px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+          <span style="color:#cdd6f4;font-size:14px;font-weight:bold">playwright</span>
+          <span style="background:#a6e3a1;color:#1e1e2e;padding:1px 8px;border-radius:10px;font-size:10px">connected</span>
+          <span style="background:#45475a;color:#a6adc8;padding:1px 8px;border-radius:10px;font-size:10px">stdio</span>
+          <span style="background:#45475a;color:#a6adc8;padding:1px 8px;border-radius:10px;font-size:10px">user</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <span style="background:#313244;color:#a6adc8;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer">Edit</span>
+            <span style="background:#313244;color:#f38ba8;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer">Remove</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:4px;font-size:12px;padding-left:20px">
+          <div style="color:#6c7086">Command</div>
+          <div style="color:#89b4fa;font-family:monospace;font-size:11px">npx @playwright/mcp@latest</div>
+          <div style="color:#6c7086">Tools</div>
+          <div style="color:#a6adc8">browser_navigate, browser_click, browser_snapshot <span style="color:#6c7086">+18 more</span></div>
+        </div>
+      </div>
+
+      <!-- Local scope -->
+      <div style="color:#a6adc8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Local Scope <span style="color:#6c7086">(private to current project)</span></div>
+
+      <!-- MCP Card: azure-devops -->
+      <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:14px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="width:10px;height:10px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+          <span style="color:#cdd6f4;font-size:14px;font-weight:bold">azure-devops</span>
+          <span style="background:#a6e3a1;color:#1e1e2e;padding:1px 8px;border-radius:10px;font-size:10px">connected</span>
+          <span style="background:#45475a;color:#a6adc8;padding:1px 8px;border-radius:10px;font-size:10px">stdio</span>
+          <span style="background:#45475a;color:#a6adc8;padding:1px 8px;border-radius:10px;font-size:10px">local</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <span style="background:#313244;color:#a6adc8;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer">Edit</span>
+            <span style="background:#313244;color:#f38ba8;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer">Remove</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:4px;font-size:12px;padding-left:20px">
+          <div style="color:#6c7086">Command</div>
+          <div style="color:#89b4fa;font-family:monospace;font-size:11px">npx -y @azure-devops/mcp ceapex</div>
+          <div style="color:#6c7086">Tools</div>
+          <div style="color:#a6adc8">wit_get_work_item, repo_create_pull_request <span style="color:#6c7086">+56 more</span></div>
+        </div>
+      </div>
+
+      <!-- MCP Card: workiq -->
+      <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:14px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="width:10px;height:10px;background:#a6e3a1;border-radius:50%;display:inline-block"></span>
+          <span style="color:#cdd6f4;font-size:14px;font-weight:bold">workiq</span>
+          <span style="background:#a6e3a1;color:#1e1e2e;padding:1px 8px;border-radius:10px;font-size:10px">connected</span>
+          <span style="background:#45475a;color:#a6adc8;padding:1px 8px;border-radius:10px;font-size:10px">stdio</span>
+          <span style="background:#45475a;color:#a6adc8;padding:1px 8px;border-radius:10px;font-size:10px">local</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <span style="background:#313244;color:#a6adc8;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer">Edit</span>
+            <span style="background:#313244;color:#f38ba8;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer">Remove</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:4px;font-size:12px;padding-left:20px">
+          <div style="color:#6c7086">Command</div>
+          <div style="color:#89b4fa;font-family:monospace;font-size:11px">npx -y @microsoft/workiq@latest mcp</div>
+          <div style="color:#6c7086">Tools</div>
+          <div style="color:#a6adc8">ask_work_iq, get_debug_link, accept_eula</div>
+        </div>
+      </div>
+
+      <!-- Available from marketplace -->
+      <div style="color:#a6adc8;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:16px;margin-bottom:8px">Available from Marketplace <span style="color:#6c7086">(not installed)</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:12px;cursor:pointer">
+          <div style="color:#cdd6f4;font-size:13px;font-weight:bold;margin-bottom:4px">GitHub</div>
+          <div style="color:#6c7086;font-size:11px;margin-bottom:8px">Issues, PRs, repos</div>
+          <span style="background:#313244;color:#a6adc8;padding:3px 10px;border-radius:4px;font-size:11px">+ Install</span>
+        </div>
+        <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:12px;cursor:pointer">
+          <div style="color:#cdd6f4;font-size:13px;font-weight:bold;margin-bottom:4px">Slack</div>
+          <div style="color:#6c7086;font-size:11px;margin-bottom:8px">Messages, channels</div>
+          <span style="background:#313244;color:#a6adc8;padding:3px 10px;border-radius:4px;font-size:11px">+ Install</span>
+        </div>
+        <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:12px;cursor:pointer">
+          <div style="color:#cdd6f4;font-size:13px;font-weight:bold;margin-bottom:4px">Supabase</div>
+          <div style="color:#6c7086;font-size:11px;margin-bottom:8px">Database, auth</div>
+          <span style="background:#313244;color:#a6adc8;padding:3px 10px;border-radius:4px;font-size:11px">+ Install</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:16px;padding:14px;background:#1e1e2e;border:1px solid #313244;border-radius:8px">
+  <h3 style="color:#cdd6f4;margin-bottom:8px;font-size:14px">MCP Server Properties</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+    <div><span style="color:#a6e3a1">●</span> <span style="color:#a6adc8">Status</span> <span style="color:#6c7086">— connected (green) / disconnected (red) / error (yellow)</span></div>
+    <div><span style="color:#a6adc8">Scope</span> <span style="color:#6c7086">— user (global) / project / local (private)</span></div>
+    <div><span style="color:#a6adc8">Type</span> <span style="color:#6c7086">— stdio / sse / http</span></div>
+    <div><span style="color:#a6adc8">Command</span> <span style="color:#6c7086">— the executable or URL</span></div>
+    <div><span style="color:#a6adc8">Args</span> <span style="color:#6c7086">— command arguments</span></div>
+    <div><span style="color:#a6adc8">Tools</span> <span style="color:#6c7086">— list of tools the server provides</span></div>
+  </div>
+  <h3 style="color:#cdd6f4;margin-top:12px;margin-bottom:8px;font-size:14px">Actions</h3>
+  <div style="color:#a6adc8;font-size:12px;line-height:1.8">
+    <strong>+ Add Server</strong> — form to configure new MCP (wraps <code>claude mcp add</code>)<br>
+    <strong>Edit</strong> — modify command, args, env vars<br>
+    <strong>Remove</strong> — delete with confirmation (wraps <code>claude mcp remove</code>)<br>
+    <strong>Refresh Status</strong> — re-run health checks<br>
+    <strong>Marketplace</strong> — browse and install from available external plugins with MCP configs
+  </div>
+</div>

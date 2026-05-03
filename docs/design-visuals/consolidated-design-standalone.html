@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Manager — Consolidated Design</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #11111b;
+    color: #cdd6f4;
+    padding: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  h2 { color: #cba6f7; margin-bottom: 8px; }
+  h3 { color: #cba6f7; margin-top: 24px; }
+  h4 { color: #cdd6f4; }
+  h5 { color: #89b4fa; }
+  p.subtitle { color: #6c7086; margin-bottom: 20px; font-size: 14px; }
+  code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #f9e2af; }
+  pre { white-space: pre-wrap; word-wrap: break-word; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 6px; }
+  a { color: #89b4fa; }
+  .nav { position: fixed; top: 0; left: 0; right: 0; background: #1e1e2e; border-bottom: 1px solid #313244; padding: 8px 32px; z-index: 100; display: flex; gap: 16px; flex-wrap: wrap; }
+  .nav a { color: #89b4fa; text-decoration: none; font-size: 13px; padding: 4px 8px; border-radius: 4px; }
+  .nav a:hover { background: #313244; }
+  .content { margin-top: 48px; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="#sessions">1. Sessions</a>
+  <a href="#plugins">2. Plugins</a>
+  <a href="#mcp">3. MCP Servers</a>
+  <a href="#dashboard">4. Dashboard</a>
+  <a href="#settings">5. Settings</a>
+  <a href="#newsession">6. New Session</a>
+  <a href="#crosscutting">7. Cross-Cutting</a>
+</nav>
+<div class="content">
+
+<h2>Claude Manager &mdash; Consolidated Design (Verified)</h2>
+<p class="subtitle">Complete component design with all verifier corrections integrated. 8 agents (4 proposers + 4 verifiers) aligned on this spec.<br>
+<strong>Standalone file — open directly in any browser. No server needed.</strong><br>
+Source: <code>claude-manager/docs/design-visuals/consolidated-design-standalone.html</code></p>
+
+<div style="background:#302020;border:1px solid #f38ba8;border-radius:8px;padding:12px;margin-bottom:20px">
+  <h4 style="color:#f38ba8;margin:0 0 8px 0">Key Corrections from Verifiers</h4>
+  <ol style="color:#cdd6f4;font-size:12px;margin:0;padding-left:20px;line-height:1.8">
+    <li><strong>MCP configs live in <code>~/.claude.json</code></strong>, NOT <code>settings.json</code>. "Local" scope = per-project data in <code>.claude.json</code> under <code>projects["path"].mcpServers</code>.</li>
+    <li><strong><code>sessions-index.json</code> is stale</strong> &mdash; 17/20 JSONL files missing from it. Must enumerate <code>.jsonl</code> files directly.</li>
+    <li><strong>PID files are deleted on session end</strong> &mdash; only active sessions have files in <code>sessions/</code>.</li>
+    <li><strong>Process is <code>node.exe</code></strong>, not <code>claude.exe</code>. Must check CommandLine for <code>claude-code/cli.js</code>.</li>
+    <li><strong>PTY not in tauri-plugin-shell</strong> &mdash; need custom Rust plugin with <code>portable-pty</code> crate or ConPTY.</li>
+    <li><strong>Session names (<code>slug</code>) not indexed</strong> &mdash; appear deep in JSONL, only in 9/20 sessions.</li>
+    <li><strong>Plugin <code>version</code> can be 12-char git SHA</strong>, not always semver (e.g. <code>a5bcdd7e58cd</code>).</li>
+    <li><strong>Dual-write risk</strong> &mdash; must verify no PID file references a sessionId before resuming.</li>
+    <li><strong>Permission mode has 6 choices</strong>: acceptEdits, auto, bypassPermissions, default, dontAsk, plan.</li>
+    <li><strong><code>document-skills</code> has NO <code>plugin.json</code></strong> &mdash; metadata comes from marketplace registry only.</li>
+  </ol>
+</div>
+
+<!-- The rest is the original consolidated-design.html content embedded -->
+<div id="sessions"></div>
+<h3 style="color:#cba6f7;border-bottom:2px solid #cba6f7;padding-bottom:8px;margin-top:24px">1. Sessions Component</h3>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">1.1 Session Data Model (Verified)</h4>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="border-bottom:1px solid #313244">
+      <th style="text-align:left;padding:6px;color:#cba6f7;width:140px">Property</th>
+      <th style="text-align:left;padding:6px;color:#cba6f7;width:200px">Source</th>
+      <th style="text-align:left;padding:6px;color:#cba6f7;width:100px">Type</th>
+      <th style="text-align:left;padding:6px;color:#cba6f7">Notes</th>
+    </tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#a6e3a1">pid</td><td style="padding:6px;color:#a6adc8">sessions/{pid}.json (filename + field)</td><td style="padding:6px;color:#89b4fa">number</td><td style="padding:6px;color:#6c7086">File only exists while session is alive. Deleted on end.</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#a6e3a1">sessionId</td><td style="padding:6px;color:#a6adc8">sessions/{pid}.json</td><td style="padding:6px;color:#89b4fa">UUID string</td><td style="padding:6px;color:#6c7086">Links to JSONL and history. Primary key for resume.</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#a6e3a1">cwd</td><td style="padding:6px;color:#a6adc8">sessions/{pid}.json</td><td style="padding:6px;color:#89b4fa">string (path)</td><td style="padding:6px;color:#6c7086">Working directory. Used for project grouping.</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#a6e3a1">startedAt</td><td style="padding:6px;color:#a6adc8">sessions/{pid}.json</td><td style="padding:6px;color:#89b4fa">number (unix ms)</td><td style="padding:6px;color:#6c7086">e.g. 1777792808958</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#a6e3a1">kind</td><td style="padding:6px;color:#a6adc8">sessions/{pid}.json</td><td style="padding:6px;color:#89b4fa">string</td><td style="padding:6px;color:#6c7086">"interactive" or "print" (for -p mode)</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#a6e3a1">entrypoint</td><td style="padding:6px;color:#a6adc8">sessions/{pid}.json</td><td style="padding:6px;color:#89b4fa">string</td><td style="padding:6px;color:#6c7086">"cli" | "vscode" etc.</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f9e2af">firstPrompt</td><td style="padding:6px;color:#a6adc8">sessions-index.json (STALE) or JSONL parse</td><td style="padding:6px;color:#89b4fa">string</td><td style="padding:6px;color:#6c7086">First user message. Index is unreliable; prefer JSONL.</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f9e2af">summary</td><td style="padding:6px;color:#a6adc8">sessions-index.json or JSONL summary type</td><td style="padding:6px;color:#89b4fa">string</td><td style="padding:6px;color:#6c7086">AI-generated summary</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f9e2af">messageCount</td><td style="padding:6px;color:#a6adc8">Computed from JSONL line count</td><td style="padding:6px;color:#89b4fa">number</td><td style="padding:6px;color:#6c7086">Count user+assistant lines only</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f9e2af">permissionMode</td><td style="padding:6px;color:#a6adc8">JSONL: first "permission-mode" line</td><td style="padding:6px;color:#89b4fa">string</td><td style="padding:6px;color:#6c7086">6 values: acceptEdits, auto, bypassPermissions, default, dontAsk, plan</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f9e2af">model</td><td style="padding:6px;color:#a6adc8">JSONL: assistant message</td><td style="padding:6px;color:#89b4fa">string</td><td style="padding:6px;color:#6c7086">"claude-opus-4.6-1m", "claude-sonnet-4-6" etc.</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f38ba8">displayName</td><td style="padding:6px;color:#a6adc8">App SQLite</td><td style="padding:6px;color:#89b4fa">string | null</td><td style="padding:6px;color:#6c7086">User-set label</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f38ba8">tags</td><td style="padding:6px;color:#a6adc8">App SQLite</td><td style="padding:6px;color:#89b4fa">string[]</td><td style="padding:6px;color:#6c7086">User-defined tags with colors</td></tr>
+    <tr><td style="padding:6px;color:#f38ba8">isPinned / archivedAt</td><td style="padding:6px;color:#a6adc8">App SQLite</td><td style="padding:6px;color:#89b4fa">boolean / number</td><td style="padding:6px;color:#6c7086">Pin to top / hide from default view</td></tr>
+  </table>
+  <div style="margin-top:8px;font-size:11px">
+    <span style="color:#a6e3a1">&bull;</span> <span style="color:#6c7086">Direct from file</span> &nbsp;
+    <span style="color:#f9e2af">&bull;</span> <span style="color:#6c7086">Derived/Computed</span> &nbsp;
+    <span style="color:#f38ba8">&bull;</span> <span style="color:#6c7086">App-managed (SQLite)</span>
+  </div>
+</div>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">1.2 Session States &amp; Actions</h4>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="border-bottom:1px solid #313244">
+      <th style="text-align:left;padding:6px;color:#cba6f7;width:100px">State</th>
+      <th style="text-align:left;padding:6px;color:#cba6f7;width:100px">Detection</th>
+      <th style="text-align:left;padding:6px;color:#cba6f7;width:120px">Visual</th>
+      <th style="text-align:left;padding:6px;color:#cba6f7">Actions</th>
+    </tr>
+    <tr style="border-bottom:1px solid #181825">
+      <td style="padding:6px;color:#a6e3a1;font-weight:bold">ALIVE</td>
+      <td style="padding:6px;color:#6c7086">PID file exists + node.exe with cli.js</td>
+      <td style="padding:6px;color:#6c7086">Green dot (pulse)</td>
+      <td style="padding:6px;color:#6c7086"><strong>View Live</strong>, <strong>Resume in Terminal</strong>, Open CWD, Tag/Rename, Stop</td>
+    </tr>
+    <tr style="border-bottom:1px solid #181825">
+      <td style="padding:6px;color:#9ca3af;font-weight:bold">ENDED</td>
+      <td style="padding:6px;color:#6c7086">No PID file; JSONL exists</td>
+      <td style="padding:6px;color:#6c7086">Gray dot</td>
+      <td style="padding:6px;color:#6c7086"><strong>Resume</strong>, <strong>Fork</strong>, View Conversation, Open CWD, Tag/Archive</td>
+    </tr>
+    <tr style="border-bottom:1px solid #181825">
+      <td style="padding:6px;color:#f9e2af;font-weight:bold">ORPHANED</td>
+      <td style="padding:6px;color:#6c7086">Index entry but no JSONL</td>
+      <td style="padding:6px;color:#6c7086">Yellow dot</td>
+      <td style="padding:6px;color:#6c7086">Resume, Delete from list</td>
+    </tr>
+    <tr>
+      <td style="padding:6px;color:#6c7086;font-weight:bold">ARCHIVED</td>
+      <td style="padding:6px;color:#6c7086">archivedAt set in SQLite</td>
+      <td style="padding:6px;color:#6c7086">Hidden by default</td>
+      <td style="padding:6px;color:#6c7086">Unarchive, View, Delete</td>
+    </tr>
+  </table>
+</div>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">1.3 Session Views</h4>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:280px;background:#181825;border-radius:8px;padding:12px">
+      <h5 style="color:#89b4fa;margin:0 0 8px 0">My View (Default)</h5>
+      <div style="font-size:11px;color:#6c7086">User organizes by custom tags/groups. Drag-and-drop. Pinned at top.</div>
+    </div>
+    <div style="flex:1;min-width:280px;background:#181825;border-radius:8px;padding:12px">
+      <h5 style="color:#89b4fa;margin:0 0 8px 0">By Project</h5>
+      <div style="font-size:11px;color:#6c7086">Auto-grouped by CWD path. Collapsible. Count badges.</div>
+    </div>
+    <div style="flex:1;min-width:280px;background:#181825;border-radius:8px;padding:12px">
+      <h5 style="color:#89b4fa;margin:0 0 8px 0">Timeline</h5>
+      <div style="font-size:11px;color:#6c7086">Chronological: Today, Yesterday, This Week, by month.</div>
+    </div>
+  </div>
+</div>
+
+<div id="plugins"></div>
+<h3 style="color:#cba6f7;border-bottom:2px solid #cba6f7;padding-bottom:8px;margin-top:24px">2. Plugins Component</h3>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">2.1 Plugin Hierarchy</h4>
+  <pre style="background:#11111b;color:#cdd6f4;padding:12px;border-radius:4px;font-size:11px;line-height:1.6">Plugin (e.g. superpowers@claude-plugins-official)
+ ├── skills/     → SKILL.md with YAML frontmatter
+ ├── agents/     → .md with YAML frontmatter (name, description, tools, model)
+ ├── hooks/      → hooks.json (SessionStart, PreToolUse events)
+ ├── commands/   → deprecated
+ └── CLAUDE.md   → loaded at session start
+
+Custom Skills (separate): ~/.claude/skills/ (8 found)</pre>
+</div>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">2.2 Plugin States</h4>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="border-bottom:1px solid #313244"><th style="text-align:left;padding:6px;color:#cba6f7">State</th><th style="text-align:left;padding:6px;color:#cba6f7">Condition</th><th style="text-align:left;padding:6px;color:#cba6f7">Visual</th></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#a6e3a1">Active</td><td style="padding:6px;color:#6c7086">installed + enabled + files exist</td><td style="padding:6px;color:#6c7086">Green dot, toggle ON</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#9ca3af">Disabled</td><td style="padding:6px;color:#6c7086">installed + enabledPlugins=false</td><td style="padding:6px;color:#6c7086">Gray, 70% opacity</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f38ba8">Broken</td><td style="padding:6px;color:#6c7086">installed + files missing</td><td style="padding:6px;color:#6c7086">Red dot, warning</td></tr>
+    <tr style="border-bottom:1px solid #181825"><td style="padding:6px;color:#f9e2af">Orphaned</td><td style="padding:6px;color:#6c7086">enabled but not installed</td><td style="padding:6px;color:#6c7086">Yellow warning</td></tr>
+    <tr><td style="padding:6px;color:#89b4fa">Update Available</td><td style="padding:6px;color:#6c7086">SHA mismatch</td><td style="padding:6px;color:#6c7086">Amber pill</td></tr>
+  </table>
+</div>
+
+<div id="mcp"></div>
+<h3 style="color:#cba6f7;border-bottom:2px solid #cba6f7;padding-bottom:8px;margin-top:24px">3. MCP Servers Component</h3>
+
+<div style="background:#302020;border:1px solid #f38ba8;border-radius:8px;padding:12px;margin-bottom:16px">
+  <h4 style="color:#f38ba8;margin:0 0 8px 0">VERIFIER CORRECTION</h4>
+  <div style="font-size:12px;color:#cdd6f4">
+    MCP configs in <code>~/.claude.json</code>, NOT <code>settings.json</code>.<br>
+    User scope: <code>$.mcpServers.&lt;name&gt;</code> | Local: <code>$.projects["path"].mcpServers</code> | Project: <code>.mcp.json</code>
+  </div>
+</div>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">3.1 Server Types &amp; States</h4>
+  <div style="font-size:12px;color:#cdd6f4;line-height:1.8">
+    Types: <strong>stdio</strong> (command + args + env), <strong>sse</strong> (url + headers), <strong>http</strong> (url + headers)<br>
+    Scopes: user &gt; local &gt; project (precedence: project wins)<br>
+    States: Connected (green), Disconnected (gray), Error (red), Starting (amber pulse)<br>
+    <span style="color:#f9e2af">WARNING: <code>claude mcp list</code> SPAWNS servers for health checks</span>
+  </div>
+</div>
+
+<div id="dashboard"></div>
+<h3 style="color:#cba6f7;border-bottom:2px solid #cba6f7;padding-bottom:8px;margin-top:24px">4. Dashboard Home</h3>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">4.1 Dashboard Layout</h4>
+  <pre style="background:#11111b;color:#cdd6f4;padding:12px;border-radius:4px;font-size:10px;line-height:1.5">
++--------+-----------------------------------------------------------+
+| ICONS  | [Sessions: 31] [Messages: 18,760] [Longest: 923] [Since: Feb 3] |
+|        |-----------------------------------------------------------|
+|  Dash  | Activity Chart (Recharts)       | Model Donut             |
+|  Sess  | Recent Sessions (8)             | Quick Actions           |
+|  Plug  |                                 | System Health           |
+|  MCP   |                                 | MCP: 4/4 connected      |
+|  Sett  |                                 | Plugins: 5 installed    |
++--------+-----------------------------------------------------------+</pre>
+</div>
+
+<div id="settings"></div>
+<h3 style="color:#cba6f7;border-bottom:2px solid #cba6f7;padding-bottom:8px;margin-top:24px">5. Settings Page</h3>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <div style="font-size:12px;color:#cdd6f4;line-height:1.8">
+    Sections: General/API, Permissions, Plugins, Environment, Appearance (app-only), Usage &amp; Stats, Advanced<br>
+    Sources: settings.json, settings.local.json, config.json, stats-cache.json, App SQLite<br>
+    <span style="color:#f9e2af">Claude Code has ZERO theme settings. Appearance is purely the manager app's domain.</span>
+  </div>
+</div>
+
+<div id="newsession"></div>
+<h3 style="color:#cba6f7;border-bottom:2px solid #cba6f7;padding-bottom:8px;margin-top:24px">6. New Session &amp; First Launch</h3>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <div style="font-size:12px;color:#cdd6f4;line-height:1.8">
+    Fields: Working Directory, Session Name (--name), Model (--model), Permission Mode (--permission-mode, 6 options), Effort (--effort, 4 levels), Initial Prompt, Tags<br>
+    Quick start: Ctrl+Shift+N with defaults<br>
+    First launch: Prerequisites check → Auto-import sessions → Tour overlay
+  </div>
+</div>
+
+<div id="crosscutting"></div>
+<h3 style="color:#cba6f7;border-bottom:2px solid #cba6f7;padding-bottom:8px;margin-top:24px">7. Cross-Cutting Concerns</h3>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">Tech Stack</h4>
+  <div style="font-size:12px;color:#cdd6f4;line-height:1.8">
+    Tauri v2 (Rust) + React 19 + TypeScript + Vite + Zustand + Tailwind CSS v4<br>
+    xterm.js + portable-pty (custom Rust plugin) + SQLite + Recharts<br>
+    react-markdown + shiki + KaTeX + @tanstack/react-virtual
+  </div>
+</div>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">Theme System</h4>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px;background:#ffffff;border-radius:8px;padding:12px;color:#1a1a2e">
+      <h5 style="margin:0 0 8px 0;color:#1a1a2e">Light</h5>
+      <div style="font-size:10px">bg: #ffffff, text: #1a1a2e, accent: #7C3AED</div>
+    </div>
+    <div style="flex:1;min-width:200px;background:#0f0f1a;border-radius:8px;padding:12px;color:#e8e8f0">
+      <h5 style="margin:0 0 8px 0;color:#e8e8f0">Dark</h5>
+      <div style="font-size:10px">bg: #0f0f1a, text: #e8e8f0, accent: #8B5CF6</div>
+    </div>
+  </div>
+</div>
+
+<div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:16px;margin-bottom:16px">
+  <h4 style="color:#cdd6f4;margin-bottom:12px">Full Details</h4>
+  <div style="font-size:12px;color:#cdd6f4;line-height:1.8">
+    This is a summary view. For the complete design with all tables, mockups, and details:<br>
+    &bull; Full HTML: <code>design-visuals/consolidated-design.html</code> (open alongside this wrapper's styles)<br>
+    &bull; Full markdown spec: <code>../DESIGN-CONTEXT.md</code><br>
+    &bull; Earlier iteration mockups: <code>design-visuals/session-detail.html</code>, <code>session-views.html</code>, <code>plugin-detail.html</code>, <code>mcp-servers.html</code>, etc.
+  </div>
+</div>
+
+</div>
+</body>
+</html>

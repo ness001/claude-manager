@@ -1,0 +1,132 @@
+<h2>Plugin Detail View</h2>
+<p class="subtitle">When you click into a plugin, how should its contents (skills, agents, hooks) be displayed?</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#181825;padding:16px;font-size:13px">
+        <div style="color:#cba6f7;font-size:15px;margin-bottom:12px;font-weight:bold">superpowers <span style="color:#6c7086;font-size:11px">v5.0.7</span></div>
+        <div style="border:1px solid #313244;border-radius:6px;overflow:hidden">
+          <div style="display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid #313244;background:#1e1e2e">
+            <span style="background:#cba6f7;color:#1e1e2e;padding:2px 8px;border-radius:10px;font-size:10px;margin-right:10px">skill</span>
+            <span style="color:#cdd6f4">brainstorming</span>
+            <span style="color:#6c7086;margin-left:auto;font-size:11px">Creative ideation workflow</span>
+          </div>
+          <div style="display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid #313244;background:#1e1e2e">
+            <span style="background:#a6e3a1;color:#1e1e2e;padding:2px 8px;border-radius:10px;font-size:10px;margin-right:10px">skill</span>
+            <span style="color:#cdd6f4">writing-plans</span>
+            <span style="color:#6c7086;margin-left:auto;font-size:11px">Implementation planning</span>
+          </div>
+          <div style="display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid #313244;background:#1e1e2e">
+            <span style="background:#f9e2af;color:#1e1e2e;padding:2px 8px;border-radius:10px;font-size:10px;margin-right:10px">skill</span>
+            <span style="color:#cdd6f4">systematic-debugging</span>
+            <span style="color:#6c7086;margin-left:auto;font-size:11px">Bug investigation</span>
+          </div>
+          <div style="display:flex;align-items:center;padding:10px 12px;background:#1e1e2e">
+            <span style="background:#89b4fa;color:#1e1e2e;padding:2px 8px;border-radius:10px;font-size:10px;margin-right:10px">hook</span>
+            <span style="color:#cdd6f4">on-session-start</span>
+            <span style="color:#6c7086;margin-left:auto;font-size:11px">Bootstrap loader</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Flat List + Type Badges</h3>
+      <p>All children in one list, each tagged with its type. Simple and scannable at a glance.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#181825;padding:16px;font-size:13px">
+        <div style="color:#cba6f7;font-size:15px;margin-bottom:12px;font-weight:bold">superpowers <span style="color:#6c7086;font-size:11px">v5.0.7</span></div>
+        <div style="display:flex;border-bottom:1px solid #313244;margin-bottom:12px">
+          <div style="padding:8px 16px;color:#cba6f7;border-bottom:2px solid #cba6f7;font-size:12px">Skills (14)</div>
+          <div style="padding:8px 16px;color:#6c7086;font-size:12px">Agents (2)</div>
+          <div style="padding:8px 16px;color:#6c7086;font-size:12px">Hooks (3)</div>
+        </div>
+        <div style="border:1px solid #313244;border-radius:6px;overflow:hidden">
+          <div style="padding:10px 12px;border-bottom:1px solid #313244;background:#1e1e2e;color:#cdd6f4">brainstorming</div>
+          <div style="padding:10px 12px;border-bottom:1px solid #313244;background:#1e1e2e;color:#cdd6f4">writing-plans</div>
+          <div style="padding:10px 12px;border-bottom:1px solid #313244;background:#1e1e2e;color:#cdd6f4">systematic-debugging</div>
+          <div style="padding:10px 12px;background:#1e1e2e;color:#cdd6f4">test-driven-development</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Tabbed Sub-sections</h3>
+      <p>Tabs within the plugin for "Skills", "Agents", "Hooks". More organized but requires more clicks.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#181825;padding:16px;font-size:13px">
+        <div style="color:#cba6f7;font-size:15px;margin-bottom:12px;font-weight:bold">superpowers <span style="color:#6c7086;font-size:11px">v5.0.7</span></div>
+        <div style="background:#1e1e2e;border:1px solid #313244;border-radius:6px;padding:12px;font-family:monospace;font-size:12px">
+          <div style="color:#cdd6f4">▼ superpowers/</div>
+          <div style="color:#6c7086;padding-left:16px">▼ skills/</div>
+          <div style="color:#a6e3a1;padding-left:32px">📄 brainstorming.md</div>
+          <div style="color:#a6e3a1;padding-left:32px">📄 writing-plans.md</div>
+          <div style="color:#a6e3a1;padding-left:32px">📄 debugging.md</div>
+          <div style="color:#a6e3a1;padding-left:32px">📄 tdd.md</div>
+          <div style="color:#6c7086;padding-left:16px">▶ agents/</div>
+          <div style="color:#6c7086;padding-left:16px">▼ hooks/</div>
+          <div style="color:#f9e2af;padding-left:32px">📄 session-start.sh</div>
+          <div style="color:#6c7086;padding-left:16px">📄 CLAUDE.md</div>
+          <div style="color:#6c7086;padding-left:16px">📄 package.json</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C: Tree View</h3>
+      <p>Expandable file tree mirroring the plugin's folder structure. Power-user friendly, shows everything.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="d" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#181825;padding:16px;font-size:13px">
+        <div style="color:#cba6f7;font-size:15px;margin-bottom:12px;font-weight:bold">superpowers <span style="color:#6c7086;font-size:11px">v5.0.7</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:12px">
+            <div style="color:#cba6f7;font-size:13px;font-weight:bold;margin-bottom:4px">brainstorming</div>
+            <div style="color:#6c7086;font-size:11px;margin-bottom:8px">Creative ideation workflow</div>
+            <div style="display:flex;gap:6px">
+              <span style="background:#313244;color:#a6adc8;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">📂 IDE</span>
+              <span style="background:#313244;color:#a6adc8;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">🌐 View</span>
+            </div>
+          </div>
+          <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:12px">
+            <div style="color:#a6e3a1;font-size:13px;font-weight:bold;margin-bottom:4px">writing-plans</div>
+            <div style="color:#6c7086;font-size:11px;margin-bottom:8px">Implementation planning</div>
+            <div style="display:flex;gap:6px">
+              <span style="background:#313244;color:#a6adc8;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">📂 IDE</span>
+              <span style="background:#313244;color:#a6adc8;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">🌐 View</span>
+            </div>
+          </div>
+          <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:12px">
+            <div style="color:#f9e2af;font-size:13px;font-weight:bold;margin-bottom:4px">debugging</div>
+            <div style="color:#6c7086;font-size:11px;margin-bottom:8px">Bug investigation</div>
+            <div style="display:flex;gap:6px">
+              <span style="background:#313244;color:#a6adc8;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">📂 IDE</span>
+              <span style="background:#313244;color:#a6adc8;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">🌐 View</span>
+            </div>
+          </div>
+          <div style="background:#1e1e2e;border:1px solid #313244;border-radius:8px;padding:12px">
+            <div style="color:#89b4fa;font-size:13px;font-weight:bold;margin-bottom:4px">TDD</div>
+            <div style="color:#6c7086;font-size:11px;margin-bottom:8px">Test-driven development</div>
+            <div style="display:flex;gap:6px">
+              <span style="background:#313244;color:#a6adc8;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">📂 IDE</span>
+              <span style="background:#313244;color:#a6adc8;padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer">🌐 View</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>D: Card Grid</h3>
+      <p>Each child as a card with name, description, and quick actions (open in IDE, view in browser, enable/disable).</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,112 @@
+<h2>Main Navigation Structure</h2>
+<p class="subtitle">How should the app be organized at the top level?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Sidebar Navigation</h3>
+      <p>Persistent left sidebar with sections: Sessions, Plugins, MCP Servers, Settings. Like VS Code's activity bar.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body" style="display:flex;min-height:200px;font-size:13px">
+          <div style="width:200px;background:#1e1e2e;padding:12px;border-right:1px solid #333">
+            <div style="color:#cba6f7;font-weight:bold;margin-bottom:16px">Claude Manager</div>
+            <div style="color:#a6adc8;margin-bottom:8px;padding:6px 8px;background:#313244;border-radius:4px">📋 Sessions</div>
+            <div style="color:#6c7086;margin-bottom:8px;padding:6px 8px">🧩 Plugins</div>
+            <div style="color:#6c7086;margin-bottom:8px;padding:6px 8px">🔌 MCP Servers</div>
+            <div style="color:#6c7086;margin-bottom:8px;padding:6px 8px">⚙️ Settings</div>
+          </div>
+          <div style="flex:1;background:#181825;padding:16px">
+            <div style="color:#cdd6f4;font-size:16px;margin-bottom:12px">Sessions</div>
+            <div style="color:#6c7086">Session list and details here...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Tab-Based</h3>
+      <p>Top-level tabs for each section, with multiple tabs open at once like a browser.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body" style="min-height:200px;font-size:13px">
+          <div style="display:flex;background:#1e1e2e;border-bottom:1px solid #333">
+            <div style="padding:10px 20px;background:#181825;color:#cba6f7;border-bottom:2px solid #cba6f7">Sessions</div>
+            <div style="padding:10px 20px;color:#6c7086">Plugins</div>
+            <div style="padding:10px 20px;color:#6c7086">MCP Servers</div>
+            <div style="padding:10px 20px;color:#6c7086">Settings</div>
+          </div>
+          <div style="background:#181825;padding:16px;min-height:160px">
+            <div style="color:#cdd6f4;font-size:16px;margin-bottom:12px">Sessions</div>
+            <div style="color:#6c7086">Session list and details here...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Dashboard Home + Drill-in</h3>
+      <p>Overview home screen with cards showing counts and status, click to drill into each section.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body" style="min-height:200px;font-size:13px;background:#181825;padding:16px">
+          <div style="color:#cba6f7;font-size:18px;margin-bottom:16px">Claude Manager</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="background:#1e1e2e;padding:16px;border-radius:8px;border:1px solid #313244">
+              <div style="color:#cdd6f4;font-size:24px">47</div>
+              <div style="color:#6c7086">Sessions</div>
+            </div>
+            <div style="background:#1e1e2e;padding:16px;border-radius:8px;border:1px solid #313244">
+              <div style="color:#cdd6f4;font-size:24px">5</div>
+              <div style="color:#6c7086">Plugins</div>
+            </div>
+            <div style="background:#1e1e2e;padding:16px;border-radius:8px;border:1px solid #313244">
+              <div style="color:#cdd6f4;font-size:24px">3</div>
+              <div style="color:#6c7086">MCP Servers</div>
+            </div>
+            <div style="background:#1e1e2e;padding:16px;border-radius:8px;border:1px solid #313244">
+              <div style="color:#cdd6f4;font-size:24px">12</div>
+              <div style="color:#6c7086">Skills</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="d" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Sidebar + Dashboard Home</h3>
+      <p>Sidebar nav with a dashboard overview as the default landing page. Best of both worlds.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-body" style="display:flex;min-height:200px;font-size:13px">
+          <div style="width:56px;background:#1e1e2e;padding:12px 8px;border-right:1px solid #333;text-align:center">
+            <div style="color:#cba6f7;margin-bottom:16px;font-size:18px">🏠</div>
+            <div style="color:#a6adc8;margin-bottom:12px;font-size:18px">📋</div>
+            <div style="color:#6c7086;margin-bottom:12px;font-size:18px">🧩</div>
+            <div style="color:#6c7086;margin-bottom:12px;font-size:18px">🔌</div>
+            <div style="color:#6c7086;margin-bottom:12px;font-size:18px">⚙️</div>
+          </div>
+          <div style="flex:1;background:#181825;padding:16px">
+            <div style="color:#cba6f7;font-size:16px;margin-bottom:16px">Dashboard</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div style="background:#1e1e2e;padding:12px;border-radius:6px;border:1px solid #313244">
+                <div style="color:#cdd6f4;font-size:20px">47</div>
+                <div style="color:#6c7086;font-size:11px">Sessions</div>
+              </div>
+              <div style="background:#1e1e2e;padding:12px;border-radius:6px;border:1px solid #313244">
+                <div style="color:#cdd6f4;font-size:20px">5</div>
+                <div style="color:#6c7086;font-size:11px">Plugins</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
