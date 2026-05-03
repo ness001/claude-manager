@@ -214,7 +214,7 @@ Right content area showing the selected session:
 | permission-mode | No | Metadata only |
 | progress | No | Ephemeral, skip (~80% of lines) |
 | file-history-snapshot | No | Internal |
-| attachment | No | Internal (skill_listing, mcp_instructions may become badges later) |
+| attachment | No | Internal. Deferred to V2. |
 | queue-operation | No | Internal |
 | last-prompt | No | Cache |
 
