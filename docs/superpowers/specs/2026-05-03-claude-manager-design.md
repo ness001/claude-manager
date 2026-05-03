@@ -3,7 +3,7 @@
 > **Version:** 1.0  
 > **Date:** 2026-05-03  
 > **Status:** Approved for implementation planning  
-> **Visual mockups:** `docs/design-visuals/` (13 HTML files)
+> **Visual mockups:** `docs/design-visuals/` (17+ HTML files)
 
 ---
 
@@ -158,6 +158,15 @@ Session metadata is assembled from multiple sources:
 | ORPHANED | Index entry but no JSONL file | Yellow, italic | Resume (may work), Open CWD, Delete from list |
 | ARCHIVED | `archivedAt` set in SQLite | Hidden by default | Unarchive, View Conversation, Delete |
 
+### 5.3.1 CLI Commands for Session Actions
+
+| Action | Command | Notes |
+|---|---|---|
+| Resume | `claude --resume <sessionId>` | Opens in OS terminal (cmd.exe or WT). Must verify no PID file references this sessionId first. |
+| Fork | `claude --resume <sessionId> --fork-session` | Creates new session branching from ended conversation. |
+| Stop | Send `SIGTERM` to PID from PID file | Sequence: SIGTERM → wait 5s → SIGKILL if still alive. Confirm with user before sending. |
+| New Session | `claude [--cwd <dir>] [--model <m>] [--permission-mode <pm>] [-p "<prompt>"]` | See section 10 for full flag mapping. |
+
 **Critical:** ALIVE sessions must NOT show a "Resume" button — they are already running. Show "View Live" and "Resume in Terminal" instead.
 
 **Process detection:** Claude CLI runs as `node.exe`, not `claude.exe`. Must check CommandLine for `claude-code/cli.js`. Use PowerShell `Get-WmiObject Win32_Process` (not `tasklist` which fails in bash). Cross-check process creation time vs `startedAt` to handle PID reuse.
@@ -196,7 +205,7 @@ Right content area showing the selected session:
 | ALIVE (external) | Read-only JSONL tail with live updates via FS watch. "Resume in Terminal" opens OS terminal. |
 | ENDED | Read-only conversation viewer with virtual scrolling and jump-to-turn navigation. |
 
-**Large file handling:** Filter out `progress` type lines (~80% of file). Parse first 50 messages immediately, rest in Web Worker. Virtual scrolling with `@tanstack/react-virtual`.
+**Large file handling:** Parse first 50 messages immediately, rest in Web Worker. Virtual scrolling with `@tanstack/react-virtual`. Note: no `progress` type exists in actual JSONL — noise reduction comes from skipping internal types (permission-mode, file-history-snapshot, queue-operation, last-prompt).
 
 **Mockups:** `session-detail-v2.html`, `session-views.html`, `conversation-viewer.html`
 
@@ -212,7 +221,6 @@ Right content area showing the selected session:
 | system (compact_boundary) | Divider | "--- Context compacted ---" muted dashed border |
 | summary | Banner | "Session summary: {text}" |
 | permission-mode | No | Metadata only |
-| progress | No | Ephemeral, skip (~80% of lines) |
 | file-history-snapshot | No | Internal |
 | attachment | No | Internal. Deferred to V2. |
 | queue-operation | No | Internal |
@@ -241,7 +249,7 @@ Plugin (e.g. superpowers@claude-plugins-official)
 |---|---|
 | `~/.claude/plugins/installed_plugins.json` | Plugin registry. Keyed by `{name}@{marketplace}`, value is ARRAY of installations. |
 | `~/.claude/settings.json` → `enabledPlugins` | Enable/disable map (separate from installation) |
-| `~/.claude/plugins/cache/{marketplace}/{version}/` | Plugin files on disk |
+| `~/.claude/plugins/cache/{marketplace}/{plugin-name}/{version}/` | Plugin files on disk (3-level nesting) |
 | `install-counts-cache.json` | Download counts |
 | `blocklist.json` | Server-side blocklist |
 | `known_marketplaces.json` | Marketplace sources |
@@ -271,7 +279,7 @@ Full-page card list with:
 - Plugin cards: status dot, name, marketplace source, description, version pill, component counts, enable/disable toggle
 - Broken plugins show red border, warning text, Reinstall/Remove buttons
 
-**Metadata fallback:** Some plugins (e.g., `document-skills`) have NO `plugin.json`. Fall back to `marketplace.json` for metadata.
+**Metadata fallback:** Some plugins (e.g., `document-skills`) have NO `plugin.json`. When present, `plugin.json` lives inside the `.claude-plugin/` subdirectory, not the plugin root. Fall back to `marketplace.json` for metadata.
 
 ### 6.6 Plugin Detail View
 
@@ -287,7 +295,7 @@ Accessed by clicking a plugin card. Shows:
 
 ## 7. Custom Skills
 
-Standalone skills that are NOT bundled inside plugins. These live at `~/.claude/skills/` as individual `.md` files with YAML frontmatter (`name`, `description`). They are loaded into every Claude Code session automatically.
+Standalone skills that are NOT bundled inside plugins. These live at `~/.claude/skills/` as **directories**, each containing a `SKILL.md` file with YAML frontmatter (`name`, `description`). They are loaded into every Claude Code session automatically.
 
 ### 7.1 Skills List View
 
@@ -560,13 +568,13 @@ CREATE TABLE app_settings (
 │   └── sessions-index.json             # STALE cache — speed hint only
 ├── plugins/
 │   ├── installed_plugins.json          # Plugin registry
-│   └── cache/{marketplace}/{version}/  # Plugin files
-├── skills/                             # Custom standalone skills
+│   └── cache/{marketplace}/{plugin-name}/{version}/  # Plugin files
+├── skills/                             # Custom standalone skills (directories with SKILL.md)
 ├── settings.json                       # Permissions, env vars, plugin enablement
 ├── settings.local.json                 # Machine-specific overrides
 ├── config.json                         # API key
 ├── stats-cache.json                    # Usage statistics
-└── .claude.json (in ~/, NOT ~/.claude/)# MCP server configs
+└── .claude.json (in ~/, NOT ~/.claude/)# Primary config: MCP servers, project settings, trust lists
 ```
 
 ---
@@ -577,7 +585,7 @@ These were discovered by 8 paired research agents and must not be deviated from:
 
 1. **MCP configs are in `~/.claude.json`**, not `settings.json`
 2. **`sessions-index.json` is stale** — 17/20 JSONL files missing from index, 12 entries point to missing files. Use as speed hint only.
-3. **PID files are ephemeral** — deleted when session ends. Only ~3 exist at any time.
+3. **PID files are ephemeral** — deleted when session ends. Typically ~6 exist at any time (varies by user activity).
 4. **Claude CLI runs as `node.exe`** — check CommandLine for `claude-code/cli.js`, not process name.
 5. **Plugin versions can be git SHAs** — not always semver.
 6. **`tauri-plugin-shell` has no PTY support** — custom Rust plugin required.
@@ -586,6 +594,92 @@ These were discovered by 8 paired research agents and must not be deviated from:
 9. **Some plugins lack `plugin.json`** — fall back to `marketplace.json`.
 10. **`tasklist` fails in bash** — use `cmd.exe /c "tasklist ..."` or `powershell.exe -Command "..."`.
 
+---
+
+## 17.5 Error Handling
+
+| Scenario | Behavior |
+|---|---|
+| Claude CLI not found (`which claude` fails) | First Launch: block at prerequisites. Normal: banner at top "Claude CLI not found — Install instructions" with link. |
+| API key missing / invalid | Settings > General shows red indicator. Dashboard system health shows "API: Not configured". |
+| Corrupted JSONL (malformed JSON line) | Skip the malformed line, log warning. Show session with partial data + "⚠ N lines could not be parsed" note in conversation viewer. |
+| Dead CWD (directory no longer exists) | Session card shows ⚠ icon. "Open CWD" and "Open in VS Code" buttons disabled with tooltip "Directory not found". Resume still allowed (Claude CLI handles missing CWDs). |
+| JSONL file missing (index references it) | Mark session as ORPHANED state. |
+| MCP server spawn fails | Red dot, "Error" status pill, expand card to show error message. "Retry" button prominent. |
+| SQLite open/write fails | Fatal: show error dialog with "Reset Database" and "Open Data Directory" buttons. |
+| Single-instance collision | `tauri-plugin-single-instance` handles this: focus existing window. If the existing window is unresponsive (>3s), offer "Force launch new instance" option. |
+
+## 17.6 Loading & Empty States
+
+| Panel | Loading State | Empty State |
+|---|---|---|
+| Dashboard | Skeleton cards (pulsing gray rectangles) for stat cards and charts | "No sessions found. Start your first session to see stats here." + New Session button |
+| Session list | 4 skeleton cards in sidebar | "No sessions found" with illustration + "New Session" CTA |
+| Conversation viewer | Centered spinner with "Loading conversation…" | "Select a session to view its conversation" |
+| Plugin list | 3 skeleton cards | "No plugins installed. Use `claude plugins install <name>` to add plugins." |
+| Skills list | 2 skeleton cards | "No custom skills found at `~/.claude/skills/`. Create a skill directory with a SKILL.md file to get started." |
+| MCP Servers | 2 skeleton cards per scope group | "No MCP servers configured. Add one to extend Claude's capabilities." + [+ Add Server] button |
+| Settings | Skeleton form fields | n/a (forms always have defaults) |
+
+## 17.7 Search Behavior
+
+All search bars share the same behavior:
+
+- **Matching:** Case-insensitive substring match across searchable fields
+- **Debounce:** 200ms after last keystroke before filtering
+- **Highlight:** Matching text segments highlighted with accent background (`bg-accent/20`)
+- **Scope per panel:**
+  - Sessions: searches `displayName`, `firstPrompt`, `tags`, `cwd`
+  - Plugins: searches `name`, `description`, `marketplace`
+  - Skills: searches `name`, `description`
+  - MCP Servers: searches `name`, `command`, `args`
+  - Command palette: searches action `label`
+- **Empty results:** "No results for '{query}'" with suggestion to clear filters
+
+## 17.8 Performance Bounds
+
+| Operation | Target | Notes |
+|---|---|---|
+| Initial cold start (first launch import) | <30s for 500 sessions | Parse first ~10 JSONL lines each, batch SQLite inserts |
+| Warm start (subsequent launches) | <2s to interactive | Load from SQLite, check for new JSONL files only |
+| Session list render | <100ms for 200 items | Virtual scrolling if >50 items |
+| Conversation viewer open | <500ms for 5000-line JSONL | Parse first 50 messages sync, rest in Web Worker |
+| Search filter | <50ms after debounce | In-memory filter on loaded data |
+
+## 17.9 SQLite Migrations
+
+Schema versioning via `app_settings` table:
+- Key: `schema_version`, value: integer starting at `1`
+- On app start, check current version vs expected version
+- Run migration functions sequentially: `migrate_1_to_2()`, `migrate_2_to_3()`, etc.
+- Each migration wrapped in a transaction — rollback on failure
+- If migration fails: show error dialog, do not start app with mismatched schema
+
+## 17.10 MCP Add/Edit Form Fields
+
+The "Add Server" and "Edit" dialogs share the same form:
+
+| Field | Control | Validation |
+|---|---|---|
+| Name | Text input | Required, unique within scope, alphanumeric + hyphens |
+| Scope | Radio: User / Local | Required |
+| Type | Radio: stdio / sse / http | Required, changes form fields below |
+| Command (stdio) | Text input | Required for stdio |
+| Args (stdio) | Tag-style multi-input | Optional |
+| URL (sse/http) | Text input | Required for sse/http, must be valid URL |
+| Headers (sse/http) | Key-value pair editor | Optional, supports `${ENV_VAR}` syntax |
+| Env | Key-value pair editor | Optional |
+
+Save action writes to `~/.claude.json` at the appropriate JSON path based on scope.
+
+## 17.11 JSONL Concurrent Access
+
+JSONL files are written by Claude CLI processes and read by Claude Manager simultaneously:
+
+- **Read strategy:** Incremental read with byte offset tracking. On FS watch trigger, seek to last known offset and read new bytes.
+- **Partial line handling:** If the last read chunk doesn't end with `\n`, buffer the partial line and retry on next trigger.
+- **File truncation:** If file size < last offset, reset offset to 0 and re-parse (file was replaced, not appended).
+- **Lock-free:** Never acquire locks on JSONL files — Claude CLI owns write access.
 ---
 
 ## 18. Visual Mockups Index
