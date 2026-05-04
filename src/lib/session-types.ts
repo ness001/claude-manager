@@ -180,6 +180,13 @@ export interface SessionMeta {
 
   // ── Computed ───────────────────────────────────────────────
   state: SessionState;
+  /**
+   * Absolute path to the JSONL file backing this session, when known. Set
+   * by `loadAllSessions()` so the conversation viewer can read the file
+   * without re-resolving the path. `undefined` for orphaned sessions whose
+   * JSONL was not seen during discovery.
+   */
+  jsonlPath?: string;
 }
 
 /** Activity chart period — see spec §4.1. Values must stay lowercase. */

@@ -16,9 +16,10 @@ describe("ContentArea", () => {
   });
 
   // Sessions section was upgraded in T2.9 — it now mounts SessionListPanel
-  // instead of a placeholder heading. Other sections remain placeholders.
+  // instead of a placeholder heading. Dashboard section was upgraded in
+  // T2.13 — it now mounts the full dashboard layout (no <h1>). Other
+  // sections remain placeholders.
   const headingCases: Array<{ section: Section; heading: string }> = [
-    { section: "dashboard", heading: "Dashboard" },
     { section: "plugins", heading: "Plugins" },
     { section: "skills", heading: "Skills" },
     { section: "mcp", heading: "MCP Servers" },
@@ -36,10 +37,16 @@ describe("ContentArea", () => {
     },
   );
 
-  it("renders SessionListPanel when activeSection is sessions", () => {
+  it("renders DashboardSection layout when activeSection is dashboard", () => {
+    useNavigationStore.getState().navigateTo("dashboard");
+    render(<ContentArea />);
+    expect(screen.getByTestId("dashboard-section")).toBeInTheDocument();
+  });
+
+  it("renders SessionsSection when activeSection is sessions", () => {
     useNavigationStore.getState().navigateTo("sessions");
     render(<ContentArea />);
-    expect(screen.getByTestId("session-list-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("sessions-section")).toBeInTheDocument();
   });
 
   it("renders the MCP section heading as 'MCP Servers' specifically", () => {

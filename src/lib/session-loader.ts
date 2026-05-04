@@ -216,6 +216,7 @@ function buildSessionMeta(
   d: DiscoveredSession,
   row: SessionRow | undefined,
   pid: PidFileData | undefined,
+  jsonlPath: string,
 ): SessionMeta {
   return {
     sessionId: d.sessionId,
@@ -247,6 +248,7 @@ function buildSessionMeta(
       hasPid: pid !== undefined,
       archivedAt: row?.archived_at ?? null,
     }),
+    jsonlPath,
   };
 }
 
@@ -315,7 +317,8 @@ export async function loadAllSessions(): Promise<SessionMeta[]> {
   const seen = new Set<string>();
   for (const d of discovered) {
     const row = rowsBySessionId.get(d.sessionId);
-    out.push(buildSessionMeta(d, row, pidsBySessionId.get(d.sessionId)));
+    const jsonlPath = await resolveSessionPath(d.projectDir, d.sessionId);
+    out.push(buildSessionMeta(d, row, pidsBySessionId.get(d.sessionId), jsonlPath));
     seen.add(d.sessionId);
   }
   // Orphans: SQLite rows that did NOT come back from discover_sessions.

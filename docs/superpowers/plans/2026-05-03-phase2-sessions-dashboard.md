@@ -929,7 +929,7 @@ Status indicators: MCP connection count, plugin count, API reachability (HEAD re
 - Modify: `src/sections/DashboardSection.tsx` (replace placeholder)
 - Modify: `src/sections/SessionsSection.tsx` (replace placeholder)
 
-- [ ] **Step 1: Wire up DashboardSection**
+- [x] **Step 1: Wire up DashboardSection**
 
 Replace placeholder with full dashboard layout per spec §4.1:
 - Row 1: 4 StatCards in a grid
@@ -940,7 +940,7 @@ Call `dashboardStore.loadDashboard()` on mount.
 
 **Note:** FS watchers and live session updates are deferred to Phase 4 Task 10. Phase 2 provides one-shot data loading only.
 
-- [ ] **Step 2: Wire up SessionsSection**
+- [x] **Step 2: Wire up SessionsSection**
 
 Replace placeholder with split-pane layout: `SessionListPanel` (260px left) + `SessionDetailPanel` (flex right).
 
@@ -948,13 +948,13 @@ Call `sessionStore.loadSessions()` on mount.
 
 Handle loading states: skeleton cards per spec §17.6. Handle empty state: "No sessions found" + New Session CTA.
 
-- [ ] **Step 3: Run all tests — expect PASS**
+- [x] **Step 3: Run all tests — expect PASS**
 
-- [ ] **Step 4: Dev build verification**
+- [x] **Step 4: Dev build verification**
 
 `npx tauri dev` — Dashboard shows stats/charts (or empty states if no data). Sessions shows session list from real `~/.claude/` data. Clicking a session shows conversation viewer.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat(T2.13): wire up Dashboard and Sessions sections — Phase 2 complete"`
 
@@ -963,42 +963,42 @@ Handle loading states: skeleton cards per spec §17.6. Handle empty state: "No s
 *Unit tests* — N/A (integration task; no isolated logic)
 
 *Component / integration tests* (`tests/sections/DashboardSection.test.tsx`, `SessionsSection.test.tsx`, RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-sql` + `@tauri-apps/plugin-fs`):
-- [ ] mounts without console errors (both sections)
-- [ ] DashboardSection layout (spec §4.1): Row 1 = 4 StatCards in grid; Row 2 = ActivityChart (60%) + ModelDonut (40%); Row 3 = RecentSessions (60%) + QuickActions + SystemHealth (40% column)
-- [ ] DashboardSection: `dashboardStore.loadDashboard()` invoked once on mount
-- [ ] SessionsSection layout: 260px left `SessionListPanel` + flex right `SessionDetailPanel`
-- [ ] SessionsSection: `sessionStore.loadSessions()` invoked once on mount
-- [ ] SessionsSection loading state — skeleton cards present (spec §17.6) while `isLoading: true`
-- [ ] SessionsSection empty state — "No sessions found" + New Session CTA when `sessions.length === 0`
-- [ ] interaction: click a session in list → `SessionDetailPanel` updates to that session
-- [ ] dark + light theme parity for both sections
+- [x] mounts without console errors (both sections)
+- [x] DashboardSection layout (spec §4.1): Row 1 = 4 StatCards in grid; Row 2 = ActivityChart (60%) + ModelDonut (40%); Row 3 = RecentSessions (60%) + QuickActions + SystemHealth (40% column)
+- [x] DashboardSection: `dashboardStore.loadDashboard()` invoked once on mount
+- [x] SessionsSection layout: 260px left `SessionListPanel` + flex right `SessionDetailPanel`
+- [x] SessionsSection: `sessionStore.loadSessions()` invoked once on mount
+- [x] SessionsSection loading state — skeleton cards present (spec §17.6) while `isLoading: true`
+- [x] SessionsSection empty state — "No sessions found" + New Session CTA when `sessions.length === 0`
+- [x] interaction: click a session in list → `SessionDetailPanel` updates to that session
+- [x] dark + light theme parity for both sections
 
 *Data-fixture tests* — N/A in this task (relies on mocks; underlying fixtures covered by T2.5, T2.7)
 
 *Rust checks* — N/A (no `src-tauri/` changes)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* (multi-file scan + list rendering):
-- [ ] full Sessions section first paint with 100 real sessions < 1s after IPC return
-- [ ] full Dashboard section first paint < 500ms after data return
-- [ ] no FS watchers wired up in Phase 2 (deferred to Phase 4 Task 10 per task note)
+- [x] full Sessions section first paint with 100 real sessions < 1s after IPC return
+- [x] full Dashboard section first paint < 500ms after data return
+- [x] no FS watchers wired up in Phase 2 (deferred to Phase 4 Task 10 per task note)
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
-- [ ] navigate to Dashboard — stats / charts populated (or empty states if no data)
-- [ ] navigate to Sessions — list shows real `~/.claude/` sessions
-- [ ] click a session — conversation viewer renders
-- [ ] keyboard shortcut: section switch shortcut from Phase 1 still works
-- [ ] dark + light render correctly across both sections
-- [ ] DevTools Console: zero errors / React key warnings
+- [x] navigate to Dashboard — stats / charts populated (or empty states if no data)
+- [x] navigate to Sessions — list shows real `~/.claude/` sessions
+- [x] click a session — conversation viewer renders
+- [x] keyboard shortcut: section switch shortcut from Phase 1 still works
+- [x] dark + light render correctly across both sections
+- [x] DevTools Console: zero errors / React key warnings
 - *Existing notes:*
   - Step 3 (existing): "Run all tests — expect PASS"
   - Step 4 (existing): "Dev build verification — `npx tauri dev` — Dashboard shows stats/charts (or empty states if no data). Sessions shows session list from real `~/.claude/` data. Clicking a session shows conversation viewer."
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §4.1, §6, §17.6
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.13): wire up Dashboard and Sessions sections — Phase 2 complete`
+- [x] All checks above pass
+- [x] Behavior matches spec §4.1, §6, §17.6
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.13): wire up Dashboard and Sessions sections — Phase 2 complete`

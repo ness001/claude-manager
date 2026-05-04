@@ -18,10 +18,8 @@ describe("App", () => {
 
   it("renders the SidebarRail and ContentArea (default Dashboard)", () => {
     render(<App />);
-    // Dashboard heading proves ContentArea mounted with default section.
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Dashboard" }),
-    ).toBeInTheDocument();
+    // DashboardSection (T2.13) testid proves ContentArea mounted with default section.
+    expect(screen.getByTestId("dashboard-section")).toBeInTheDocument();
     // Sidebar nav item proves SidebarRail mounted.
     expect(
       screen.getByRole("button", { name: /dashboard/i }),
