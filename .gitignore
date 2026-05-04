@@ -33,3 +33,6 @@ Thumbs.db
 
 # Transient screenshot output from scripts/_test/ helpers
 scripts/_test/out/
+
+# Git worktrees (per superpowers:using-git-worktrees skill)
+.worktrees/
