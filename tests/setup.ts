@@ -17,3 +17,20 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// @tauri-apps/api/window reads window.__TAURI_INTERNALS__.metadata, which
+// only exists inside the real Tauri runtime. Without this mock, any component
+// that calls getCurrentWindow() (e.g. TitleBar) crashes under jsdom with
+// "Cannot read properties of undefined (reading 'metadata')".
+vi.mock("@tauri-apps/api/window", () => {
+  const win = {
+    isMaximized: vi.fn().mockResolvedValue(false),
+    onResized: vi.fn().mockResolvedValue(() => {}),
+    minimize: vi.fn().mockResolvedValue(undefined),
+    toggleMaximize: vi.fn().mockResolvedValue(undefined),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+  return {
+    getCurrentWindow: () => win,
+  };
+});
