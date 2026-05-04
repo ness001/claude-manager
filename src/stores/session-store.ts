@@ -25,6 +25,12 @@ interface SessionState {
   selectSession: (id: string | null) => void;
   setViewMode: (mode: SessionViewMode) => void;
   setSearchQuery: (query: string) => void;
+  /**
+   * Update a session's user-managed `displayName` in-memory. SQLite
+   * persistence is wired up in a later phase; this keeps the editable name
+   * field on `SessionInfoBar` (T2.10) reactive without round-tripping yet.
+   */
+  setSessionDisplayName: (id: string, name: string) => void;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -48,6 +54,12 @@ export const useSessionStore = create<SessionState>((set) => ({
   selectSession: (id) => set({ selectedId: id }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setSearchQuery: (query) => set({ searchQuery: query }),
+  setSessionDisplayName: (id, name) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.sessionId === id ? { ...s, displayName: name } : s,
+      ),
+    })),
 }));
 
 /**
