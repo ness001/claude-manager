@@ -23,5 +23,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     css: false,
+    // Worktrees are nested copies of this repo. Without excluding them, vitest
+    // picks up their tests too and runs each suite multiple times.
+    exclude: ["**/node_modules/**", "**/dist/**", "**/.worktrees/**"],
   },
 });
