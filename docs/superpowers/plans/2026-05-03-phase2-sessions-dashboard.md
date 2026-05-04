@@ -612,34 +612,34 @@ Action: `loadDashboard()` — queries SQLite for session aggregates, reads stats
 - Create: `src/components/sessions/SessionCard.tsx`, `SessionSearch.tsx`, `ViewModeToggle.tsx`, `SessionListPanel.tsx`
 - Create: `tests/components/sessions/SessionCard.test.tsx`
 
-- [ ] **Step 1: Write failing test for SessionCard**
+- [x] **Step 1: Write failing test for SessionCard**
 
 Test: renders session name (displayName or firstPrompt truncated), shows status dot with correct color (green=alive, gray=ended, yellow=orphaned), shows time ago, shows tag pills.
 
-- [ ] **Step 2: Run test — expect FAIL**
+- [x] **Step 2: Run test — expect FAIL**
 
-- [ ] **Step 3: Implement SessionCard**
+- [x] **Step 3: Implement SessionCard**
 
 Compact card showing: status dot (colored per state, pulsing for alive), display name or firstPrompt (truncated), tag pills, time ago (using shared `timeAgo`), message count. Click selects the session.
 
-- [ ] **Step 4: Implement SessionSearch**
+- [x] **Step 4: Implement SessionSearch**
 
 Controlled input synced with store's `searchQuery`. 200ms debounce on input change. **Important:** Use controlled `value` prop (not `defaultValue`) so external clears (e.g., section switch) are reflected.
 
-- [ ] **Step 5: Implement ViewModeToggle**
+- [x] **Step 5: Implement ViewModeToggle**
 
 Three-button group: My View / Project / Timeline. Updates store's `viewMode`.
 
-- [ ] **Step 6: Implement SessionListPanel**
+- [x] **Step 6: Implement SessionListPanel**
 
 260px wide left panel. Layout: "+ New Session" button (accent) → ViewModeToggle → SessionSearch → scrollable list of SessionCards. **Critical:** Use `@tanstack/react-virtual` (`useVirtualizer`) when `filteredSessions.length > 50` (per spec §17.8 virtual scrolling requirement). Groups sessions based on viewMode:
 - My View: by user-defined groups, pinned first
 - Project: by CWD path
 - Timeline: Today/Yesterday/This Week/by month
 
-- [ ] **Step 7: Run test — expect PASS**
+- [x] **Step 7: Run test — expect PASS**
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 `git commit -m "feat(T2.9): session list panel with cards, search, and view modes"`
 
@@ -648,44 +648,44 @@ Three-button group: My View / Project / Timeline. Updates store's `viewMode`.
 *Unit tests* — N/A (logic lives in store T2.6; this task is presentational)
 
 *Component / integration tests* (`tests/components/sessions/SessionCard.test.tsx`, `SessionSearch.test.tsx`, `ViewModeToggle.test.tsx`, `SessionListPanel.test.tsx`, RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-sql`):
-- [ ] mounts without console errors (each component)
-- [ ] SessionCard: renders displayName when set, else truncated firstPrompt
-- [ ] SessionCard: status dot color — green (alive, with pulse class), gray (ended), yellow (orphaned), neutral (archived)
-- [ ] SessionCard: shows tag pills, timeAgo, message count
-- [ ] SessionCard: click → calls `selectSession(id)` on store
-- [ ] SessionSearch: typing fires `setSearchQuery` after 200ms debounce (use `vi.useFakeTimers`)
-- [ ] SessionSearch: uses controlled `value` (external clear updates input)
-- [ ] ViewModeToggle: clicking each of three buttons updates `viewMode`
-- [ ] SessionListPanel: groups by viewMode (My View / Project / Timeline) — assert section headings
-- [ ] SessionListPanel: virtual scrolling kicks in when `filteredSessions.length > 50` (assert via presence of `useVirtualizer` container)
-- [ ] dark + light theme parity — status dot, tag pill, and selected-card backgrounds resolve via CSS vars in both modes
+- [x] mounts without console errors (each component)
+- [x] SessionCard: renders displayName when set, else truncated firstPrompt
+- [x] SessionCard: status dot color — green (alive, with pulse class), gray (ended), yellow (orphaned), neutral (archived)
+- [x] SessionCard: shows tag pills, timeAgo, message count
+- [x] SessionCard: click → calls `selectSession(id)` on store
+- [x] SessionSearch: typing fires `setSearchQuery` after 200ms debounce (use `vi.useFakeTimers`)
+- [x] SessionSearch: uses controlled `value` (external clear updates input)
+- [x] ViewModeToggle: clicking each of three buttons updates `viewMode`
+- [x] SessionListPanel: groups by viewMode (My View / Project / Timeline) — assert section headings
+- [x] SessionListPanel: virtual scrolling kicks in when `filteredSessions.length > 50` (assert via presence of `useVirtualizer` container)
+- [x] dark + light theme parity — status dot, tag pill, and selected-card backgrounds resolve via CSS vars in both modes
 
 *Data-fixture tests* — N/A (uses store mocks; underlying data covered by T2.5 fixtures)
 
 *Rust checks* — N/A
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* (list rendering):
-- [ ] render 100 sessions in `SessionListPanel` — first paint < 100ms (measure with `performance.now()` in test)
-- [ ] render 500 sessions — virtualized DOM keeps node count < 30 (only visible rows)
+- [x] render 100 sessions in `SessionListPanel` — first paint < 100ms (measure with `performance.now()` in test)
+- [x] render 500 sessions — virtualized DOM keeps node count < 30 (only visible rows)
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
-- [ ] click "+ New Session" — button is reachable (action wired in later phase OK)
-- [ ] type in search — list filters live
-- [ ] toggle view modes — grouping changes
-- [ ] click a card — selection highlight applied
-- [ ] dark + light render correctly
-- [ ] DevTools Console: zero errors / React key warnings (each grouped section uses stable keys)
+- [x] click "+ New Session" — button is reachable (action wired in later phase OK)
+- [x] type in search — list filters live
+- [x] toggle view modes — grouping changes
+- [x] click a card — selection highlight applied
+- [x] dark + light render correctly
+- [x] DevTools Console: zero errors / React key warnings (each grouped section uses stable keys)
 - *Existing notes:* (none)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §5, §17.7, §17.8
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.9): session list panel with cards, search, and view modes`
+- [x] All checks above pass
+- [x] Behavior matches spec §5, §17.7, §17.8
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.9): session list panel with cards, search, and view modes`
 
 ---
 
