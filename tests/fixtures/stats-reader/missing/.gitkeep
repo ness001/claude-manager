@@ -1,0 +1,3 @@
+# Empty directory marker — this directory simulates the case where
+# `~/.claude/stats-cache.json` does not exist. The reader must return defaults
+# without throwing.

@@ -503,44 +503,44 @@ Derived: `filteredSessions()` — filter by search query (case-insensitive, matc
 - Create: `src/lib/stats-reader.ts`
 - Create: `tests/lib/stats-reader.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test: reads mock stats-cache.json structure, extracts dailyActivity, dailyModelTokens, hourCounts. Handles missing file gracefully.
 
-- [ ] **Step 2: Run tests — expect FAIL**
+- [x] **Step 2: Run tests — expect FAIL**
 
-- [ ] **Step 3: Implement stats reader**
+- [x] **Step 3: Implement stats reader**
 
 Read `~/.claude/stats-cache.json` via Tauri FS plugin. Parse and return shaped data for charts. Handle file-not-found (return empty/default data).
 
-- [ ] **Step 4: Run tests — expect PASS**
+- [x] **Step 4: Run tests — expect PASS**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat(T2.7): stats-cache.json reader"`
 
 **Verification**
 
 *Unit tests* (`tests/lib/stats-reader.test.ts`):
-- [ ] case 1: reads valid `stats-cache.json` → returns shape with `costUSD`, `hourCounts`, `dailyActivity`, `dailyModelTokens`
-- [ ] case 2: missing file (Tauri FS rejects) → returns empty/default `{ dailyActivity: [], dailyModelTokens: [], hourCounts: [], costUSD: 0 }` and does NOT throw
-- [ ] case 3: malformed JSON → returns defaults and does NOT throw
-- [ ] case 4: extra/unknown keys are ignored without erroring
+- [x] case 1: reads valid `stats-cache.json` → returns shape with `costUSD`, `hourCounts`, `dailyActivity`, `dailyModelTokens`
+- [x] case 2: missing file (Tauri FS rejects) → returns empty/default `{ dailyActivity: [], dailyModelTokens: [], hourCounts: [], costUSD: 0 }` and does NOT throw
+- [x] case 3: malformed JSON → returns defaults and does NOT throw
+- [x] case 4: extra/unknown keys are ignored without erroring
 
 *Component / integration tests* — N/A (pure reader; mock `@tauri-apps/plugin-fs` in unit tests)
 
 *Data-fixture tests* (task reads `~/.claude/stats-cache.json`):
-- [ ] fixture `tests/fixtures/stats-reader/stats-cache.json` matching the per-spec schema (`costUSD`, `hourCounts[24]`, `dailyActivity[]`, `dailyModelTokens[]`)
-- [ ] fixture `tests/fixtures/stats-reader/missing/` — directory with no file, asserts graceful default
-- [ ] fixture `tests/fixtures/stats-reader/malformed.json` — bad JSON, asserts graceful default
-- [ ] reader returns expected normalized shape
-- [ ] (DB) — N/A
+- [x] fixture `tests/fixtures/stats-reader/stats-cache.json` matching the per-spec schema (`costUSD`, `hourCounts[24]`, `dailyActivity[]`, `dailyModelTokens[]`)
+- [x] fixture `tests/fixtures/stats-reader/missing/` — directory with no file, asserts graceful default
+- [x] fixture `tests/fixtures/stats-reader/malformed.json` — bad JSON, asserts graceful default
+- [x] reader returns expected normalized shape
+- [x] (DB) — N/A
 
 *Rust checks* — N/A
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A (single small JSON file)
 
@@ -548,10 +548,10 @@ Read `~/.claude/stats-cache.json` via Tauri FS plugin. Parse and return shaped d
 - *Existing notes:* (none)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §6 (Dashboard data sources)
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.7): stats-cache.json reader`
+- [x] All checks above pass
+- [x] Behavior matches spec §6 (Dashboard data sources)
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.7): stats-cache.json reader`
 
 ---
 

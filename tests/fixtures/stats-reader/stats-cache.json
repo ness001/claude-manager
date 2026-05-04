@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "lastComputedDate": "2026-04-08",
+  "costUSD": 12.34,
+  "dailyActivity": [
+    { "date": "2026-02-03", "messageCount": 18, "sessionCount": 1, "toolCallCount": 1 },
+    { "date": "2026-03-05", "messageCount": 8, "sessionCount": 1, "toolCallCount": 0 }
+  ],
+  "dailyModelTokens": [
+    { "date": "2026-02-03", "tokensByModel": { "claude-opus-4.5": 6379 } },
+    { "date": "2026-03-05", "tokensByModel": { "claude-opus-4.6": 12000, "claude-sonnet-4.6": 500 } }
+  ],
+  "hourCounts": {
+    "9": 4,
+    "10": 1,
+    "14": 7,
+    "15": 15,
+    "23": 2
+  }
+}
