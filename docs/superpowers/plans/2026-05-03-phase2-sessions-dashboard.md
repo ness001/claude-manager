@@ -10,6 +10,17 @@
 
 **Prerequisites:** Phase 1 complete (app shell, sidebar, theme, SQLite schema, navigation).
 
+## Conventions for all Phase 2 tasks
+
+(General task-execution rules live in repo `CLAUDE.md` → "Executing a plan task". The items below are Phase-2-specific.)
+
+- **Claude data on disk:** sessions live under `~/.claude/projects/<slug>/*.jsonl`; PID files under `~/.claude/sessions/*.pid`; aggregate stats at `~/.claude/stats-cache.json`. On Windows `~` = `%USERPROFILE%`.
+- **`sessions-index.json` is stale** — never trust it as the source of truth for live sessions. Re-derive from JSONL + PID file scan. (See `docs/DESIGN-CONTEXT.md`.)
+- **PID files are ephemeral** — a missing PID file means "ended", not "never existed". Cross-check against process liveness, not file presence.
+- **Process name is `node.exe` (Windows) / `node` — not `claude`.** Liveness checks must look for the right executable.
+- **JSONL `content` is `string | JsonlContent[]`.** First user message is often a plain string. Any code that assumes array form will crash on real fixtures.
+- **Manual UI / E2E smoke verification:** when not N/A, run `npx tauri dev`, capture screenshots via `scripts/_test/helper.ps1`, and embed the screenshot file paths in the final ralph output before promising completion.
+
 ---
 
 ## File Structure

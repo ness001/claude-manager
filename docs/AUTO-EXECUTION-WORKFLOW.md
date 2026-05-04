@@ -118,7 +118,7 @@ completion_promise: "PHASE 1 COMPLETE"
 **How to use:**
 ```bash
 # In a Claude Code session, inside the claude-manager directory:
-/ralph-loop "Read docs/superpowers/plans/2026-05-03-phase1-foundation.md and implement all tasks using superpowers:subagent-driven-development. When ALL tasks are done and tests pass: <promise>PHASE 1 COMPLETE</promise>" --max-iterations 50 --completion-promise "PHASE 1 COMPLETE"
+/ralph-loop:ralph-loop "Read docs/superpowers/plans/2026-05-03-phase1-foundation.md and implement all tasks using superpowers:subagent-driven-development. When ALL tasks are done and tests pass: <promise>PHASE 1 COMPLETE</promise>" --max-iterations 50 --completion-promise "PHASE 1 COMPLETE"
 ```
 
 **Why ralph loop?** Claude Code sessions have context limits. When context fills up, the session compresses and continues. Ralph loop ensures that even across context resets, the agent picks up where it left off by:
@@ -127,7 +127,7 @@ completion_promise: "PHASE 1 COMPLETE"
 - Each iteration reads current state from disk, not from conversation history
 
 **Two ralph implementations available:**
-1. **ralph-loop plugin** (recommended) — In-session Stop hook. No new process. State persists in `.claude/ralph-loop.local.md`. Activated via `/ralph-loop` command.
+1. **ralph-loop plugin** (recommended) — In-session Stop hook. No new process. State persists in `.claude/ralph-loop.local.md`. Activated via `/ralph-loop:ralph-loop` command.
 2. **ralph-marketplace** — External bash loop that spawns fresh `claude --print` processes per iteration. Uses `prd.json` format. Good for headless/CI use.
 
 ---
@@ -178,7 +178,7 @@ Features:
 2. git checkout -b phase-1-foundation  (or reuse existing branch)
 3. claude --dangerously-skip-permissions
 
-4. /ralph-loop "<prompt>" --max-iterations 50 --completion-promise "PHASE 1 COMPLETE"
+4. /ralph-loop:ralph-loop "<prompt>" --max-iterations 50 --completion-promise "PHASE 1 COMPLETE"
    │
    ├─ Iteration 1:
    │   ├─ Read plan → find first unchecked task
@@ -217,7 +217,7 @@ Phases are **sequential** (Phase 2 depends on Phase 1 output). Run them one at a
 git checkout -b phase-1-foundation
 claude --dangerously-skip-permissions
 # Inside the session (auto-PR is included in the prompt):
-/ralph-loop "..." --completion-promise "PHASE 1 COMPLETE"
+/ralph-loop:ralph-loop "..." --completion-promise "PHASE 1 COMPLETE"
 # → session auto-creates PR, then exits
 
 # Phase 2
@@ -225,7 +225,7 @@ git checkout master && git pull
 git checkout -b phase-2-sessions
 scripts/sync-pool.sh master
 claude --dangerously-skip-permissions
-/ralph-loop "..." --completion-promise "PHASE 2 COMPLETE"
+/ralph-loop:ralph-loop "..." --completion-promise "PHASE 2 COMPLETE"
 # → session auto-creates PR, then exits
 
 # Phase 3, 4 follow the same pattern

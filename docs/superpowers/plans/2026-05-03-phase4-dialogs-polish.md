@@ -10,6 +10,18 @@
 
 **Prerequisites:** Phase 1-3 complete (all sections functional except these features).
 
+## Conventions for all Phase 4 tasks
+
+(General task-execution rules live in repo `CLAUDE.md` → "Executing a plan task". The items below are Phase-4-specific.)
+
+- **PTY plugin is custom Rust** — uses `portable-pty` crate; on Windows must use ConPTY backend, not winpty. The `claude` CLI requires a real terminal — bare `Command::spawn` will not work.
+- **Launching `claude`:** the binary on disk is `node.exe` running the JS entrypoint, not a `claude.exe`. Use the `claude` shim only via PATH lookup; do not hardcode paths. (See `docs/DESIGN-CONTEXT.md`.)
+- **Settings reads/writes touch multiple files:** `~/.claude/settings.json` (user), `~/.claude.json` (CLI config incl. MCP), `<project>/.claude/settings.local.json` (project-local overrides). Each task says which file(s) it owns — never widen scope.
+- **Read-modify-write rule from Phase 3 still applies** — preserve unrelated keys.
+- **Command Palette is keyboard-first** — every interactive element must be reachable without mouse; `Esc` closes the overlay; arrow keys navigate; `Enter` activates.
+- **First Launch flow runs at most once per install** — gated by a flag in SQLite, not by file existence.
+- **Manual UI / E2E smoke verification:** when not N/A, run `npx tauri dev`, capture screenshots via `scripts/_test/helper.ps1`, and embed the screenshot file paths in the final ralph output before promising completion.
+
 ---
 
 ## File Structure

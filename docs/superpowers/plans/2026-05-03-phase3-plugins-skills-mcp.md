@@ -10,6 +10,17 @@
 
 **Prerequisites:** Phase 1 complete (app shell, navigation), Phase 2 complete (session types pattern to follow).
 
+## Conventions for all Phase 3 tasks
+
+(General task-execution rules live in repo `CLAUDE.md` → "Executing a plan task". The items below are Phase-3-specific.)
+
+- **Plugin registry:** `~/.claude/installed_plugins.json` lists installed plugins; per-plugin enable state lives in `~/.claude/settings.json` (NOT in the registry file).
+- **Skills:** scan `~/.claude/skills/<plugin>/<skill-name>/SKILL.md`. Frontmatter (name/description/etc.) is YAML between `---` fences at file head.
+- **MCP server scopes:** user + local scopes live in `~/.claude.json` (NOT `~/.claude/settings.json` — common mistake). Project scope lives in `<project-root>/.mcp.json`. (See `docs/DESIGN-CONTEXT.md`.)
+- **Writes are read-modify-write:** when editing `~/.claude.json`, preserve all unrelated keys. Never replace the whole file with a partial object.
+- **Source of truth is the disk file, not SQLite** — these three sections do not cache to SQLite.
+- **Manual UI / E2E smoke verification:** when not N/A, run `npx tauri dev`, capture screenshots via `scripts/_test/helper.ps1`, and embed the screenshot file paths in the final ralph output before promising completion.
+
 ---
 
 ## File Structure
