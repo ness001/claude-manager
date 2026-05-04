@@ -85,7 +85,7 @@ tests/
 **Files:**
 - Create: `src/lib/plugin-types.ts`
 
-- [ ] **Step 1: Define plugin types**
+- [x] **Step 1: Define plugin types**
 
 `PluginMeta`: name, marketplace, version (string — can be semver or 12-char git SHA per spec §6.3), gitCommitSha (40-char), description, installPath, state (PluginState), skillCount, agentCount, hookCount, hasClaudeMd.
 
@@ -102,8 +102,8 @@ tests/
 **Verification**
 
 *Unit tests* (`tests/lib/plugin-types.test.ts`):
-- [ ] case 1: type-only file — assert exported type names compile via a `tests/lib/plugin-types.compile.ts` snippet imported in test
-- [ ] case 2: `PluginState` union accepts all five literals; rejects an unknown literal under `// @ts-expect-error`
+- [x] case 1: type-only file — assert exported type names compile via a `tests/lib/plugin-types.compile.ts` snippet imported in test
+- [x] case 2: `PluginState` union accepts all five literals; rejects an unknown literal under `// @ts-expect-error`
 
 *Component / integration tests* — N/A (no components in this task)
 
@@ -112,20 +112,20 @@ tests/
 *Rust checks* — N/A (no `src-tauri/` changes)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A
 
 *Manual UI / E2E smoke* — N/A (no user-visible surface yet)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §4 (Plugin Data Model) and §6.4 (states)
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.1): add plugin type definitions`
+- [x] All checks above pass
+- [x] Behavior matches spec §4 (Plugin Data Model) and §6.4 (states)
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.1): add plugin type definitions`
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 `git commit -m "feat: add plugin type definitions"`
 
