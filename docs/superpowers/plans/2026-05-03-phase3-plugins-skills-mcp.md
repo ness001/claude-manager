@@ -88,6 +88,32 @@ tests/
 
 `HookInfo`: event (e.g., "SessionStart", "PreToolUse"), command, from `hooks.json`.
 
+**Verification**
+
+*Unit tests* (`tests/lib/plugin-types.test.ts`):
+- [ ] case 1: type-only file — assert exported type names compile via a `tests/lib/plugin-types.compile.ts` snippet imported in test
+- [ ] case 2: `PluginState` union accepts all five literals; rejects an unknown literal under `// @ts-expect-error`
+
+*Component / integration tests* — N/A (no components in this task)
+
+*Data-fixture tests* — N/A (types only, no parsing or filesystem reads)
+
+*Rust checks* — N/A (no `src-tauri/` changes)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A
+
+*Manual UI / E2E smoke* — N/A (no user-visible surface yet)
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §4 (Plugin Data Model) and §6.4 (states)
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.1): add plugin type definitions`
+
 - [ ] **Step 2: Commit**
 
 `git commit -m "feat: add plugin type definitions"`
@@ -133,6 +159,45 @@ Test: merges installed_plugins.json + settings.json enabledPlugins into PluginMe
 
 - [ ] **Step 5: Run tests — expect PASS**
 
+**Verification**
+
+*Unit tests* (`tests/lib/plugin-loader.test.ts`):
+- [ ] case 1: merges `installed_plugins.json` + `settings.json.enabledPlugins` → `PluginMeta[]` with correct state per entry
+- [ ] case 2: missing `installPath` on disk → state is `broken`
+- [ ] case 3: name in `enabledPlugins` but absent from `installed_plugins.json` → state is `orphaned` (spec §4)
+- [ ] case 4: array of installations under one `{name}@{marketplace}` key → one `PluginMeta` per array entry
+- [ ] case 5: 12-char git SHA version string accepted alongside semver (DESIGN-CONTEXT §2.5)
+- [ ] case 6: plugin with no `plugin.json` falls back to `marketplace.json` (DESIGN-CONTEXT §2.9)
+
+*Component / integration tests* — N/A (loader is non-UI)
+
+*Data-fixture tests* (this task reads JSON config + filesystem):
+- [ ] fixture at `tests/fixtures/plugin-loader/` covering DESIGN-CONTEXT.md §2.5 (semver + 12-char SHA versions) and §2.9 (no `plugin.json`, falls back to `marketplace.json`)
+- [ ] fixture for `installed_plugins.json` whose value is an ARRAY of installations (not a single object)
+- [ ] fixture for `settings.json` with `enabledPlugins` map producing one orphaned entry
+- [ ] parser returns expected normalized `PluginMeta[]` shape sorted by name
+
+*Rust checks* (touches `src-tauri/`):
+- [ ] `cd src-tauri && cargo check` clean
+- [ ] `cargo test` green (if any)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* (multi-file scan):
+- [ ] scanning ~50 plugin installations completes < 1s end-to-end
+- [ ] each `plugin.json` / `marketplace.json` parse < 100ms
+
+*Manual UI / E2E smoke* — deferred to T3.5 (no UI yet)
+- *Existing notes:* tests must validate broken/orphaned/active/disabled state mapping per spec §6.4
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §4 and §10 (refresh strategy)
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.2): add plugin loader with state detection`
+
 - [ ] **Step 6: Commit**
 
 `git commit -m "feat: add plugin loader with state detection"`
@@ -160,6 +225,35 @@ Actions: `loadPlugins()`, `selectPlugin(name)` (loads detail), `setSearchQuery(q
 Computed: `filteredPlugins()` — filter by search query matching name, description, marketplace (per spec §17.7).
 
 - [ ] **Step 4: Run tests — expect PASS**
+
+**Verification**
+
+*Unit tests* (`tests/stores/plugin-store.test.ts`):
+- [ ] case 1: `loadPlugins()` populates `plugins` and clears `isLoading`
+- [ ] case 2: `selectPlugin(name)` populates `selectedPlugin` with detail
+- [ ] case 3: `setSearchQuery` filters by name, description, and marketplace
+- [ ] case 4: `togglePlugin(name)` flips enabled state and triggers settings.json write (mocked Rust command)
+- [ ] case 5: error path — Rust command rejects → store sets error state, no partial mutation
+
+*Component / integration tests* — N/A (Zustand store, no DOM)
+
+*Data-fixture tests* — N/A (uses mocked loader; fixtures live in T3.2)
+
+*Rust checks* — N/A (no `src-tauri/` changes)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A
+
+*Manual UI / E2E smoke* — deferred to T3.5
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §4 and §17.7 (search semantics)
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.3): add plugin Zustand store`
 
 - [ ] **Step 5: Commit**
 
@@ -192,6 +286,47 @@ Header: name, marketplace, version, status, action buttons (Open in File Browser
 `PluginAgentsTab`: List of agents with name + description + model + tools.
 `PluginHooksTab`: Display hooks.json entries — event name + command.
 
+**Verification**
+
+*Unit tests* — N/A (UI components covered by RTL below)
+
+*Component / integration tests* (`tests/components/plugins/PluginCard.test.tsx`, `PluginListView.test.tsx`, `PluginDetailView.test.tsx`, `PluginSkillsTab.test.tsx`, `PluginAgentsTab.test.tsx`, `PluginHooksTab.test.tsx`; RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-sql` + `@tauri-apps/plugin-fs` + `@tauri-apps/plugin-shell`):
+- [ ] mounts without console errors
+- [ ] PluginCard: status dot color matches each `PluginState` (active/disabled/broken/orphaned/update-available)
+- [ ] PluginCard: broken plugin renders red border + Reinstall/Remove buttons; disabled plugin renders 70% opacity
+- [ ] PluginCard: toggle switch click → calls store `togglePlugin` once
+- [ ] PluginListView: header counts (installed/active/disabled) reflect store; empty state copy matches spec §17.6
+- [ ] PluginListView: "Check for Updates" click invokes update detection action (mocked) — local SHA vs mocked remote HEAD
+- [ ] PluginDetailView: tab switching between Skills / Agents / Hooks renders correct tab body
+- [ ] PluginAgentsTab + PluginSkillsTab + PluginHooksTab: render rows from fixture data
+- [ ] dark + light theme parity (toggle theme attribute, snapshot key classes)
+
+*Data-fixture tests* — only the update-detection path (mock the `git ls-remote` network call):
+- [ ] fixture comparing local `gitCommitSha` vs remote HEAD → emits `update-available` for mismatched plugins (DESIGN-CONTEXT §2.5)
+
+*Rust checks* — N/A (no `src-tauri/` changes)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* (renders many plugin cards):
+- [ ] rendering 50 PluginCards in PluginListView < 200ms (RTL render timing)
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] navigate to Plugins; cards render with correct status dots
+- [ ] toggle a plugin → state flips visually and persists across reload
+- [ ] click a plugin → detail view with Skills/Agents/Hooks tabs
+- [ ] "Open in File Browser" / "Open in VS Code" actions invoke shell open
+- [ ] dark + light render correctly
+- [ ] DevTools Console: zero errors
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §4, §6.4, §13 (update detection), §17.6, §17.7
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.4): add plugin list and detail UI components`
+
 - [ ] **Step 5: Commit**
 
 `git commit -m "feat: add plugin list and detail UI components"`
@@ -206,6 +341,41 @@ Header: name, marketplace, version, status, action buttons (Open in File Browser
 - [ ] **Step 1: Wire up PluginsSection**
 
 If no plugin selected → show PluginListView. If plugin selected → show PluginDetailView with back button. Load plugins on mount. Handle loading / empty states.
+
+**Verification**
+
+*Unit tests* — N/A
+
+*Component / integration tests* (`tests/components/sections/PluginsSection.test.tsx`; RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-fs`):
+- [ ] mounts without console errors
+- [ ] no selection → renders `PluginListView`
+- [ ] selecting a plugin via store → renders `PluginDetailView` with back button
+- [ ] back button click → returns to list (selection cleared)
+- [ ] loading state renders skeletons; empty state renders spec §17.6 copy
+- [ ] dark + light theme parity
+
+*Data-fixture tests* — N/A (reuses T3.2 fixtures via mocks)
+
+*Rust checks* — N/A
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] sidebar → Plugins → list renders
+- [ ] click plugin card → detail view; back arrow returns to list
+- [ ] dark + light render correctly
+- [ ] keyboard shortcut (sidebar nav) lands on Plugins
+- [ ] DevTools Console: zero errors
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §4, §17.6
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.5): wire up Plugins section`
 
 - [ ] **Step 2: Commit**
 
@@ -242,6 +412,38 @@ Test: scans directory structure, parses SKILL.md frontmatter, handles missing/ma
 
 - [ ] **Step 6: Run tests — expect PASS**
 
+**Verification**
+
+*Unit tests* (`tests/lib/skill-loader.test.ts`):
+- [ ] case 1: scans `~/.claude/skills/` and returns one `CustomSkill` per subdirectory containing `SKILL.md`
+- [ ] case 2: malformed YAML frontmatter → entry omitted (or surfaced with error flag), no throw
+- [ ] case 3: subdirectory without `SKILL.md` → skipped
+- [ ] case 4: name + description extracted from frontmatter and trimmed
+
+*Component / integration tests* — N/A (loader, no UI)
+
+*Data-fixture tests* (this task reads filesystem):
+- [ ] fixture at `tests/fixtures/skill-loader/` with: valid SKILL.md (name + description in frontmatter), missing SKILL.md, malformed frontmatter, plus a plugin-bundled skill at `<plugin>/skills/SKILL.md` that should NOT appear in custom-skills results
+- [ ] parser returns expected normalized `CustomSkill[]` shape
+
+*Rust checks* (touches `src-tauri/`):
+- [ ] `cd src-tauri && cargo check` clean
+- [ ] `cargo test` green (if any)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A (only ~8 known custom skills today)
+
+*Manual UI / E2E smoke* — deferred to T3.7
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §7
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.6): add custom skills scanner`
+
 - [ ] **Step 7: Commit**
 
 `git commit -m "feat: add custom skills scanner"`
@@ -272,6 +474,45 @@ Header: "Custom Skills" title + skill count + path (`~/.claude/skills/`) + [+ Cr
 
 Replace placeholder with SkillsListView. Load skills on mount.
 
+**Verification**
+
+*Unit tests* (`tests/stores/skill-store.test.ts`):
+- [ ] case 1: `loadSkills()` populates `skills` and clears `isLoading`
+- [ ] case 2: `setSearchQuery` filters by name and description
+- [ ] case 3: error path — loader rejects → store records error, no partial mutation
+
+*Component / integration tests* (`tests/components/skills/SkillCard.test.tsx`, `SkillsListView.test.tsx`, `tests/components/sections/SkillsSection.test.tsx`; RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-fs` + `@tauri-apps/plugin-shell`):
+- [ ] mounts without console errors
+- [ ] SkillCard: renders name, description, file path; "Open in VS Code" / "Open in File Browser" actions invoke shell open (mocked)
+- [ ] SkillsListView: header shows skill count + path `~/.claude/skills/`; search filters cards
+- [ ] SkillsListView: empty state matches spec §17.6
+- [ ] SkillsListView: info box references plugin-bundled skills via Plugins panel
+- [ ] SkillsSection: replaces placeholder with `SkillsListView` and triggers load on mount
+- [ ] dark + light theme parity
+
+*Data-fixture tests* — N/A (reuses T3.6 fixtures via mocked loader)
+
+*Rust checks* — N/A
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] sidebar → Skills → 8 known custom skills render
+- [ ] search box filters list
+- [ ] "Open in VS Code" opens the SKILL.md file
+- [ ] dark + light render correctly
+- [ ] DevTools Console: zero errors
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §7, §17.6, §17.7
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.7): add Skills list view`
+
 - [ ] **Step 5: Commit**
 
 `git commit -m "feat: add Skills list view"`
@@ -294,6 +535,32 @@ Replace placeholder with SkillsListView. Load skills on mount.
 Per spec §8.1: configs are in `~/.claude.json` (NOT settings.json). Three scopes with precedence: project > local > user. Same name at multiple scopes → most specific wins, shadowed server is dimmed.
 
 **Trust tracking (spec §8.1):** `~/.claude.json` has `enabledMcpjsonServers` and `disabledMcpjsonServers` arrays per project entry. These determine whether `.mcp.json` project-scope servers are trusted. The McpServer type must include `isTrusted: boolean | undefined` (only applicable to project-scope servers).
+
+**Verification**
+
+*Unit tests* (`tests/lib/mcp-types.test.ts`):
+- [ ] case 1: `McpScope` / `McpServerType` / `McpServerState` unions accept exactly the documented literals (`// @ts-expect-error` rejects others)
+- [ ] case 2: `McpServer` type permits `isTrusted: boolean | undefined` only on project-scope construction (compile-time assertion via fixture)
+
+*Component / integration tests* — N/A (types only)
+
+*Data-fixture tests* — N/A (no parsing yet — covered in T3.9)
+
+*Rust checks* — N/A (no `src-tauri/` changes)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A
+
+*Manual UI / E2E smoke* — N/A (no user-visible surface)
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §5 (MCP Data Model), §8.1 (scopes + trust)
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.8): add MCP server type definitions`
 
 - [ ] **Step 2: Commit**
 
@@ -342,6 +609,48 @@ Test: parses user-scope servers from `~/.claude.json` → `$.mcpServers`, local-
 
 - [ ] **Step 5: Run tests — expect PASS**
 
+**Verification**
+
+*Unit tests* (`tests/lib/mcp-loader.test.ts`):
+- [ ] case 1: parses user-scope servers from `$.mcpServers` in `~/.claude.json`
+- [ ] case 2: parses local-scope servers from `$.projects["<cwd>"].mcpServers`
+- [ ] case 3: parses project-scope servers from `<project_root>/.mcp.json`; missing file → empty list, no throw
+- [ ] case 4: scope precedence (project > local > user) — same name at multiple scopes resolves to most-specific; shadowed entries flagged via `isOverridden` + `overriddenBy`
+- [ ] case 5: stdio server fixture (command + args + env) round-trips
+- [ ] case 6: sse / http server fixtures with `${ENV_VAR}` placeholder headers preserved verbatim
+- [ ] case 7: `isTrusted` derived from `enabledMcpjsonServers` / `disabledMcpjsonServers` for project-scope only
+- [ ] case 8: `check_mcp_status()` is mocked — test asserts the loader NEVER calls the real `claude mcp list` subprocess (spec §5 / §8.3 warning)
+- [ ] case 9: status mapping covers `connected`, `disconnected`, `error`, `starting`
+- [ ] case 10: atomic write — `saveMcpServer` round-trips through write-to-temp-then-rename (mocked `@tauri-apps/plugin-fs`)
+- [ ] case 11: `deleteMcpServer` removes the correct JSON path for each scope
+
+*Component / integration tests* — N/A (loader is non-UI)
+
+*Data-fixture tests* (this task reads JSON config + filesystem):
+- [ ] fixture at `tests/fixtures/mcp-loader/` with `~/.claude.json` covering user (`$.mcpServers`), local (`$.projects[<path>].mcpServers`), and a project-root `.mcp.json` (DESIGN-CONTEXT §2.1)
+- [ ] fixture exercises "Overridden" badge logic (same name at user + local; project + user)
+- [ ] fixture for stdio + sse + http types with env / headers placeholders
+- [ ] scope precedence (project > local > user) verified against fixture
+
+*Rust checks* (touches `src-tauri/`):
+- [ ] `cd src-tauri && cargo check` clean
+- [ ] `cargo test` green (if any)
+- [ ] subprocess for `claude mcp list` is gated behind a mockable trait/fn so tests never spawn it (spec §5 / §8.3)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A (typically <20 servers across scopes)
+
+*Manual UI / E2E smoke* — deferred to T3.12
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §5, §8.1, §8.3, §10 (refresh strategy)
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.9): add MCP server loader with scope resolution`
+
 - [ ] **Step 6: Commit**
 
 `git commit -m "feat: add MCP server loader with scope resolution"`
@@ -369,6 +678,37 @@ Actions: `loadServers()`, `addServer(server)`, `updateServer(server)`, `removeSe
 Computed: `serversByScope()` — group into user/local/project arrays.
 
 - [ ] **Step 4: Run tests — expect PASS**
+
+**Verification**
+
+*Unit tests* (`tests/stores/mcp-store.test.ts`):
+- [ ] case 1: `loadServers()` populates list grouped by scope via `serversByScope()`
+- [ ] case 2: `addServer` / `updateServer` / `removeServer` call mocked loader writers and refresh state
+- [ ] case 3: `refreshStatus()` updates each server's `status` from mocked `check_mcp_status()` — never calls the real subprocess
+- [ ] case 4: `restartServer` / `connectServer` invoke the mocked Rust commands and reflect transient `starting` state
+- [ ] case 5: `setSearchQuery` filters by name + command + args (stdio) and url (sse/http) per spec §17.7
+- [ ] case 6: `startEditing` / `stopEditing` toggle `editingServer` cleanly
+- [ ] case 7: error path — write rejection rolls back optimistic state
+
+*Component / integration tests* — N/A (Zustand store, no DOM)
+
+*Data-fixture tests* — N/A (reuses T3.9 fixtures via mocks)
+
+*Rust checks* — N/A (no `src-tauri/` changes here)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A
+
+*Manual UI / E2E smoke* — deferred to T3.12
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §5, §8.3, §17.7
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.10): add MCP Zustand store`
 
 - [ ] **Step 5: Commit**
 
@@ -419,6 +759,54 @@ Header: "MCP Servers" title + [+ Add Server] button + [Refresh Status] button + 
 
 **Loading states (spec §17.6):** Show skeleton cards during load — 3 skeleton cards for plugins, 2 for skills, 2 per scope group for MCP.
 
+**Verification**
+
+*Unit tests* — N/A (UI components covered by RTL below)
+
+*Component / integration tests* (`tests/components/mcp/McpServerCard.test.tsx`, `McpServerDetail.test.tsx`, `McpServerForm.test.tsx`, `McpPanel.test.tsx`; RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-fs` — never invoke real subprocess):
+- [ ] mounts without console errors
+- [ ] McpServerCard: status dot per state — green=connected, gray hollow=disconnected, red=error, amber pulsing=starting (spec §8.3)
+- [ ] McpServerCard: action set varies per state (Connected: Restart/View Tools/View Logs/Edit/Remove; Disconnected: Connect/View Logs/Edit/Remove; Error: Retry/View Logs/Edit/Remove; Starting: Cancel after >10s/View Logs)
+- [ ] McpServerCard: shadowed server is dimmed and shows "Overridden by [scope]" badge
+- [ ] McpServerCard: Remove → confirmation dialog → calls store removeServer
+- [ ] McpServerDetail: stdio shows command + args; sse/http shows URL; env values masked with reveal toggle; headers preserved
+- [ ] McpServerForm: type radio swaps fields; validation — name required + alphanumeric/hyphens + unique within scope; URL validation for sse/http
+- [ ] McpServerForm: `${ENV_VAR}` placeholder accepted in headers
+- [ ] McpServerForm: Save calls `saveMcpServer` (mocked); Cancel closes without write
+- [ ] McpPanel: header "MCP Servers", [+ Add Server], [Refresh Status], search bar
+- [ ] McpPanel: groups rendered with scope headers ("User Scope (available in all projects)", "Local Scope", "Project Scope")
+- [ ] McpPanel: search filters by name + command + args (stdio) + url (sse/http) (spec §17.7)
+- [ ] McpPanel: matching segments highlighted with `bg-accent/20` (spec §17.7)
+- [ ] McpPanel: loading shows 2 skeleton cards per scope group; empty state per spec §17.6
+- [ ] dark + light theme parity
+
+*Data-fixture tests* (only because each card variant needs scope/state fixtures):
+- [ ] fixture at `tests/fixtures/mcp-ui/` covering all four states (connected/disconnected/error/starting), all three types (stdio/sse/http), and a shadowed pair to exercise "Overridden" badge — verifies scope precedence (project > local > user)
+- [ ] fixture asserts NO subprocess for `claude mcp list` is invoked during component tests (spec §5 / §8.3)
+
+*Rust checks* — N/A (no `src-tauri/` changes)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A (typically <20 cards)
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] navigate to MCP; servers grouped by scope render
+- [ ] expand/collapse a card → details visible/hidden
+- [ ] add a stdio server via form → appears in correct scope group
+- [ ] edit existing server → form pre-populates; save persists
+- [ ] remove with confirmation
+- [ ] dark + light render correctly
+- [ ] DevTools Console: zero errors
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §5, §8.1, §8.3, §17.6, §17.7, §17.10
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.11): add MCP server UI components`
+
 - [ ] **Step 5: Commit**
 
 `git commit -m "feat: add MCP server UI components"`
@@ -433,6 +821,43 @@ Header: "MCP Servers" title + [+ Add Server] button + [Refresh Status] button + 
 - [ ] **Step 1: Wire up McpSection**
 
 Replace placeholder with McpPanel. Load servers on mount. Refresh status on 15s interval when panel visible, 60s when backgrounded, 2s after action (per spec §13). Show McpServerForm as modal when adding/editing.
+
+**Verification**
+
+*Unit tests* — N/A
+
+*Component / integration tests* (`tests/components/sections/McpSection.test.tsx`; RTL + jsdom + fake timers; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-fs`):
+- [ ] mounts without console errors and renders `McpPanel`
+- [ ] load on mount calls store `loadServers` once
+- [ ] refresh interval — 15s when panel visible, 60s when document hidden (toggle visibilityState), 2s burst after add/edit/remove (vitest fake timers)
+- [ ] add/edit click → `McpServerForm` modal mounts; close on Cancel/Save
+- [ ] subprocess for `claude mcp list` is mocked end-to-end — never invoked (spec §5 / §8.3)
+- [ ] dark + light theme parity
+
+*Data-fixture tests* — N/A (reuses T3.9 fixtures via mocks)
+
+*Rust checks* — N/A
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget* — N/A
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] sidebar → MCP Servers → groups render
+- [ ] [+ Add Server] opens modal; save persists
+- [ ] [Refresh Status] triggers an immediate refresh
+- [ ] tab away then return → refresh cadence resumes
+- [ ] dark + light render correctly
+- [ ] keyboard shortcut for sidebar nav lands on MCP
+- [ ] DevTools Console: zero errors
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §5, §8.3, §10 (refresh strategy), §13
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T3.12): wire up MCP Servers section`
 
 - [ ] **Step 2: Commit**
 
@@ -456,3 +881,47 @@ Replace placeholder with McpPanel. Load servers on mount. Refresh status on 15s 
 - [ ] **Step 4: Commit**
 
 `git commit -m "chore: Phase 3 Plugins/Skills/MCP complete"`
+
+**Verification**
+
+*Unit tests*:
+- [ ] case 1: `npx vitest run` — full Phase 3 suite green
+- [ ] case 2: vitest reports zero unhandled rejections / console errors
+
+*Component / integration tests* (RTL + jsdom; `@tauri-apps/api/core` + `@tauri-apps/plugin-sql` + `@tauri-apps/plugin-fs` mocked across the suite):
+- [ ] mounts without console errors across Plugins / Skills / MCP sections
+- [ ] cross-section navigation: Plugins → Skills → MCP retains state
+- [ ] dark + light theme parity across all three sections
+
+*Data-fixture tests*:
+- [ ] all Phase 3 fixtures (`tests/fixtures/plugin-loader/`, `skill-loader/`, `mcp-loader/`, `mcp-ui/`) loaded by their respective tests still pass
+- [ ] DESIGN-CONTEXT edge cases asserted: §2.1 (MCP in `~/.claude.json` + scope precedence project > local > user), §2.5 (semver + 12-char SHA), §2.9 (no `plugin.json` → `marketplace.json` fallback)
+- [ ] zero invocations of the real `claude mcp list` subprocess across the entire test run (spec §5 / §8.3)
+
+*Rust checks*:
+- [ ] `cd src-tauri && cargo check` clean
+- [ ] `cargo test` green (if any)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+
+*Perf budget*:
+- [ ] scanning ~50 plugin installations < 1s end-to-end
+- [ ] each plugin manifest parse < 100ms
+- [ ] MCP refresh tick at 15s does not block UI (frame budget < 16ms during refresh)
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] Plugins: shows installed plugins from `~/.claude/plugins/` with correct states (active/disabled/broken/orphaned/update-available)
+- [ ] Skills: shows custom skills from `~/.claude/skills/`
+- [ ] MCP: shows servers from `~/.claude.json` and project `.mcp.json`; can add/edit/remove servers; status refreshes
+- [ ] dark + light render correctly across all three sections
+- [ ] sidebar keyboard shortcuts for each section work
+- [ ] DevTools Console: zero errors
+- *Existing notes:* Steps 1-3 above (vitest, cargo check, tauri dev navigation) are the original integration gate
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §4, §5, §7, §8, §10, §13, §17
+- [ ] All Phase 3 plan checkboxes `[x]`
+- [ ] Commit: `chore(T3.13): Phase 3 Plugins/Skills/MCP complete`
