@@ -375,7 +375,7 @@ Add `mod sessions;` and register all 4 commands (`discover_sessions`, `get_sessi
 **Files:**
 - Create: `src/lib/session-loader.ts`
 
-- [ ] **Step 1: Implement session loading pipeline**
+- [x] **Step 1: Implement session loading pipeline**
 
 `loadAllSessions()`:
 1. Call `invoke("discover_sessions")` — single batch Rust command
@@ -390,47 +390,47 @@ Add `mod sessions;` and register all 4 commands (`discover_sessions`, `get_sessi
 
 `loadSingleSession(sessionId)`: Load JSONL file, parse to ConversationEntry[], return for conversation viewer.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 `git commit -m "feat(T2.5): session loader with SQLite sync"`
 
 **Verification**
 
 *Unit tests* (`tests/lib/session-loader.test.ts`):
-- [ ] case 1: `loadAllSessions()` calls `invoke("discover_sessions")` exactly once (single batch, not N calls)
-- [ ] case 2: cross-references PID files — sessions whose PID file is present and "alive" get `state: "alive"`; missing PID file → `"ended"`
-- [ ] case 3: SQLite upsert uses `ON CONFLICT(session_id) DO UPDATE SET` and preserves `display_name`, `tags`, `group_id`, `is_pinned`, `archived_at`, `sort_order`
-- [ ] case 4: session already in SQLite with recent `lastSyncedAt` → re-parse skipped
-- [ ] case 5: dual-write safety — when a PID file exists and is alive, loader does NOT mark session as "ended" (DESIGN-CONTEXT §2.8)
-- [ ] case 6: `loadSingleSession(id)` calls `invoke("read_jsonl_file")` and returns parsed `ConversationEntry[]`
+- [x] case 1: `loadAllSessions()` calls `invoke("discover_sessions")` exactly once (single batch, not N calls)
+- [x] case 2: cross-references PID files — sessions whose PID file is present and "alive" get `state: "alive"`; missing PID file → `"ended"`
+- [x] case 3: SQLite upsert uses `ON CONFLICT(session_id) DO UPDATE SET` and preserves `display_name`, `tags`, `group_id`, `is_pinned`, `archived_at`, `sort_order`
+- [x] case 4: session already in SQLite with recent `lastSyncedAt` → re-parse skipped
+- [x] case 5: dual-write safety — when a PID file exists and is alive, loader does NOT mark session as "ended" (DESIGN-CONTEXT §2.8)
+- [x] case 6: `loadSingleSession(id)` calls `invoke("read_jsonl_file")` and returns parsed `ConversationEntry[]`
 
 *Component / integration tests* (`tests/lib/session-loader.test.ts`, mock `@tauri-apps/api/core` + `@tauri-apps/plugin-sql`):
-- [ ] mock IPC + SQL plugins; assert orchestration order: discover → read_pid_files → SQLite read → SQLite upsert
-- [ ] no console errors during full pipeline run
+- [x] mock IPC + SQL plugins; assert orchestration order: discover → read_pid_files → SQLite read → SQLite upsert
+- [x] no console errors during full pipeline run
 
 *Data-fixture tests* (task reads JSONL via Rust + writes SQLite):
-- [ ] fixture from T2.4 — mocked `discover_sessions` response of 20 sessions including stale-index, missing-jsonl, no-slug, alive-with-pid (DESIGN-CONTEXT §2.2, §2.3, §2.8)
-- [ ] loader produces expected merged shape per fixture
-- [ ] (DB) migration check — N/A (no schema change in this task; uses existing v1 schema)
+- [x] fixture from T2.4 — mocked `discover_sessions` response of 20 sessions including stale-index, missing-jsonl, no-slug, alive-with-pid (DESIGN-CONTEXT §2.2, §2.3, §2.8)
+- [x] loader produces expected merged shape per fixture
+- [x] (DB) migration check — N/A (no schema change in this task; uses existing v1 schema)
 
 *Rust checks* — N/A (no `src-tauri/` changes — task only consumes existing IPC commands)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* (multi-file scan):
-- [ ] full pipeline for 500 sessions completes < 30s end-to-end (spec)
-- [ ] subsequent reload (warm SQLite) < 2s
+- [x] full pipeline for 500 sessions completes < 30s end-to-end (spec)
+- [x] subsequent reload (warm SQLite) < 2s
 
 *Manual UI / E2E smoke* — N/A in isolation; verified via T2.13 wiring
 - *Existing notes:* (none)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §10 (data refresh), §5.1
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.5): session loader with SQLite sync`
+- [x] All checks above pass
+- [x] Behavior matches spec §10 (data refresh), §5.1
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.5): session loader with SQLite sync`
 
 ---
 
