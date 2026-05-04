@@ -1,21 +1,21 @@
-Execute Phase 2 of the claude-manager build.
+Execute Phase 4 of the claude-manager build.
 
 PRE-FLIGHT (do this FIRST, before anything else, every iteration):
 1. Run `pwd` and `git branch --show-current`.
-2. If pwd does not end in `.worktrees/phase-2` OR the branch is not `feature/phase-2`, STOP IMMEDIATELY.
+2. If pwd does not end in `.worktrees/phase-4` OR the branch is not `feature/phase-4`, STOP IMMEDIATELY.
    Do not edit any files. Output this message verbatim and then output the promise:
-       "Wrong workspace: phase-2 work must run from .worktrees/phase-2 on feature/phase-2.
+       "Wrong workspace: phase-4 work must run from .worktrees/phase-4 on feature/phase-4.
         Current pwd=<actual>, branch=<actual>. Cancel this loop and re-launch from the worktree."
-       <promise>PHASE_2_WRONG_WORKSPACE</promise>
+       <promise>PHASE_4_WRONG_WORKSPACE</promise>
 3. Otherwise proceed.
 
-Plan file: docs/superpowers/plans/2026-05-03-phase2-sessions-dashboard.md
-T2.1 is already complete (commit feat(T2.1) is in git history).
-You will work tasks T2.2 through T2.13 sequentially in plan order. SERIAL ONLY — do not parallelize.
+Plan file: docs/superpowers/plans/2026-05-03-phase4-dialogs-polish.md
+Phase 3 must be complete (all T3.x commits in git history) before this phase starts.
+You will work tasks T4.1 through T4.11 sequentially in plan order. SERIAL ONLY — do not parallelize.
 
 For each task in turn:
 1. Read CLAUDE.md section "Executing a plan task" (the 7 standing rules).
-2. Read the "Conventions for all Phase 2 tasks" block at the top of the plan.
+2. Read the "Conventions for all Phase 4 tasks" block at the top of the plan.
 3. Read the task's section in the plan, including every spec citation. Open
    docs/superpowers/specs/2026-05-03-claude-manager-design.md and read the cited §X.Y sections in full.
    Do NOT invent field names, enum values, or behavior.
@@ -24,7 +24,8 @@ For each task in turn:
    "FAIL: <item> — <reason>" for each. For sections marked N/A in the plan print
    "SKIP (N/A): <section>". Never reclassify a non-N/A item as N/A.
 6. Flip the plan checkbox from [ ] to [x] in the same commit that completes the task.
-7. Commit with message in the form `feat(T2.x): <DoD subject>`. The Definition-of-Done line is canonical.
+7. Commit with message in the form `feat(T4.x): <DoD subject>` (final task uses `chore(T4.11): ...`).
+   The Definition-of-Done line is canonical.
 
 Type-level test assertions use vitest `expectTypeOf`.
 
@@ -35,7 +36,7 @@ before promising.
 Move to the next task only after the current task's commit has landed.
 
 If a task FAILs after a good-faith fix attempt, output exactly
-`<promise>PHASE_2_BLOCKED_AT_T2.x</promise>` (substituting the actual task number) and stop. Do not skip ahead.
+`<promise>PHASE_4_BLOCKED_AT_T4.x</promise>` (substituting the actual task number) and stop. Do not skip ahead.
 
 Forbidden absolutely:
 - `--no-verify`
@@ -45,7 +46,7 @@ Forbidden absolutely:
 - editing the plan to lower verification standards
 - parallelizing dependent tasks
 
-When ALL 12 remaining tasks (T2.2 through T2.13) are complete, all their checkboxes are flipped, and
-T2.13's commit has landed, output exactly:
+When ALL 11 tasks (T4.1 through T4.11) are complete, all their checkboxes are flipped, and
+T4.11's commit has landed, output exactly:
 
-<promise>PHASE_2_COMPLETE</promise>
+<promise>PHASE_4_COMPLETE</promise>
