@@ -1,0 +1,145 @@
+// Plugin list page — see spec §6.5, §17.6, §17.7. Header (title + counts +
+// "Install Plugin" hint button + "Check for Updates" button + search), body
+// is a responsive grid of PluginCards.
+//
+// Update detection per spec §13: clicking "Check for Updates" calls
+// `checkPluginUpdates`, which talks to the Rust IPC and merges the result
+// back into the store via `setPlugins`.
+
+import { useMemo, useState } from "react";
+import { Plus, RefreshCw, Search } from "lucide-react";
+
+import { filterPlugins, usePluginStore } from "../../stores/plugin-store";
+import { checkPluginUpdates } from "../../lib/plugin-updates";
+import { PluginCard } from "./PluginCard";
+
+export function PluginListView() {
+  const plugins = usePluginStore((s) => s.plugins);
+  const searchQuery = usePluginStore((s) => s.searchQuery);
+  const setSearchQuery = usePluginStore((s) => s.setSearchQuery);
+  const selectedPlugin = usePluginStore((s) => s.selectedPlugin);
+  const isLoading = usePluginStore((s) => s.isLoading);
+
+  const [isChecking, setIsChecking] = useState(false);
+
+  const filtered = useMemo(
+    () => filterPlugins(plugins, searchQuery),
+    [plugins, searchQuery],
+  );
+
+  const installedCount = plugins.length;
+  const activeCount = plugins.filter(
+    (p) => p.state === "active" || p.state === "update-available",
+  ).length;
+  const disabledCount = plugins.filter((p) => p.state === "disabled").length;
+
+  const onCheckForUpdates = async () => {
+    setIsChecking(true);
+    try {
+      const refreshed = await checkPluginUpdates(plugins, { force: true });
+      // Push the new state back into the store. We mirror the loadPlugins
+      // shape so the cards re-render with `update-available` markers.
+      usePluginStore.setState({ plugins: refreshed });
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  return (
+    <section
+      data-testid="plugin-list-view"
+      className="flex h-full flex-col gap-4 p-6"
+    >
+      <header className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-text-primary">Plugins</h1>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              data-testid="install-plugin-btn"
+              title="Run `claude plugins install <name>` in your terminal"
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+            >
+              <Plus size={14} />
+              Install Plugin
+            </button>
+            <button
+              type="button"
+              data-testid="check-updates-btn"
+              onClick={() => {
+                void onCheckForUpdates();
+              }}
+              disabled={isChecking || plugins.length === 0}
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={isChecking ? "animate-spin" : ""} />
+              Check for Updates
+            </button>
+          </div>
+        </div>
+        <div className="flex gap-3 text-xs text-text-muted">
+          <span data-testid="stat-installed">{installedCount} installed</span>
+          <span data-testid="stat-active">{activeCount} active</span>
+          <span data-testid="stat-disabled">{disabledCount} disabled</span>
+        </div>
+        <div className="relative">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-text-muted"
+          />
+          <input
+            type="search"
+            data-testid="plugin-search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search plugins by name, description, or marketplace…"
+            className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+          />
+        </div>
+      </header>
+
+      {isLoading && plugins.length === 0 ? (
+        <div data-testid="loading-skeleton" className="flex flex-col gap-2">
+          <div className="h-24 animate-pulse rounded-md bg-bg-tertiary" />
+          <div className="h-24 animate-pulse rounded-md bg-bg-tertiary" />
+          <div className="h-24 animate-pulse rounded-md bg-bg-tertiary" />
+        </div>
+      ) : plugins.length === 0 ? (
+        <div
+          data-testid="empty-state"
+          className="flex flex-1 items-center justify-center text-center text-sm text-text-muted"
+        >
+          No plugins installed. Use{" "}
+          <code className="mx-1 rounded bg-bg-tertiary px-1.5 py-0.5">
+            claude plugins install &lt;name&gt;
+          </code>{" "}
+          to add plugins.
+        </div>
+      ) : filtered.length === 0 ? (
+        <div
+          data-testid="no-matches"
+          className="flex flex-1 items-center justify-center text-center text-sm text-text-muted"
+        >
+          No results for "{searchQuery}"
+        </div>
+      ) : (
+        <div
+          data-testid="plugin-grid"
+          className="grid grid-cols-1 gap-3 overflow-auto md:grid-cols-2 xl:grid-cols-3"
+        >
+          {filtered.map((p) => (
+            <PluginCard
+              key={`${p.name}@${p.marketplace}@${p.installPath}`}
+              plugin={p}
+              selected={
+                selectedPlugin != null &&
+                selectedPlugin.name === p.name &&
+                selectedPlugin.installPath === p.installPath
+              }
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}

@@ -23,6 +23,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             get_db_path,
             sessions::commands::discover_sessions,
@@ -33,6 +34,7 @@ pub fn run() {
             plugins::commands::read_settings_enabled_plugins,
             plugins::commands::read_plugin_contents,
             plugins::commands::write_plugin_enabled,
+            plugins::commands::check_plugin_updates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

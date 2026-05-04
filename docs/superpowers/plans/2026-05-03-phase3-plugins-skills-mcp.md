@@ -277,21 +277,21 @@ Computed: `filteredPlugins()` — filter by search query matching name, descript
 **Files:**
 - Create: all files under `src/components/plugins/`
 
-- [ ] **Step 1: Implement PluginCard**
+- [x] **Step 1: Implement PluginCard**
 
 Card showing: status dot (colored per state §6.4), plugin name, marketplace source, description (truncated), version pill, component counts (N skills, N agents), enable/disable toggle switch. Broken plugins: red border + warning text + Reinstall/Remove buttons. Disabled plugins: 70% opacity.
 
-- [ ] **Step 2: Implement PluginListView**
+- [x] **Step 2: Implement PluginListView**
 
 Header: "Plugins" title + stats (N installed, N active, N disabled) + [Install Plugin] button (opens terminal command hint) + [Check for Updates] button + search bar. Body: grid/list of PluginCards. Empty state per spec §17.6: "No plugins installed. Use `claude plugins install <name>` to add plugins."
 
 **Update detection (spec §13):** "Check for Updates" compares local `gitCommitSha` against remote HEAD via `git ls-remote`. Cache result for 1hr. Mark plugins with mismatched SHAs as `update-available` state.
 
-- [ ] **Step 3: Implement PluginDetailView**
+- [x] **Step 3: Implement PluginDetailView**
 
 Header: name, marketplace, version, status, action buttons (Open in File Browser, Open in VS Code — use `shell.open()` from Tauri). Tabbed content: Skills / Agents / Hooks tabs.
 
-- [ ] **Step 4: Implement tab components**
+- [x] **Step 4: Implement tab components**
 
 `PluginSkillsTab`: List of skills with name + description from frontmatter.
 `PluginAgentsTab`: List of agents with name + description + model + tools.
@@ -302,27 +302,27 @@ Header: name, marketplace, version, status, action buttons (Open in File Browser
 *Unit tests* — N/A (UI components covered by RTL below)
 
 *Component / integration tests* (`tests/components/plugins/PluginCard.test.tsx`, `PluginListView.test.tsx`, `PluginDetailView.test.tsx`, `PluginSkillsTab.test.tsx`, `PluginAgentsTab.test.tsx`, `PluginHooksTab.test.tsx`; RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-sql` + `@tauri-apps/plugin-fs` + `@tauri-apps/plugin-shell`):
-- [ ] mounts without console errors
-- [ ] PluginCard: status dot color matches each `PluginState` (active/disabled/broken/orphaned/update-available)
-- [ ] PluginCard: broken plugin renders red border + Reinstall/Remove buttons; disabled plugin renders 70% opacity
-- [ ] PluginCard: toggle switch click → calls store `togglePlugin` once
-- [ ] PluginListView: header counts (installed/active/disabled) reflect store; empty state copy matches spec §17.6
-- [ ] PluginListView: "Check for Updates" click invokes update detection action (mocked) — local SHA vs mocked remote HEAD
-- [ ] PluginDetailView: tab switching between Skills / Agents / Hooks renders correct tab body
-- [ ] PluginAgentsTab + PluginSkillsTab + PluginHooksTab: render rows from fixture data
-- [ ] dark + light theme parity (toggle theme attribute, snapshot key classes)
+- [x] mounts without console errors
+- [x] PluginCard: status dot color matches each `PluginState` (active/disabled/broken/orphaned/update-available)
+- [x] PluginCard: broken plugin renders red border + Reinstall/Remove buttons; disabled plugin renders 70% opacity
+- [x] PluginCard: toggle switch click → calls store `togglePlugin` once
+- [x] PluginListView: header counts (installed/active/disabled) reflect store; empty state copy matches spec §17.6
+- [x] PluginListView: "Check for Updates" click invokes update detection action (mocked) — local SHA vs mocked remote HEAD
+- [x] PluginDetailView: tab switching between Skills / Agents / Hooks renders correct tab body
+- [x] PluginAgentsTab + PluginSkillsTab + PluginHooksTab: render rows from fixture data
+- [x] dark + light theme parity (toggle theme attribute, snapshot key classes)
 
 *Data-fixture tests* — only the update-detection path (mock the `git ls-remote` network call):
-- [ ] fixture comparing local `gitCommitSha` vs remote HEAD → emits `update-available` for mismatched plugins (DESIGN-CONTEXT §2.5)
+- [x] fixture comparing local `gitCommitSha` vs remote HEAD → emits `update-available` for mismatched plugins (DESIGN-CONTEXT §2.5)
 
 *Rust checks* — N/A (no `src-tauri/` changes)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* (renders many plugin cards):
-- [ ] rendering 50 PluginCards in PluginListView < 200ms (RTL render timing)
+- [x] rendering 50 PluginCards in PluginListView < 200ms (RTL render timing)
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
 - [ ] navigate to Plugins; cards render with correct status dots
@@ -333,12 +333,12 @@ Header: name, marketplace, version, status, action buttons (Open in File Browser
 - [ ] DevTools Console: zero errors
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §4, §6.4, §13 (update detection), §17.6, §17.7
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.4): add plugin list and detail UI components`
+- [x] All checks above pass (manual UI smoke deferred to T3.5 — components are not yet reachable from the running app; checkboxes flipped in T3.5 commit)
+- [x] Behavior matches spec §4, §6.4, §13 (update detection), §17.6, §17.7
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.4): add plugin list and detail UI components`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat: add plugin list and detail UI components"`
 

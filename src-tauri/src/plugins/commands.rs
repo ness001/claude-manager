@@ -359,6 +359,42 @@ fn stem(p: &Path) -> String {
         .to_string()
 }
 
+/// Look up `git ls-remote origin HEAD` for each marketplace under
+/// `~/.claude/plugins/marketplaces/<name>/`. Returns a marketplace → SHA map.
+/// Marketplaces that aren't a git checkout, can't reach their remote, or
+/// time out are simply omitted. Spec §13 (cache TTL is enforced on the
+/// frontend).
+#[tauri::command]
+pub fn check_plugin_updates(marketplaces: Vec<String>) -> Result<std::collections::HashMap<String, String>, String> {
+    let Some(root) = claude_home() else {
+        return Err("Could not resolve ~/.claude".to_string());
+    };
+    let marketplaces_root = root.join("plugins").join("marketplaces");
+    let mut out: std::collections::HashMap<String, String> =
+        std::collections::HashMap::new();
+    for name in marketplaces {
+        let dir = marketplaces_root.join(&name);
+        if !dir.join(".git").exists() {
+            continue;
+        }
+        let output = std::process::Command::new("git")
+            .args(["ls-remote", "origin", "HEAD"])
+            .current_dir(&dir)
+            .output();
+        let Ok(output) = output else { continue };
+        if !output.status.success() {
+            continue;
+        }
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        if let Some(sha) = stdout.split_whitespace().next() {
+            if sha.len() == 40 {
+                out.insert(name, sha.to_string());
+            }
+        }
+    }
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
