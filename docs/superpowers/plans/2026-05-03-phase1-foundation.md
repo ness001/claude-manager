@@ -124,6 +124,36 @@ Include: `node_modules/`, `dist/`, `target/`, `*.db`, `.vite/`. Keep `Cargo.lock
 
 `git add -A && git commit -m "feat: scaffold Tauri v2 + React 19 + Vite project"`
 
+**Verification**
+
+*Unit tests* — N/A (no application logic shipped in this task; scaffolding only).
+
+*Component / integration tests* — N/A (no components beyond a "Hello" placeholder; real component tests start at T1.4).
+
+*Data-fixture tests* — N/A (no SQLite / JSONL / `~/.claude/` reads in this task).
+
+*Rust checks* — task touches `src-tauri/`:
+- [ ] `cd src-tauri && cargo check` clean
+- [ ] `cargo test` green (no tests yet, so `0 passed` is acceptable)
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `// @ts-ignore`, `eslint-disable`, or `any` introduced
+
+*Perf budget* — N/A (no scans or large list rendering in scaffold).
+
+*Manual UI / E2E smoke*:
+- [ ] `npm run dev` serves Vite on `http://localhost:1420`
+- [ ] `npx tauri dev` opens a 1200x800 window titled "Claude Manager"
+- [ ] DevTools Console: zero errors / React warnings
+- *Existing notes:* `npx tauri info` confirms Tauri v2 + Rust toolchain + Webview2; `cd src-tauri && cargo check` verifies Rust compiles.
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §1 "Tech Stack" of `2026-05-03-claude-manager-design.md`
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T1.1): scaffold Tauri v2 + React 19 + Vite project`
+
 ---
 
 ### Task 2: Tailwind CSS v4 + Theme System
@@ -165,6 +195,36 @@ Body: no margin, system font stack, antialiased. HTML: 150ms transition on bg/co
 
 `git commit -m "feat: add Tailwind CSS v4 theme system with dark/light/system modes"`
 
+**Verification**
+
+*Unit tests* (`tests/stores/theme-store.test.ts`):
+- [ ] case 1: default state → `mode === "dark"` and `resolved === "dark"`
+- [ ] case 2: `setMode("light")` → both `mode` and `resolved` become `"light"`
+- [ ] case 3: `setMode("dark")` switches back to `"dark"`
+- [ ] case 4: `setMode("system")` with `matchMedia` mocked to `matches: true` → `resolved === "dark"`
+- [ ] case 5 (edge): `setMode("system")` with `matchMedia` mocked to `matches: false` → `resolved === "light"`
+
+*Component / integration tests* — N/A (App.tsx is not yet wired; theme class is applied at T1.6, where component-level dark/light parity is exercised).
+
+*Data-fixture tests* — N/A (no SQLite / JSONL / `~/.claude/` reads; theme persistence is layered in at T1.6 after T1.7 ships the DB).
+
+*Rust checks* — N/A (no `src-tauri/` changes in this task).
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `// @ts-ignore`, `eslint-disable`, or `any` introduced
+
+*Perf budget* — N/A.
+
+*Manual UI / E2E smoke* — N/A at this step (App not wired; manual smoke deferred to T1.6).
+- *Existing notes:* `tests/setup.ts` mocks `window.matchMedia` (jsdom does not implement it) returning `prefers-color-scheme: dark` as `false` by default; tests then override per case. Tailwind v4 syntax: `@import "tailwindcss"` + `@theme {}` block with `--color-*` custom properties (NOT v3 `@tailwind base/components/utilities`).
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §1 "Tech Stack" + §7 "Settings — Appearance" (theme is app-local) of `2026-05-03-claude-manager-design.md`
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T1.2): add Tailwind CSS v4 theme system with dark/light/system modes`
+
 ---
 
 ### Task 3: Navigation Store
@@ -188,6 +248,35 @@ Export `Section` type as a TypeScript union type: `type Section = "dashboard" | 
 - [x] **Step 5: Commit**
 
 `git commit -m "feat: add navigation store with 6 sections"`
+
+**Verification**
+
+*Unit tests* (`tests/stores/navigation-store.test.ts`):
+- [ ] case 1: initial state → `activeSection === "dashboard"`
+- [ ] case 2: `navigateTo("sessions")` → `activeSection === "sessions"`
+- [ ] case 3: round-trip through all 6 sections (`dashboard`, `sessions`, `plugins`, `skills`, `mcp`, `settings`) each updates `activeSection`
+- [ ] case 4 (type-level): `Section` union enforced — passing an invalid string fails `tsc --noEmit`
+
+*Component / integration tests* — N/A (no component consumes this store until T1.4 / T1.5).
+
+*Data-fixture tests* — N/A (no SQLite / JSONL / `~/.claude/` reads; navigation state is in-memory only).
+
+*Rust checks* — N/A (no `src-tauri/` changes).
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `// @ts-ignore`, `eslint-disable`, or `any` introduced
+
+*Perf budget* — N/A.
+
+*Manual UI / E2E smoke* — N/A at this step (deferred to T1.6).
+- *Existing notes:* `Section` is a TypeScript union (`"dashboard" | "sessions" | "plugins" | "skills" | "mcp" | "settings"`), not an enum — idiomatic for Zustand/React.
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §1 "App Layout" of `2026-05-03-claude-manager-design.md`
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T1.3): add navigation store with 6 sections`
 
 ---
 
@@ -216,6 +305,36 @@ Button with `aria-label`, `data-active`, icon, label text. Active state: accent 
 - [x] **Step 6: Commit**
 
 `git commit -m "feat: add SidebarRail component with 6 nav items"`
+
+**Verification**
+
+*Unit tests* — N/A (no pure logic; component-level only).
+
+*Component / integration tests* (`tests/components/SidebarRail.test.tsx`, RTL + jsdom):
+- [ ] mounts without console errors
+- [ ] renders all 6 nav items by `aria-label` (`Dashboard`, `Sessions`, `Plugins`, `Skills`, `MCP Servers`, `Settings`)
+- [ ] interaction: click on "Sessions" → navigation store `activeSection === "sessions"` and the corresponding `SidebarRailItem` has `data-active="true"`
+- [ ] active item shows the left-border accent indicator (assert class / computed style)
+- [ ] dark + light theme parity: toggle `document.documentElement.classList` between empty and `"dark"`, assert key tokens (active accent, sidebar bg) resolve in each
+
+*Data-fixture tests* — N/A.
+
+*Rust checks* — N/A.
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `// @ts-ignore`, `eslint-disable`, or `any` introduced
+
+*Perf budget* — N/A.
+
+*Manual UI / E2E smoke* — deferred to T1.6 (App not yet wired).
+- *Existing notes:* Uses `lucide-react` icons (NOT emoji — emoji rendering varies across platforms). 48px wide rail. Active state: accent color + left border indicator.
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §1 "App Layout" of `2026-05-03-claude-manager-design.md`
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T1.4): add SidebarRail component with 6 nav items`
 
 ---
 
@@ -246,6 +365,36 @@ Maps `activeSection` from navigation store to the corresponding component. Simpl
 
 `git commit -m "feat: add ContentArea section router with 6 placeholder sections"`
 
+**Verification**
+
+*Unit tests* — N/A (router is a pure object lookup with no branching logic worth isolating from the component test).
+
+*Component / integration tests* (`tests/components/ContentArea.test.tsx`, RTL + jsdom):
+- [ ] mounts without console errors
+- [ ] for each `activeSection` in `{dashboard, sessions, plugins, skills, mcp, settings}`, the correct heading is rendered (e.g. `mcp` → "MCP Servers", not "MCP")
+- [ ] interaction: calling `navigateTo("plugins")` on the navigation store re-renders ContentArea with the Plugins heading
+- [ ] all 6 placeholder sections mount individually without errors
+- [ ] dark + light theme parity (toggle `document.documentElement.classList`, assert text + bg tokens)
+
+*Data-fixture tests* — N/A.
+
+*Rust checks* — N/A.
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `// @ts-ignore`, `eslint-disable`, or `any` introduced
+
+*Perf budget* — N/A.
+
+*Manual UI / E2E smoke* — deferred to T1.6.
+- *Existing notes:* Each placeholder renders heading + brief description. MCP section heading is "MCP Servers" (not "MCP"). ContentArea is a simple object lookup keyed by `activeSection`.
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §1 "App Layout" of `2026-05-03-claude-manager-design.md`
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T1.5): add ContentArea section router with 6 placeholder sections`
+
 ---
 
 ### Task 6: Wire Up App.tsx — Layout + Theme + Keyboard Shortcuts
@@ -268,6 +417,45 @@ Flex row: `<SidebarRail />` + `<ContentArea />`, full viewport height, theme cla
 - [x] **Step 3: Commit**
 
 `git commit -m "feat: wire up App layout with sidebar, content area, theme, and keyboard shortcuts"`
+
+**Verification**
+
+*Unit tests* — N/A (App.tsx wiring is exercised through its component test; no isolated pure logic to unit-test separately).
+
+*Component / integration tests* (`tests/components/App.test.tsx`, RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-sql` for the persistence path):
+- [ ] mounts without console errors
+- [ ] applies `dark` class on `document.documentElement` when `resolved === "dark"`; removes it when `"light"`
+- [ ] interaction: dispatch `keydown` `Ctrl+1` → navigation store `activeSection === "dashboard"`; `Ctrl+2..6` map in order to `sessions, plugins, skills, mcp, settings`
+- [ ] `Ctrl+,` → `activeSection === "settings"`
+- [ ] shortcut handler is skipped when `document.activeElement` is an `<input>`, `<textarea>`, or `[contenteditable]`
+- [ ] `e.preventDefault()` is called on matched shortcuts (assert via spy)
+- [ ] when `mode === "system"`, a `matchMedia` change listener is registered; switching `mode` away from `"system"` removes it (no leak)
+- [ ] dark + light theme parity (toggle `document.documentElement.classList`, assert SidebarRail + ContentArea key tokens)
+
+*Data-fixture tests* — only relevant once persistence (T1.7) is wired:
+- [ ] with `app_settings.theme_mode = "light"` mocked, App calls `setMode("light")` on mount
+
+*Rust checks* — N/A (no `src-tauri/` changes in this task).
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `// @ts-ignore`, `eslint-disable`, or `any` introduced
+
+*Perf budget* — N/A.
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] window opens; clicking each of the 6 sidebar icons switches the content area
+- [ ] `Ctrl+1` through `Ctrl+6` and `Ctrl+,` work; do NOT trigger Chromium defaults (e.g. `Ctrl+N` new window)
+- [ ] focusing a text input and pressing `Ctrl+1` does NOT navigate
+- [ ] dark + light render correctly; toggling system OS theme with `mode === "system"` flips colors live
+- [ ] DevTools Console: zero errors / React warnings (no duplicate-listener warnings after toggling system mode on/off repeatedly)
+- *Existing notes:* `useEffect` for the system theme listener must include `mode` in its dependency array AND return a cleanup that removes the listener — without this, switching to "system" doesn't register, and toggling on/off accumulates duplicate listeners. Theme persistence reads `app_settings` after T1.7 ships. Shortcuts check `ctrlKey` only (not shift/alt/meta) and call `e.preventDefault()` on match.
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §1 "App Layout" of `2026-05-03-claude-manager-design.md`
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T1.6): wire up App layout with sidebar, content area, theme, and keyboard shortcuts`
 
 ---
 
@@ -300,6 +488,44 @@ Add `mod db;`, create `#[tauri::command] fn get_db_path(app: AppHandle) -> Resul
 
 `git commit -m "feat: add SQLite database initialization with schema v1"`
 
+**Verification**
+
+*Unit tests* (`tests/lib/db.test.ts`, mock `@tauri-apps/api/core` `invoke` + `@tauri-apps/plugin-sql` `Database.load`):
+- [ ] case 1: `getDb()` invokes `get_db_path` Rust command exactly once across multiple calls (singleton)
+- [ ] case 2: subsequent `getDb()` calls return the same instance
+- [ ] case 3: `dbSelect<T>()` and `dbExecute()` forward to the underlying `Database` API and propagate errors
+
+*Component / integration tests* — N/A (no UI surface for the DB layer in T1.7; consumed by later phases).
+
+*Data-fixture tests* — task reads SQLite at `~/.claude-manager/`-style app data dir:
+- [ ] fixture at `tests/fixtures/T1.7/` containing (a) an empty dir → fresh DB initialized, (b) a pre-existing `v0` DB (no `schema_version` row) → migration sets it to `1`
+- [ ] after init, all 4 tables exist: `sessions`, `tags`, `groups`, `app_settings` (assert via `SELECT name FROM sqlite_master WHERE type='table'`)
+- [ ] `INSERT OR IGNORE` for `schema_version = '1'` is idempotent — re-opening does NOT re-create tables or duplicate the version row
+- [ ] migration: open at v(N-1) = `0` (no row), call `getDb()`, assert `app_settings.schema_version` row equals `1`
+- [ ] migration framework: `migrate_1_to_2()` slot exists and is wrapped in a transaction (rolls back on failure) even though it is a no-op for v1
+
+*Rust checks* — task touches `src-tauri/`:
+- [ ] `cd src-tauri && cargo check` clean
+- [ ] `cargo test` green (path helper unit test if added; otherwise `0 passed` is acceptable)
+- [ ] `get_db_path` registered in `invoke_handler` and creates the app data dir if missing
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors
+- [ ] no new `// @ts-ignore`, `eslint-disable`, or `any` introduced
+
+*Perf budget* — N/A (single-file DB open, not a multi-file scan).
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] on first launch, the SQLite file appears at the resolved app data dir; on second launch, no schema errors
+- [ ] DevTools Console: zero errors related to `Database.load` or `invoke("get_db_path")`
+- *Existing notes:* Schema lives in TypeScript only — Rust resolves the file path via `app.path().app_data_dir()` (Tauri v2 `Manager` trait, no extra plugin). `tauri-plugin-path` is NOT a real Tauri v2 crate. Migration framework runs sequential `migrate_N_to_N+1` functions in transactions; v1 has nothing to migrate, just sets the version.
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §1 "Tech Stack — Database" + §15 "Key File Paths" + §17.9 "Schema Migration" of `2026-05-03-claude-manager-design.md`
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `feat(T1.7): add SQLite database initialization with schema v1`
+
 ---
 
 ### Task 8: Full Build Verification
@@ -313,3 +539,44 @@ Add `mod db;`, create `#[tauri::command] fn get_db_path(app: AppHandle) -> Resul
 - [x] **Step 4: Final commit**
 
 `git commit -m "chore: Phase 1 Foundation complete"`
+
+**Verification**
+
+*Unit tests* — N/A (T1.8 is itself a meta-verification step; per-task unit tests are owned by T1.2 and T1.3).
+
+*Component / integration tests* — N/A (owned by T1.4 / T1.5 / T1.6).
+
+*Data-fixture tests* — N/A (owned by T1.7).
+
+*Rust checks*:
+- [ ] `cd src-tauri && cargo check` clean
+- [ ] `cargo test` green
+
+*Type-check + lint gate*:
+- [ ] `npx tsc --noEmit` zero errors across the whole `src/` tree
+- [ ] no new `// @ts-ignore`, `eslint-disable`, or `any` introduced anywhere in Phase 1
+
+*Perf budget* — N/A.
+
+*Manual UI / E2E smoke* (run `npx tauri dev`):
+- [ ] app window opens with dark theme by default
+- [ ] sidebar shows 6 lucide icons (Dashboard, Sessions, Plugins, Skills, MCP Servers, Settings)
+- [ ] clicking each sidebar item switches the section
+- [ ] `Ctrl+1` through `Ctrl+6` navigate; `Ctrl+,` jumps to Settings
+- [ ] DevTools Console: zero errors / React warnings
+- *Existing notes:* `npx vitest run` all PASS; `cd src-tauri && cargo check` clean; `npx tauri dev` opens window with dark theme + sidebar with 6 icons + click & `Ctrl+1-6` working.
+
+*Per-task DoD audit — confirm each prior task is fully signed off:*
+- [ ] T1.1 DoD checklist satisfied (scaffold + cargo check + manual smoke + commit)
+- [ ] T1.2 DoD checklist satisfied (theme-store unit tests + tsc clean + commit)
+- [ ] T1.3 DoD checklist satisfied (navigation-store unit tests + tsc clean + commit)
+- [ ] T1.4 DoD checklist satisfied (SidebarRail component test + tsc clean + commit)
+- [ ] T1.5 DoD checklist satisfied (ContentArea component test + tsc clean + commit)
+- [ ] T1.6 DoD checklist satisfied (App component test + manual smoke + commit)
+- [ ] T1.7 DoD checklist satisfied (DB unit + data-fixture tests + cargo check + commit)
+
+*Definition of Done*:
+- [ ] All checks above pass
+- [ ] Behavior matches spec §1 "Tech Stack" + §1 "App Layout" + §15 "Key File Paths" of `2026-05-03-claude-manager-design.md`
+- [ ] Plan checkbox `[x]`
+- [ ] Commit: `chore(T1.8): Phase 1 Foundation complete`
