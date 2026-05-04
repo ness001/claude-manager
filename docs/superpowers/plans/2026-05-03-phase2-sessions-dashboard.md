@@ -440,13 +440,13 @@ Add `mod sessions;` and register all 4 commands (`discover_sessions`, `get_sessi
 - Create: `src/stores/session-store.ts`
 - Create: `tests/stores/session-store.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test: initial state (empty sessions, no selection), setViewMode changes mode, setSearchQuery filters, selectSession updates selectedId, filteredSessions returns correct subset.
 
-- [ ] **Step 2: Run tests — expect FAIL**
+- [x] **Step 2: Run tests — expect FAIL**
 
-- [ ] **Step 3: Implement session store**
+- [x] **Step 3: Implement session store**
 
 State: `sessions: SessionMeta[]`, `selectedId: string | null`, `viewMode: "my" | "project" | "timeline"`, `searchQuery: string`, `isLoading: boolean`.
 
@@ -456,22 +456,22 @@ Derived: `filteredSessions()` — filter by search query (case-insensitive, matc
 
 **Performance note:** Don't put `filteredSessions()` as a store method that calls `get()`. Instead, compute it as a derived selector outside the store, or use `useMemo` in the component. This prevents unnecessary re-renders (Zustand uses referential equality).
 
-- [ ] **Step 4: Run tests — expect PASS**
+- [x] **Step 4: Run tests — expect PASS**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat(T2.6): session Zustand store with filtering and view modes"`
 
 **Verification**
 
 *Unit tests* (`tests/stores/session-store.test.ts`):
-- [ ] case 1: initial state — `sessions: []`, `selectedId: null`, `viewMode: "my"`, `searchQuery: ""`, `isLoading: false`
-- [ ] case 2: `setViewMode("project")` updates mode and does not reset selection
-- [ ] case 3: `setSearchQuery("foo")` filters sessions case-insensitively across `displayName`, `firstPrompt`, `tags`, `cwd` (spec §17.7)
-- [ ] case 4: `selectSession(id)` updates `selectedId`
-- [ ] case 5: `filteredSessions` excludes `isSidechain === true` sessions
-- [ ] case 6: `filteredSessions` excludes archived sessions unless view mode shows them
-- [ ] case 7: `loadSessions()` integration — calls session-loader (mocked) and populates store
+- [x] case 1: initial state — `sessions: []`, `selectedId: null`, `viewMode: "my"`, `searchQuery: ""`, `isLoading: false`
+- [x] case 2: `setViewMode("project")` updates mode and does not reset selection
+- [x] case 3: `setSearchQuery("foo")` filters sessions case-insensitively across `displayName`, `firstPrompt`, `tags`, `cwd` (spec §17.7)
+- [x] case 4: `selectSession(id)` updates `selectedId`
+- [x] case 5: `filteredSessions` excludes `isSidechain === true` sessions
+- [x] case 6: `filteredSessions` excludes archived sessions unless view mode shows them
+- [x] case 7: `loadSessions()` integration — calls session-loader (mocked) and populates store
 
 *Component / integration tests* — N/A (store is exercised through SessionListPanel in T2.9 + T2.13)
 
@@ -480,9 +480,9 @@ Derived: `filteredSessions()` — filter by search query (case-insensitive, matc
 *Rust checks* — N/A
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
-- [ ] `filteredSessions` is a derived selector or `useMemo`-computed in components, NOT a store method using `get()` (referential-equality re-render guard)
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `filteredSessions` is a derived selector or `useMemo`-computed in components, NOT a store method using `get()` (referential-equality re-render guard)
 
 *Perf budget* — N/A (in-memory filter; perf measured at component layer in T2.9)
 
@@ -490,10 +490,10 @@ Derived: `filteredSessions()` — filter by search query (case-insensitive, matc
 - *Existing notes:* (none)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §17.7, §5.3
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.6): session Zustand store with filtering and view modes`
+- [x] All checks above pass
+- [x] Behavior matches spec §17.7, §5.3
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.6): session Zustand store with filtering and view modes`
 
 ---
 
