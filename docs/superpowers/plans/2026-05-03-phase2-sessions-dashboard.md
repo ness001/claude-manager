@@ -560,38 +560,38 @@ Read `~/.claude/stats-cache.json` via Tauri FS plugin. Parse and return shaped d
 **Files:**
 - Create: `src/stores/dashboard-store.ts`
 
-- [ ] **Step 1: Implement dashboard store**
+- [x] **Step 1: Implement dashboard store**
 
 State: `totalSessions`, `totalMessages`, `longestSession` (name + count), `activeSince`, `activityData[]`, `modelUsage[]`, `recentSessions[]`, `isLoading`.
 
 Action: `loadDashboard()` — queries SQLite for session aggregates, reads stats-cache.json for chart data, gets recent 8 sessions.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 `git commit -m "feat(T2.8): dashboard Zustand store"`
 
 **Verification**
 
 *Unit tests* (`tests/stores/dashboard-store.test.ts`):
-- [ ] case 1: initial state — all numeric fields 0, all arrays empty, `isLoading: false`
-- [ ] case 2: `loadDashboard()` sets `isLoading: true` then false; populates `totalSessions`, `totalMessages`, `longestSession`, `activeSince` from mocked SQLite query
-- [ ] case 3: `activityData` + `modelUsage` populated from mocked stats-reader response
-- [ ] case 4: `recentSessions` returns 8 most recent (mocked SQLite ORDER BY started_at DESC LIMIT 8)
-- [ ] case 5: failed SQLite read → store falls back to safe defaults, does NOT throw
+- [x] case 1: initial state — all numeric fields 0, all arrays empty, `isLoading: false`
+- [x] case 2: `loadDashboard()` sets `isLoading: true` then false; populates `totalSessions`, `totalMessages`, `longestSession`, `activeSince` from mocked SQLite query
+- [x] case 3: `activityData` + `modelUsage` populated from mocked stats-reader response
+- [x] case 4: `recentSessions` returns 8 most recent (mocked SQLite ORDER BY started_at DESC LIMIT 8)
+- [x] case 5: failed SQLite read → store falls back to safe defaults, does NOT throw
 
 *Component / integration tests* (mock `@tauri-apps/plugin-sql` + `@tauri-apps/plugin-fs`):
-- [ ] mocks resolve correctly during `loadDashboard()`; no unhandled rejections
+- [x] mocks resolve correctly during `loadDashboard()`; no unhandled rejections
 
 *Data-fixture tests* (task reads SQLite + `stats-cache.json`):
-- [ ] reuses T2.7 fixture for `stats-cache.json`
-- [ ] fixture seed for SQLite — 20 sessions covering archived, alive, ended, no-firstPrompt, varying message counts
-- [ ] (DB) — N/A (no schema change; reads existing v1 schema)
+- [x] reuses T2.7 fixture for `stats-cache.json`
+- [x] fixture seed for SQLite — 20 sessions covering archived, alive, ended, no-firstPrompt, varying message counts
+- [x] (DB) — N/A (no schema change; reads existing v1 schema)
 
 *Rust checks* — N/A
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A (small aggregate queries)
 
@@ -599,10 +599,10 @@ Action: `loadDashboard()` — queries SQLite for session aggregates, reads stats
 - *Existing notes:* (none)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §6
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.8): dashboard Zustand store`
+- [x] All checks above pass
+- [x] Behavior matches spec §6
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.8): dashboard Zustand store`
 
 ---
 
