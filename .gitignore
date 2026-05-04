@@ -27,3 +27,9 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Session handoff note (transient, per-session)
+.claude/handoff.md
+
+# Transient screenshot output from scripts/_test/ helpers
+scripts/_test/out/
