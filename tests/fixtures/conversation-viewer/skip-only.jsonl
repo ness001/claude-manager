@@ -1,0 +1,5 @@
+{"type":"permission-mode","permissionMode":"default","uuid":"p1","timestamp":"2026-05-04T09:00:00.000Z"}
+{"type":"file-history-snapshot","uuid":"fh1","timestamp":"2026-05-04T09:00:01.000Z"}
+{"type":"attachment","uuid":"at1","timestamp":"2026-05-04T09:00:02.000Z"}
+{"type":"queue-operation","uuid":"qo1","timestamp":"2026-05-04T09:00:03.000Z"}
+{"type":"last-prompt","uuid":"lp1","timestamp":"2026-05-04T09:00:04.000Z"}

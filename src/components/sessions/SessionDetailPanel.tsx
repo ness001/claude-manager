@@ -6,6 +6,7 @@
 // ConversationViewer (T2.11).
 
 import { SessionInfoBar } from "./SessionInfoBar";
+import { ConversationViewer } from "../conversation/ConversationViewer";
 import { useSessionStore } from "../../stores/session-store";
 
 export function SessionDetailPanel() {
@@ -31,12 +32,25 @@ export function SessionDetailPanel() {
       className="flex flex-1 flex-col min-w-0"
     >
       <SessionInfoBar session={session} />
-      <div
-        data-testid="conversation-viewer-placeholder"
-        className="flex-1 overflow-auto p-4 text-sm text-text-muted"
-      >
-        Conversation viewer coming in T2.11.
-      </div>
+      {(() => {
+        // T2.11 wires in the conversation viewer. SessionMeta does not yet
+        // carry the JSONL file path (that field is added in T2.13 when the
+        // sessions section is wired to the loader). Until then, render the
+        // viewer only when a path has been attached, otherwise show a
+        // placeholder so the rest of the UI is unaffected.
+        const jsonlPath = (session as unknown as { jsonlPath?: string }).jsonlPath;
+        if (jsonlPath) {
+          return <ConversationViewer path={jsonlPath} />;
+        }
+        return (
+          <div
+            data-testid="conversation-viewer-placeholder"
+            className="flex-1 overflow-auto p-4 text-sm text-text-muted"
+          >
+            Conversation viewer waiting for session JSONL path (wired in T2.13).
+          </div>
+        );
+      })()}
     </div>
   );
 }

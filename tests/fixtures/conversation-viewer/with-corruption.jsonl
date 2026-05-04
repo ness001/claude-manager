@@ -1,0 +1,5 @@
+{"type":"user","message":{"role":"user","content":"first"},"uuid":"u1","timestamp":"2026-05-04T09:00:00.000Z"}
+{"type":"assistant","message":{"role":"assistant","model":"claude-opus-4.6","content":[{"type":"text","text":"reply 1"}]},"uuid":"a1","timestamp":"2026-05-04T09:00:01.000Z"}
+{"type":"user","message":{"role":"user","content":"this line is cut off mid-jso
+not even json at all
+{"type":"assistant","message":{"role":"assistant","model":"claude-opus-4.6","content":[{"type":"text","text":"reply 2"}]},"uuid":"a2","timestamp":"2026-05-04T09:00:02.000Z"}
