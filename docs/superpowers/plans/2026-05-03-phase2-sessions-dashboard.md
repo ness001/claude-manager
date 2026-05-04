@@ -111,7 +111,7 @@ Define `ActivityPeriod = "7d" | "30d" | "90d" | "all"` (lowercase consistently).
 
 - [x] **Step 2: Commit**
 
-`git commit -m "feat: add TypeScript types for session data model"`
+`git commit -m "feat(T2.1): TypeScript types for session data model"`
 
 **Verification**
 
@@ -178,7 +178,7 @@ Test cases:
 
 - [ ] **Step 5: Commit**
 
-`git commit -m "feat: add frontend JSONL parser with metadata extraction"`
+`git commit -m "feat(T2.2): frontend JSONL parser with metadata extraction"`
 
 **Verification**
 
@@ -239,7 +239,7 @@ Converts epoch ms to human-readable relative time: "just now", "5m ago", "2h ago
 
 - [ ] **Step 2: Commit**
 
-`git commit -m "feat: add shared time utility"`
+`git commit -m "feat(T2.3): shared time utility"`
 
 **Verification**
 
@@ -325,7 +325,7 @@ Add `mod sessions;` and register all 4 commands (`discover_sessions`, `get_sessi
 
 - [ ] **Step 7: Commit**
 
-`git commit -m "feat: add Rust session discovery, JSONL parsing, and PID detection"`
+`git commit -m "feat(T2.4): Rust session discovery, JSONL parsing, and PID detection"`
 
 **Verification**
 
@@ -392,7 +392,7 @@ Add `mod sessions;` and register all 4 commands (`discover_sessions`, `get_sessi
 
 - [ ] **Step 2: Commit**
 
-`git commit -m "feat: add session loader with SQLite sync"`
+`git commit -m "feat(T2.5): session loader with SQLite sync"`
 
 **Verification**
 
@@ -460,7 +460,7 @@ Derived: `filteredSessions()` — filter by search query (case-insensitive, matc
 
 - [ ] **Step 5: Commit**
 
-`git commit -m "feat: add session Zustand store with filtering and view modes"`
+`git commit -m "feat(T2.6): session Zustand store with filtering and view modes"`
 
 **Verification**
 
@@ -517,7 +517,7 @@ Read `~/.claude/stats-cache.json` via Tauri FS plugin. Parse and return shaped d
 
 - [ ] **Step 5: Commit**
 
-`git commit -m "feat: add stats-cache.json reader"`
+`git commit -m "feat(T2.7): stats-cache.json reader"`
 
 **Verification**
 
@@ -568,7 +568,7 @@ Action: `loadDashboard()` — queries SQLite for session aggregates, reads stats
 
 - [ ] **Step 2: Commit**
 
-`git commit -m "feat: add dashboard Zustand store"`
+`git commit -m "feat(T2.8): dashboard Zustand store"`
 
 **Verification**
 
@@ -641,7 +641,7 @@ Three-button group: My View / Project / Timeline. Updates store's `viewMode`.
 
 - [ ] **Step 8: Commit**
 
-`git commit -m "feat: add session list panel with cards, search, and view modes"`
+`git commit -m "feat(T2.9): session list panel with cards, search, and view modes"`
 
 **Verification**
 
@@ -712,7 +712,7 @@ Right content area. If no session selected: empty state "Select a session to vie
 
 - [ ] **Step 3: Commit**
 
-`git commit -m "feat: add session detail panel with info bar"`
+`git commit -m "feat(T2.10): session detail panel with info bar"`
 
 **Verification**
 
@@ -786,7 +786,7 @@ Handle corrupted lines: skip + show "⚠ N lines could not be parsed" note per s
 
 - [ ] **Step 3: Commit**
 
-`git commit -m "feat: add conversation viewer with virtual scrolling and message components"`
+`git commit -m "feat(T2.11): conversation viewer with virtual scrolling and message components"`
 
 **Verification**
 
@@ -872,7 +872,7 @@ Status indicators: MCP connection count, plugin count, API reachability (HEAD re
 
 - [ ] **Step 7: Commit**
 
-`git commit -m "feat: add dashboard UI components"`
+`git commit -m "feat(T2.12): dashboard UI components"`
 
 **Verification**
 
@@ -956,7 +956,7 @@ Handle loading states: skeleton cards per spec §17.6. Handle empty state: "No s
 
 - [ ] **Step 5: Commit**
 
-`git commit -m "feat: wire up Dashboard and Sessions sections — Phase 2 complete"`
+`git commit -m "feat(T2.13): wire up Dashboard and Sessions sections — Phase 2 complete"`
 
 **Verification**
 
