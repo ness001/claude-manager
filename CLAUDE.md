@@ -70,6 +70,18 @@ Phases are executed by ralph-loop + subagent-driven-development. See `docs/AUTO-
 - `scripts/auto-pr.sh <phase-number>` — push branch + create/update PR for a completed phase.
 - `scripts/sync-pool.sh [branch]` — fetch + reset + npm install + build for a worktree (idempotent via `.pool-synced-at-<SHA>` markers; refuses dirty trees without `--force`).
 
+### Executing a plan task (applies to every `T<phase>.<num>` task)
+
+These rules let `scripts/ralph-task.sh <task-id>` work uniformly across all phases — keep the per-task prompt small by relying on these standing rules.
+
+1. **Spec is canonical.** Citations like `§5.1` refer to `docs/superpowers/specs/2026-05-03-claude-manager-design.md`. Read every cited section before writing code — never invent field names, enum values, or behavior.
+2. **Read DESIGN-CONTEXT.md** for any task touching Claude-Code data on disk (sessions, plugins, MCP, skills, settings) — it documents non-obvious gotchas.
+3. **Commit message format is `feat(T<phase>.<num>): <subject>`.** When a task's Step bullet shows a looser commit message but the Definition of Done shows the `T`-prefixed form, the DoD form wins.
+4. **Plan checkbox flip belongs in the same commit that completes the work** (`- [ ]` → `- [x]`).
+5. **Verification checkbox treatment:** every checkbox in a task's `Verification` section is a hard gate. Print `PASS: <item>` or `FAIL: <item> — <reason>` for each. If a section is marked `N/A` in the plan, print `SKIP (N/A): <section>` and move on. Never re-classify a non-N/A item as N/A.
+6. **Type-level test assertions use vitest's `expectTypeOf`** — never write runtime assertions for type-only checks.
+7. **Forbidden shortcuts:** `--no-verify`, `it.skip`, `expect.assertions(0)`, mocking the thing under test, or editing the plan to lower verification standards.
+
 ### Conventions worth knowing
 
 - Tailwind v4 with CSS variables — color tokens like `bg-bg-primary`, `text-text-primary` are defined in `src/index.css` and switch on `.dark`.
