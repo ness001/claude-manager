@@ -39,7 +39,7 @@ export function SidebarRail() {
   return (
     <nav
       aria-label="Primary"
-      className="flex h-screen w-12 flex-col bg-sidebar-bg"
+      className="flex h-full w-12 flex-col bg-sidebar-bg"
     >
       {ITEMS.map(({ section, label, Icon }) => (
         <SidebarRailItem

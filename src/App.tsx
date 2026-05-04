@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { SidebarRail } from "./components/SidebarRail";
 import { ContentArea } from "./components/ContentArea";
+import { TitleBar } from "./components/TitleBar";
 import { useThemeStore } from "./stores/theme-store";
 import {
   useNavigationStore,
@@ -78,9 +79,12 @@ function App() {
   }, [navigateTo]);
 
   return (
-    <div className="flex h-screen w-screen bg-bg-primary text-text-primary">
-      <SidebarRail />
-      <ContentArea />
+    <div className="flex h-screen w-screen flex-col bg-bg-primary text-text-primary">
+      <TitleBar />
+      <div className="flex flex-1 min-h-0">
+        <SidebarRail />
+        <ContentArea />
+      </div>
     </div>
   );
 }
