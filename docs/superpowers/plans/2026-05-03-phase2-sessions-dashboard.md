@@ -283,13 +283,13 @@ Converts epoch ms to human-readable relative time: "just now", "5m ago", "2h ago
 - Modify: `src-tauri/src/lib.rs` (add mod sessions, register commands)
 - Modify: `src-tauri/Cargo.toml` (add `glob` only if needed — prefer `std::fs::read_dir` with manual filtering)
 
-- [ ] **Step 1: Implement `discovery.rs`**
+- [x] **Step 1: Implement `discovery.rs`**
 
 `discover_session_files() → Vec<SessionFileInfo>`: Enumerate `~/.claude/projects/*/` directories, find all `*.jsonl` files. Return file path, project directory, file size, mtime. Use `std::fs::read_dir` with `.jsonl` extension filter (no extra crate needed).
 
 Resolve `~` to the user's home directory. On Windows, use `dirs::home_dir()` or `std::env::var("USERPROFILE")`.
 
-- [ ] **Step 2: Implement `parser.rs`**
+- [x] **Step 2: Implement `parser.rs`**
 
 `parse_jsonl_metadata(path: &str) → SessionMetadata`: Read only the first ~10 lines of the JSONL file (BufReader + take). Parse each line as JSON, extract: sessionId (from line content or filename), firstPrompt, model, version, permissionMode, gitBranch, slug, isSidechain, kind, entrypoint. Count total lines for messageCount.
 
@@ -299,13 +299,13 @@ For `messageCount`: count only `user` and `assistant` type lines (per spec §5.1
 
 `read_jsonl_file(path: &str) → Vec<String>`: Read all lines of the JSONL file. Return as a Vec of raw JSON strings for frontend parsing.
 
-- [ ] **Step 3: Implement `pid.rs`**
+- [x] **Step 3: Implement `pid.rs`**
 
 `read_pid_files() → Vec<PidFileData>`: Read all JSON files from `~/.claude/sessions/`. Parse each into PidFileData struct.
 
 `is_process_alive(pid: u32, started_at: i64) → bool`: Shell out to PowerShell `Get-WmiObject Win32_Process -Filter "ProcessId = {pid}"` (NOT `Get-CimInstance` — spec §17.4 specifies `Get-WmiObject` for better compatibility with PowerShell 5.1 that ships with Windows). Check: (1) process exists, (2) CommandLine contains `cli.js`, (3) **CreationDate** is within 60s of `startedAt` to handle PID reuse. Use a timeout (5s) on the PowerShell command to prevent hanging.
 
-- [ ] **Step 4: Implement `commands.rs`**
+- [x] **Step 4: Implement `commands.rs`**
 
 Three IPC commands:
 
@@ -317,13 +317,13 @@ Three IPC commands:
 
 `read_pid_files()`: Read all PID files from `~/.claude/sessions/` and return as `Vec<PidFileData>`.
 
-- [ ] **Step 5: Register in lib.rs**
+- [x] **Step 5: Register in lib.rs**
 
 Add `mod sessions;` and register all 4 commands (`discover_sessions`, `get_session_metadata`, `read_jsonl_file`, `read_pid_files`) in `invoke_handler`.
 
-- [ ] **Step 6: Verify Rust compiles** — `cargo check`
+- [x] **Step 6: Verify Rust compiles** — `cargo check`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 `git commit -m "feat(T2.4): Rust session discovery, JSONL parsing, and PID detection"`
 
@@ -334,39 +334,39 @@ Add `mod sessions;` and register all 4 commands (`discover_sessions`, `get_sessi
 *Component / integration tests* — N/A (no React surface in this task; IPC is exercised by T2.5 + T2.13)
 
 *Data-fixture tests* (task reads JSONL + PID files + `~/.claude/`):
-- [ ] fixture `tests/fixtures/rust-sessions/projects/<proj>/<sessionId>.jsonl` × 6 (mirrors T2.2 set: normal, permission-mode, version-SHA, no-slug, noisy-progress, truncated)
-- [ ] fixture `tests/fixtures/rust-sessions/sessions-index.json` — STALE manifest (17/20 missing, 12 dangling per DESIGN-CONTEXT §2.2); discovery must trust filesystem and only consult it for `isSidechain`
-- [ ] fixture `tests/fixtures/rust-sessions/sessions/<sessionId>.json` — active PID file with full schema (DESIGN-CONTEXT §2.3, §2.8)
-- [ ] fixture `tests/fixtures/rust-sessions/sessions/<dead>.json` — stale PID file pointing to a guaranteed-dead PID
-- [ ] fixture for session referenced by stale `sessions-index.json` but with NO JSONL on disk → discovery omits it
-- [ ] parser returns expected `SessionMetadata` shape (sessionId, firstPrompt, model, version, permissionMode, gitBranch, slug, isSidechain, kind, entrypoint, messageCount)
-- [ ] `messageCount` counts only `user` + `assistant` lines (spec §5.1), not all newlines
-- [ ] (DB) — N/A (no schema change)
+- [x] fixture `tests/fixtures/rust-sessions/projects/<proj>/<sessionId>.jsonl` × 6 (mirrors T2.2 set: normal, permission-mode, version-SHA, no-slug, noisy-progress, truncated)
+- [x] fixture `tests/fixtures/rust-sessions/sessions-index.json` — STALE manifest (17/20 missing, 12 dangling per DESIGN-CONTEXT §2.2); discovery must trust filesystem and only consult it for `isSidechain`
+- [x] fixture `tests/fixtures/rust-sessions/sessions/<sessionId>.json` — active PID file with full schema (DESIGN-CONTEXT §2.3, §2.8)
+- [x] fixture `tests/fixtures/rust-sessions/sessions/<dead>.json` — stale PID file pointing to a guaranteed-dead PID
+- [x] fixture for session referenced by stale `sessions-index.json` but with NO JSONL on disk → discovery omits it
+- [x] parser returns expected `SessionMetadata` shape (sessionId, firstPrompt, model, version, permissionMode, gitBranch, slug, isSidechain, kind, entrypoint, messageCount)
+- [x] `messageCount` counts only `user` + `assistant` lines (spec §5.1), not all newlines
+- [x] (DB) — N/A (no schema change)
 
 *Rust checks*:
-- [ ] `cd src-tauri && cargo check` clean (zero warnings on new modules)
-- [ ] `cargo test sessions::` green
-- [ ] PowerShell process query is mocked / abstracted via a trait so `is_process_alive` tests do NOT spawn real processes (DESIGN-CONTEXT §2.4, §2.10)
-- [ ] process detection matches `node.exe` with `cli.js` in CommandLine via `Get-WmiObject` — NOT `claude.exe`, NOT `tasklist`, NOT `Get-CimInstance` (DESIGN-CONTEXT §2.4, §2.10; spec §17.4)
-- [ ] PowerShell invocation has 5s timeout
+- [x] `cd src-tauri && cargo check` clean (zero warnings on new modules)
+- [x] `cargo test sessions::` green
+- [x] PowerShell process query is mocked / abstracted via a trait so `is_process_alive` tests do NOT spawn real processes (DESIGN-CONTEXT §2.4, §2.10)
+- [x] process detection matches `node.exe` with `cli.js` in CommandLine via `Get-WmiObject` — NOT `claude.exe`, NOT `tasklist`, NOT `Get-CimInstance` (DESIGN-CONTEXT §2.4, §2.10; spec §17.4)
+- [x] PowerShell invocation has 5s timeout
 
 *Type-check + lint gate* — N/A (Rust task; covered by `cargo check`)
 
 *Perf budget* (multi-file scan):
-- [ ] `discover_sessions` over 500 sessions completes < 30s on first launch (spec target)
-- [ ] `discover_sessions` is a SINGLE batch IPC, not N sequential calls
+- [x] `discover_sessions` over 500 sessions completes < 30s on first launch (spec target)
+- [x] `discover_sessions` is a SINGLE batch IPC, not N sequential calls
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
-- [ ] in DevTools: `await window.__TAURI__.core.invoke("discover_sessions")` returns array
-- [ ] `read_pid_files` returns array (possibly empty)
-- [ ] DevTools Console: zero errors
+- [x] in DevTools: `await window.__TAURI__.core.invoke("discover_sessions")` returns array
+- [x] `read_pid_files` returns array (possibly empty)
+- [x] DevTools Console: zero errors
 - *Existing notes:* (none)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §3, §5.1, §17.4
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.4): Rust session discovery, JSONL parsing, and PID detection`
+- [x] All checks above pass
+- [x] Behavior matches spec §3, §5.1, §17.4
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.4): Rust session discovery, JSONL parsing, and PID detection`
 
 ---
 

@@ -1,4 +1,5 @@
 mod db;
+mod sessions;
 
 use tauri::Manager;
 
@@ -21,7 +22,13 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
-        .invoke_handler(tauri::generate_handler![get_db_path])
+        .invoke_handler(tauri::generate_handler![
+            get_db_path,
+            sessions::commands::discover_sessions,
+            sessions::commands::get_session_metadata,
+            sessions::commands::read_jsonl_file,
+            sessions::commands::read_pid_files,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

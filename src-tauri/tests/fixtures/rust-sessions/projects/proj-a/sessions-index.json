@@ -1,0 +1,1 @@
+{"sessions":[{"id":"sess-normal","isSidechain":false,"summary":"hello"},{"id":"sess-sidechain","isSidechain":true,"summary":"sub-agent"},{"id":"sess-dangling","isSidechain":false,"summary":"deleted on disk"}]}

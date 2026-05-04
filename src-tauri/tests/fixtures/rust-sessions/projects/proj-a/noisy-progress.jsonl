@@ -1,0 +1,10 @@
+{"type": "user", "message": {"role": "user", "content": "q1"}, "uuid": "u1", "timestamp": "2026-05-04T09:00:00.000Z", "sessionId": "sess-noisy", "version": "2.1.98", "gitBranch": "main"}
+{"type": "assistant", "message": {"role": "assistant", "model": "claude-opus-4.6", "content": [{"type": "text", "text": "a1"}]}, "uuid": "a1", "timestamp": "2026-05-04T09:00:01.000Z", "sessionId": "sess-noisy", "version": "2.1.98", "gitBranch": "main"}
+{"type": "progress", "data": {"i": 0}, "uuid": "p0", "timestamp": "2026-05-04T09:00:02.000Z", "sessionId": "sess-noisy"}
+{"type": "progress", "data": {"i": 1}, "uuid": "p1", "timestamp": "2026-05-04T09:00:02.000Z", "sessionId": "sess-noisy"}
+{"type": "progress", "data": {"i": 2}, "uuid": "p2", "timestamp": "2026-05-04T09:00:02.000Z", "sessionId": "sess-noisy"}
+{"type": "progress", "data": {"i": 3}, "uuid": "p3", "timestamp": "2026-05-04T09:00:02.000Z", "sessionId": "sess-noisy"}
+{"type": "progress", "data": {"i": 4}, "uuid": "p4", "timestamp": "2026-05-04T09:00:02.000Z", "sessionId": "sess-noisy"}
+{"type": "progress", "data": {"i": 5}, "uuid": "p5", "timestamp": "2026-05-04T09:00:02.000Z", "sessionId": "sess-noisy"}
+{"type": "progress", "data": {"i": 6}, "uuid": "p6", "timestamp": "2026-05-04T09:00:02.000Z", "sessionId": "sess-noisy"}
+{"type": "progress", "data": {"i": 7}, "uuid": "p7", "timestamp": "2026-05-04T09:00:02.000Z", "sessionId": "sess-noisy"}
