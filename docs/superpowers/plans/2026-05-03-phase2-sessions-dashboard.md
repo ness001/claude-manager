@@ -233,25 +233,25 @@ Test cases:
 **Files:**
 - Create: `src/lib/time-utils.ts`
 
-- [ ] **Step 1: Implement `timeAgo(timestamp: number): string`**
+- [x] **Step 1: Implement `timeAgo(timestamp: number): string`**
 
 Converts epoch ms to human-readable relative time: "just now", "5m ago", "2h ago", "Yesterday", "3d ago", "Jan 15". Single implementation shared by SessionCard and RecentSessions (avoid duplication). Return empty string for falsy input. Clamp future timestamps to "just now".
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 `git commit -m "feat(T2.3): shared time utility"`
 
 **Verification**
 
 *Unit tests* (`tests/lib/time-utils.test.ts`):
-- [ ] case 1: `timeAgo(Date.now() - 30_000)` → `"just now"`
-- [ ] case 2: `timeAgo(Date.now() - 5*60_000)` → `"5m ago"`
-- [ ] case 3: `timeAgo(Date.now() - 2*3600_000)` → `"2h ago"`
-- [ ] case 4: timestamp from yesterday (calendar boundary) → `"Yesterday"`
-- [ ] case 5: timestamp 3 days ago → `"3d ago"`
-- [ ] case 6: timestamp older than 7 days → `"Jan 15"`-style date string
-- [ ] case 7: `timeAgo(0)` / `timeAgo(NaN)` / `timeAgo(undefined as any)` → `""`
-- [ ] case 8: future timestamp (`Date.now() + 60_000`) → clamped to `"just now"`
+- [x] case 1: `timeAgo(Date.now() - 30_000)` → `"just now"`
+- [x] case 2: `timeAgo(Date.now() - 5*60_000)` → `"5m ago"`
+- [x] case 3: `timeAgo(Date.now() - 2*3600_000)` → `"2h ago"`
+- [x] case 4: timestamp from yesterday (calendar boundary) → `"Yesterday"`
+- [x] case 5: timestamp 3 days ago → `"3d ago"`
+- [x] case 6: timestamp older than 7 days → `"Jan 15"`-style date string
+- [x] case 7: `timeAgo(0)` / `timeAgo(NaN)` / `timeAgo(undefined as any)` → `""`
+- [x] case 8: future timestamp (`Date.now() + 60_000`) → clamped to `"just now"`
 
 *Component / integration tests* — N/A (pure function, exercised by SessionCard test in T2.9)
 
@@ -260,8 +260,8 @@ Converts epoch ms to human-readable relative time: "just now", "5m ago", "2h ago
 *Rust checks* — N/A
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A
 
@@ -269,10 +269,10 @@ Converts epoch ms to human-readable relative time: "just now", "5m ago", "2h ago
 - *Existing notes:* (none)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec (relative time format used in SessionCard + RecentSessions)
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.3): shared time utility`
+- [x] All checks above pass
+- [x] Behavior matches spec (relative time format used in SessionCard + RecentSessions)
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.3): shared time utility`
 
 ---
 
