@@ -76,7 +76,7 @@ tests/
 **Files:**
 - Create: `src/lib/session-types.ts`
 
-- [ ] **Step 1: Define all types**
+- [x] **Step 1: Define all types**
 
 Refer to spec §5.1 for `SessionMeta` fields. Include ALL fields:
 - From JSONL: `sessionId`, `cwd`, `firstPrompt`, `summary`, `messageCount`, `model`, `version`, `permissionMode`, `gitBranch`, `startedAt`, `durationMs`, `entrypoint`, `kind`, `slug`, `isSidechain`, `toolsUsed` (computed: distinct tool names from tool_use blocks)
@@ -98,17 +98,17 @@ Define `PidFileData`: `pid`, `sessionId`, `cwd`, `startedAt`, `kind`, `entrypoin
 
 Define `ActivityPeriod = "7d" | "30d" | "90d" | "all"` (lowercase consistently).
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 `git commit -m "feat: add TypeScript types for session data model"`
 
 **Verification**
 
 *Unit tests* (`tests/lib/session-types.test.ts`):
-- [ ] case 1: `SessionState` union accepts all four values ("alive" | "ended" | "orphaned" | "archived") via type-level assertion
-- [ ] case 2: `JsonlMessage.content` accepts both `string` and `JsonlContent[]` (compile-time assertion against fixture line)
-- [ ] case 3: `SKIP_TYPES` set contains all 5 non-rendered types from spec §5.8 / §11
-- [ ] case 4: `ConversationEntry` discriminated union exhaustiveness — `switch(kind)` with no default still type-checks
+- [x] case 1: `SessionState` union accepts all four values ("alive" | "ended" | "orphaned" | "archived") via type-level assertion
+- [x] case 2: `JsonlMessage.content` accepts both `string` and `JsonlContent[]` (compile-time assertion against fixture line)
+- [x] case 3: `SKIP_TYPES` set contains all 5 non-rendered types from spec §5.8 / §11
+- [x] case 4: `ConversationEntry` discriminated union exhaustiveness — `switch(kind)` with no default still type-checks
 
 *Component / integration tests* — N/A (types-only module, no runtime surface)
 
@@ -117,9 +117,9 @@ Define `ActivityPeriod = "7d" | "30d" | "90d" | "all"` (lowercase consistently).
 *Rust checks* — N/A (no `src-tauri/` changes)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
-- [ ] `ActivityPeriod` literals are lowercase ("7d" | "30d" | "90d" | "all")
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `ActivityPeriod` literals are lowercase ("7d" | "30d" | "90d" | "all")
 
 *Perf budget* — N/A (types-only)
 
@@ -127,10 +127,10 @@ Define `ActivityPeriod = "7d" | "30d" | "90d" | "all"` (lowercase consistently).
 - *Existing notes:* (none — task originally had no verification section)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §3, §5.1, §5.3, §5.8, §11
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.1): TypeScript types for session data model`
+- [x] All checks above pass
+- [x] Behavior matches spec §3, §5.1, §5.3, §5.8, §11
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.1): TypeScript types for session data model`
 
 ---
 
