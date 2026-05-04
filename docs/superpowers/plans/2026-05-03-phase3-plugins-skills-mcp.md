@@ -139,13 +139,13 @@ tests/
 - Create: `src-tauri/src/plugins/mod.rs`, `src-tauri/src/plugins/commands.rs`
 - Modify: `src-tauri/src/lib.rs` (register commands)
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test: merges installed_plugins.json + settings.json enabledPlugins into PluginMeta list. Detects broken state (installPath missing). Detects orphaned state (in enabledPlugins but not in installed_plugins). Correctly determines active vs disabled.
 
-- [ ] **Step 2: Run tests — expect FAIL**
+- [x] **Step 2: Run tests — expect FAIL**
 
-- [ ] **Step 3: Implement Rust commands**
+- [x] **Step 3: Implement Rust commands**
 
 `read_installed_plugins()`: Read `~/.claude/plugins/installed_plugins.json`, return as String.
 
@@ -155,7 +155,7 @@ Test: merges installed_plugins.json + settings.json enabledPlugins into PluginMe
 
 **Metadata fallback (spec §6.5):** Some plugins have no `plugin.json`. When present, `plugin.json` lives inside `.claude-plugin/` subdirectory, not plugin root. Fall back to `marketplace.json` for metadata.
 
-- [ ] **Step 4: Implement frontend plugin-loader.ts**
+- [x] **Step 4: Implement frontend plugin-loader.ts**
 
 `loadPlugins()`:
 1. Read installed_plugins.json (keyed by `{name}@{marketplace}`, value is ARRAY of installations — each array entry is a separate installation). Iterate each array entry to produce a separate `PluginMeta` per installation.
@@ -168,48 +168,48 @@ Test: merges installed_plugins.json + settings.json enabledPlugins into PluginMe
 2. Parse skill/agent frontmatter, hooks.json, CLAUDE.md existence
 3. Return `PluginDetail`
 
-- [ ] **Step 5: Run tests — expect PASS**
+- [x] **Step 5: Run tests — expect PASS**
 
 **Verification**
 
 *Unit tests* (`tests/lib/plugin-loader.test.ts`):
-- [ ] case 1: merges `installed_plugins.json` + `settings.json.enabledPlugins` → `PluginMeta[]` with correct state per entry
-- [ ] case 2: missing `installPath` on disk → state is `broken`
-- [ ] case 3: name in `enabledPlugins` but absent from `installed_plugins.json` → state is `orphaned` (spec §4)
-- [ ] case 4: array of installations under one `{name}@{marketplace}` key → one `PluginMeta` per array entry
-- [ ] case 5: 12-char git SHA version string accepted alongside semver (DESIGN-CONTEXT §2.5)
-- [ ] case 6: plugin with no `plugin.json` falls back to `marketplace.json` (DESIGN-CONTEXT §2.9)
+- [x] case 1: merges `installed_plugins.json` + `settings.json.enabledPlugins` → `PluginMeta[]` with correct state per entry
+- [x] case 2: missing `installPath` on disk → state is `broken`
+- [x] case 3: name in `enabledPlugins` but absent from `installed_plugins.json` → state is `orphaned` (spec §4)
+- [x] case 4: array of installations under one `{name}@{marketplace}` key → one `PluginMeta` per array entry
+- [x] case 5: 12-char git SHA version string accepted alongside semver (DESIGN-CONTEXT §2.5)
+- [x] case 6: plugin with no `plugin.json` falls back to `marketplace.json` (DESIGN-CONTEXT §2.9)
 
 *Component / integration tests* — N/A (loader is non-UI)
 
 *Data-fixture tests* (this task reads JSON config + filesystem):
-- [ ] fixture at `tests/fixtures/plugin-loader/` covering DESIGN-CONTEXT.md §2.5 (semver + 12-char SHA versions) and §2.9 (no `plugin.json`, falls back to `marketplace.json`)
-- [ ] fixture for `installed_plugins.json` whose value is an ARRAY of installations (not a single object)
-- [ ] fixture for `settings.json` with `enabledPlugins` map producing one orphaned entry
-- [ ] parser returns expected normalized `PluginMeta[]` shape sorted by name
+- [x] fixture at `tests/fixtures/plugin-loader/` covering DESIGN-CONTEXT.md §2.5 (semver + 12-char SHA versions) and §2.9 (no `plugin.json`, falls back to `marketplace.json`)
+- [x] fixture for `installed_plugins.json` whose value is an ARRAY of installations (not a single object)
+- [x] fixture for `settings.json` with `enabledPlugins` map producing one orphaned entry
+- [x] parser returns expected normalized `PluginMeta[]` shape sorted by name
 
 *Rust checks* (touches `src-tauri/`):
-- [ ] `cd src-tauri && cargo check` clean
-- [ ] `cargo test` green (if any)
+- [x] `cd src-tauri && cargo check` clean
+- [x] `cargo test` green (if any)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* (multi-file scan):
-- [ ] scanning ~50 plugin installations completes < 1s end-to-end
-- [ ] each `plugin.json` / `marketplace.json` parse < 100ms
+- [x] scanning ~50 plugin installations completes < 1s end-to-end
+- [x] each `plugin.json` / `marketplace.json` parse < 100ms
 
 *Manual UI / E2E smoke* — deferred to T3.5 (no UI yet)
 - *Existing notes:* tests must validate broken/orphaned/active/disabled state mapping per spec §6.4
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §4 and §10 (refresh strategy)
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.2): add plugin loader with state detection`
+- [x] All checks above pass
+- [x] Behavior matches spec §4 and §10 (refresh strategy)
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.2): add plugin loader with state detection`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 `git commit -m "feat: add plugin loader with state detection"`
 

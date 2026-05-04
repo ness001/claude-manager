@@ -1,0 +1,8 @@
+{
+  "enabledPlugins": {
+    "doc-skills@anthropic-agent-skills": true,
+    "superpowers@claude-plugins-official": true,
+    "broken-plugin@some-marketplace": true,
+    "ghost@vanished-marketplace": true
+  }
+}

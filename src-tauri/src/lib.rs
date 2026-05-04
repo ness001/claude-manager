@@ -1,4 +1,5 @@
 mod db;
+mod plugins;
 mod sessions;
 
 use tauri::Manager;
@@ -28,6 +29,9 @@ pub fn run() {
             sessions::commands::get_session_metadata,
             sessions::commands::read_jsonl_file,
             sessions::commands::read_pid_files,
+            plugins::commands::read_installed_plugins,
+            plugins::commands::read_settings_enabled_plugins,
+            plugins::commands::read_plugin_contents,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
