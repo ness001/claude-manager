@@ -97,6 +97,46 @@ pub fn read_settings_enabled_plugins() -> Result<String, String> {
     }
 }
 
+/// Set `enabledPlugins["<key>"] = <enabled>` in `~/.claude/settings.json`,
+/// preserving all unrelated keys (read-modify-write per Phase 3 conventions).
+/// Atomic via write-to-temp-then-rename.
+#[tauri::command]
+pub fn write_plugin_enabled(key: String, enabled: bool) -> Result<(), String> {
+    let Some(root) = claude_home() else {
+        return Err("Could not resolve ~/.claude".to_string());
+    };
+    let path = root.join("settings.json");
+
+    let existing = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => "{}".to_string(),
+        Err(e) => return Err(e.to_string()),
+    };
+    let mut value: serde_json::Value = if existing.trim().is_empty() {
+        serde_json::json!({})
+    } else {
+        serde_json::from_str(&existing).map_err(|e| e.to_string())?
+    };
+
+    let map = value
+        .as_object_mut()
+        .ok_or_else(|| "settings.json is not an object".to_string())?;
+
+    let entry = map
+        .entry("enabledPlugins")
+        .or_insert_with(|| serde_json::json!({}));
+    let inner = entry
+        .as_object_mut()
+        .ok_or_else(|| "enabledPlugins is not an object".to_string())?;
+    inner.insert(key, serde_json::Value::Bool(enabled));
+
+    let serialized = serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?;
+    let tmp = path.with_extension("json.tmp");
+    std::fs::write(&tmp, serialized.as_bytes()).map_err(|e| e.to_string())?;
+    std::fs::rename(&tmp, &path).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 /// Walk a plugin directory and summarize its contents.
 #[tauri::command]
 pub fn read_plugin_contents(install_path: String) -> Result<PluginContents, String> {
@@ -420,5 +460,29 @@ mod tests {
         assert_eq!(hooks.len(), 1);
         assert_eq!(hooks[0].event, "SessionStart");
         assert_eq!(hooks[0].command, "echo hi");
+    }
+
+    /// Lightweight test for the read-modify-write JSON shape produced by
+    /// `write_plugin_enabled` — exercises the inner mutation logic without
+    /// invoking the Tauri command (which would touch the real `~/.claude`).
+    #[test]
+    fn enabled_plugins_rmw_preserves_unrelated_keys() {
+        let original = r#"{"theme":"dark","enabledPlugins":{"a@m":true,"b@m":false},"customApiKeyResponses":{"approved":[]}}"#;
+        let mut value: serde_json::Value = serde_json::from_str(original).unwrap();
+        let map = value.as_object_mut().unwrap();
+        let entry = map
+            .entry("enabledPlugins")
+            .or_insert_with(|| serde_json::json!({}));
+        entry
+            .as_object_mut()
+            .unwrap()
+            .insert("a@m".to_string(), serde_json::Value::Bool(false));
+        // Unrelated keys preserved.
+        assert_eq!(value["theme"], "dark");
+        assert!(value.get("customApiKeyResponses").is_some());
+        // Mutated entry flipped.
+        assert_eq!(value["enabledPlugins"]["a@m"], false);
+        // Sibling enabledPlugins entry unchanged.
+        assert_eq!(value["enabledPlugins"]["b@m"], false);
     }
 }

@@ -221,13 +221,13 @@ Test: merges installed_plugins.json + settings.json enabledPlugins into PluginMe
 - Create: `src/stores/plugin-store.ts`
 - Create: `tests/stores/plugin-store.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test: loads plugins, selects a plugin, search filters by name/description/marketplace, toggle enable/disable updates settings.json.
 
-- [ ] **Step 2: Run tests — expect FAIL**
+- [x] **Step 2: Run tests — expect FAIL**
 
-- [ ] **Step 3: Implement plugin store**
+- [x] **Step 3: Implement plugin store**
 
 State: `plugins: PluginMeta[]`, `selectedPlugin: PluginDetail | null`, `searchQuery: string`, `isLoading: boolean`.
 
@@ -235,16 +235,16 @@ Actions: `loadPlugins()`, `selectPlugin(name)` (loads detail), `setSearchQuery(q
 
 Computed: `filteredPlugins()` — filter by search query matching name, description, marketplace (per spec §17.7).
 
-- [ ] **Step 4: Run tests — expect PASS**
+- [x] **Step 4: Run tests — expect PASS**
 
 **Verification**
 
 *Unit tests* (`tests/stores/plugin-store.test.ts`):
-- [ ] case 1: `loadPlugins()` populates `plugins` and clears `isLoading`
-- [ ] case 2: `selectPlugin(name)` populates `selectedPlugin` with detail
-- [ ] case 3: `setSearchQuery` filters by name, description, and marketplace
-- [ ] case 4: `togglePlugin(name)` flips enabled state and triggers settings.json write (mocked Rust command)
-- [ ] case 5: error path — Rust command rejects → store sets error state, no partial mutation
+- [x] case 1: `loadPlugins()` populates `plugins` and clears `isLoading`
+- [x] case 2: `selectPlugin(name)` populates `selectedPlugin` with detail
+- [x] case 3: `setSearchQuery` filters by name, description, and marketplace
+- [x] case 4: `togglePlugin(name)` flips enabled state and triggers settings.json write (mocked Rust command)
+- [x] case 5: error path — Rust command rejects → store sets error state, no partial mutation
 
 *Component / integration tests* — N/A (Zustand store, no DOM)
 
@@ -253,20 +253,20 @@ Computed: `filteredPlugins()` — filter by search query matching name, descript
 *Rust checks* — N/A (no `src-tauri/` changes)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A
 
 *Manual UI / E2E smoke* — deferred to T3.5
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §4 and §17.7 (search semantics)
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.3): add plugin Zustand store`
+- [x] All checks above pass
+- [x] Behavior matches spec §4 and §17.7 (search semantics)
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.3): add plugin Zustand store`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat: add plugin Zustand store"`
 
