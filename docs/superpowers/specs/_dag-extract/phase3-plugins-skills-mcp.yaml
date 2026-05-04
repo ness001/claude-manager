@@ -1,0 +1,68 @@
+# Phase 3: Plugins, Skills & MCP Servers — DAG Task Decomposition
+# 13 tasks, Levels 0-4
+# Dependencies: Phase 1-2 must be complete
+
+- subject: "[T3.1] plugin types"
+  level: 0
+  blockedBy: []
+  notes: "Phase 3, Task 1 — PluginMeta, PluginState, PluginDetail, SkillInfo, AgentInfo, HookInfo"
+
+- subject: "[T3.2] plugin loader (Rust commands + frontend loader)"
+  level: 1
+  blockedBy: ["[T3.1] plugin types"]
+  notes: "Phase 3, Task 2 — read_installed_plugins, read_settings_enabled_plugins, read_plugin_contents; loadPlugins(), loadPluginDetail()"
+
+- subject: "[T3.3] plugin store (Zustand)"
+  level: 2
+  blockedBy: ["[T3.2] plugin loader (Rust commands + frontend loader)"]
+  notes: "Phase 3, Task 3 — plugins[], selectedPlugin, searchQuery, togglePlugin writes settings.json"
+
+- subject: "[T3.4] plugin UI components (PluginCard, PluginListView, PluginDetailView, tabs)"
+  level: 3
+  blockedBy: ["[T3.3] plugin store (Zustand)"]
+  notes: "Phase 3, Task 4 — PluginCard with status dot/toggle, PluginListView with update detection, PluginDetailView with Skills/Agents/Hooks tabs"
+
+- subject: "[T3.5] plugins section wiring"
+  level: 4
+  blockedBy: ["[T3.4] plugin UI components (PluginCard, PluginListView, PluginDetailView, tabs)"]
+  notes: "Phase 3, Task 5 — List/detail routing, load on mount, loading/empty states"
+
+- subject: "[T3.6] custom skills types & loader"
+  level: 0
+  blockedBy: []
+  notes: "Phase 3, Task 6 — CustomSkill type, scan_custom_skills Rust command, skill-loader.ts"
+
+- subject: "[T3.7] skills store & UI (SkillsListView, SkillCard, SkillsSection)"
+  level: 1
+  blockedBy: ["[T3.6] custom skills types & loader"]
+  notes: "Phase 3, Task 7 — skill-store, SkillCard, SkillsListView, wire SkillsSection"
+
+- subject: "[T3.8] MCP types"
+  level: 0
+  blockedBy: []
+  notes: "Phase 3, Task 8 — McpServer, McpServerState, McpScope, McpServerType, trust tracking"
+
+- subject: "[T3.9] MCP loader (Rust commands + frontend loader)"
+  level: 1
+  blockedBy: ["[T3.8] MCP types"]
+  notes: "Phase 3, Task 9 — read/write_claude_json, check_mcp_status; loadMcpServers with scope resolution, saveMcpServer, deleteMcpServer"
+
+- subject: "[T3.10] MCP store (Zustand)"
+  level: 2
+  blockedBy: ["[T3.9] MCP loader (Rust commands + frontend loader)"]
+  notes: "Phase 3, Task 10 — servers[], editingServer, serversByScope computed, add/update/remove/refresh actions"
+
+- subject: "[T3.11] MCP UI components (McpServerCard, McpServerDetail, McpServerForm, McpPanel)"
+  level: 3
+  blockedBy: ["[T3.10] MCP store (Zustand)"]
+  notes: "Phase 3, Task 11 — McpServerCard with state-dependent actions, McpServerDetail, McpServerForm modal, McpPanel grouped by scope"
+
+- subject: "[T3.12] MCP section wiring"
+  level: 4
+  blockedBy: ["[T3.11] MCP UI components (McpServerCard, McpServerDetail, McpServerForm, McpPanel)"]
+  notes: "Phase 3, Task 12 — Replace placeholder, 15s/60s/2s polling intervals, form modal"
+
+- subject: "[T3.13] integration verification (all tests + build)"
+  level: 4
+  blockedBy: ["[T3.5] plugins section wiring", "[T3.7] skills store & UI (SkillsListView, SkillCard, SkillsSection)", "[T3.12] MCP section wiring"]
+  notes: "Phase 3, Task 13 — vitest run, cargo check, npx tauri dev verification"

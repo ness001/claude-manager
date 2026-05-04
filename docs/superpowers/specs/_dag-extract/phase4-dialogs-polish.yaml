@@ -1,0 +1,58 @@
+# Phase 4: Dialogs & Polish — DAG Task Decomposition
+# 11 tasks, Levels 0-5
+# Dependencies: Phase 1-3 must be complete
+
+- subject: "[T4.1] new session dialog types & launcher"
+  level: 0
+  blockedBy: []
+  notes: "Phase 4, Task 1 — config-types.ts (SessionLaunchOptions), launcher.ts buildClaudeArgs(), Rust launcher.rs"
+
+- subject: "[T4.2] new session dialog UI"
+  level: 1
+  blockedBy: ["[T4.1] new session dialog types & launcher"]
+  notes: "Phase 4, Task 2 — NewSessionDialog modal, form fields (cwd, model, permissions, effort, prompt, tags), Ctrl+N/Ctrl+Shift+N"
+
+- subject: "[T4.3] custom PTY plugin (Rust, portable-pty + ConPTY)"
+  level: 0
+  blockedBy: []
+  notes: "Phase 4, Task 3 — pty/plugin.rs, pty_create/write/resize/destroy IPC events, pty-exit handling"
+
+- subject: "[T4.4] terminal view (xterm.js + PTY store)"
+  level: 1
+  blockedBy: ["[T4.3] custom PTY plugin (Rust, portable-pty + ConPTY)"]
+  notes: "Phase 4, Task 4 — @xterm/xterm + addon-fit + addon-web-links, pty-store, TerminalView component, integrate into SessionDetailPanel"
+
+- subject: "[T4.5] command palette (Ctrl+K)"
+  level: 0
+  blockedBy: []
+  notes: "Phase 4, Task 5 — command-palette-store, CommandPalette overlay, command registry (Navigation/Sessions/Actions groups)"
+
+- subject: "[T4.6] settings types & config commands (Rust)"
+  level: 0
+  blockedBy: []
+  notes: "Phase 4, Task 6 — SettingsJson, ConfigJson, AppearanceSettings types; read/write settings.json, config.json, settings.local.json, claude.json"
+
+- subject: "[T4.7] settings store (Zustand, 7 sections)"
+  level: 1
+  blockedBy: ["[T4.6] settings types & config commands (Rust)"]
+  notes: "Phase 4, Task 7 — activeSettingsSection, settingsData, appearanceSettings, loadSettings/saveSettings"
+
+- subject: "[T4.8] settings UI (7 subsections + SettingsLayout)"
+  level: 2
+  blockedBy: ["[T4.7] settings store (Zustand, 7 sections)"]
+  notes: "Phase 4, Task 8 — SettingsLayout, General, Permissions, Plugins, Environment, Appearance, UsageStats, Advanced"
+
+- subject: "[T4.9] first launch flow (prerequisites + auto-import + guided tour)"
+  level: 3
+  blockedBy: ["[T4.8] settings UI (7 subsections + SettingsLayout)"]
+  notes: "Phase 4, Task 9 — first-launch-store, PrereqCheck, AutoImport, GuidedTour, wire into App.tsx"
+
+- subject: "[T4.10] data refresh & file watching"
+  level: 3
+  blockedBy: ["[T4.4] terminal view (xterm.js + PTY store)", "[T4.2] new session dialog UI"]
+  notes: "Phase 4, Task 10 — FS watchers for sessions/PID, incremental JSONL reading (Rust IPC), MCP status polling, stats refresh"
+
+- subject: "[T4.11] final integration & verification"
+  level: 5
+  blockedBy: ["[T4.9] first launch flow (prerequisites + auto-import + guided tour)", "[T4.10] data refresh & file watching", "[T4.5] command palette (Ctrl+K)"]
+  notes: "Phase 4, Task 11 — Full feature verification, performance check (spec §17.8 bounds), final commit"

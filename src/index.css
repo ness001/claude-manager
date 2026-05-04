@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/* Enable the `dark:` utility variant via the `.dark` class on any ancestor. */
+@variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+ * Theme tokens (light = default, dark via `.dark` overrides below)
+ *
+ * Tailwind v4 reads `--color-*` tokens from `@theme {}` and exposes them as
+ * utilities (e.g. `bg-bg-primary`, `text-accent`, `border-border-strong`).
+ * ------------------------------------------------------------------------- */
+@theme {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fa;
+  --color-bg-tertiary: #f1f3f5;
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #4a4a6a;
+  --color-text-muted: #9ca3af;
+  --color-accent: #7C3AED;
+  --color-accent-hover: #6D28D9;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+  --color-status-green: #16a34a;
+  --color-status-yellow: #eab308;
+  --color-status-red: #dc2626;
+  --color-status-blue: #2563eb;
+  --color-sidebar-bg: #f3f4f6;
+  --color-sidebar-active: #ede9fe;
+  --color-card-bg: #ffffff;
+  --color-user-bubble: #f3f4f6;
+}
+
+/* Dark theme: override the same tokens whenever `.dark` is on `<html>`. */
+.dark {
+  --color-bg-primary: #0f0f1a;
+  --color-bg-secondary: #1a1a2e;
+  --color-bg-tertiary: #232338;
+  --color-text-primary: #e8e8f0;
+  --color-text-secondary: #a6adc8;
+  --color-text-muted: #6c7086;
+  --color-accent: #8B5CF6;
+  --color-accent-hover: #7C3AED;
+  --color-border: #2d2d4a;
+  --color-border-strong: #3d3d5a;
+  --color-status-green: #a6e3a1;
+  --color-status-yellow: #f9e2af;
+  --color-status-red: #f38ba8;
+  --color-status-blue: #89b4fa;
+  --color-sidebar-bg: #15152a;
+  --color-sidebar-active: #2a1f4a;
+  --color-card-bg: #1e1e2e;
+  --color-user-bubble: #313244;
+}
+
+/* ---------------------------------------------------------------------------
+ * Base document styles
+ * ------------------------------------------------------------------------- */
+html,
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  transition: background-color 150ms ease, color 150ms ease;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* Dark scrollbar styling for dark mode (WebKit / Chromium / Edge). */
+.dark ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 6px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
