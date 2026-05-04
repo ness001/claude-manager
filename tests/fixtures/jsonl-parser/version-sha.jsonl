@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":"first prompt"},"uuid":"u1","timestamp":"2026-05-04T09:00:00.000Z","sessionId":"sess-sha","version":"abc123def456","gitBranch":"main"}
+{"type":"assistant","message":{"role":"assistant","model":"claude-opus-4.6","content":[{"type":"text","text":"reply"}]},"uuid":"a1","timestamp":"2026-05-04T09:00:01.000Z","sessionId":"sess-sha","version":"abc123def456","gitBranch":"main"}

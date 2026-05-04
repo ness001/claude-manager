@@ -151,7 +151,7 @@ Define `ActivityPeriod = "7d" | "30d" | "90d" | "all"` (lowercase consistently).
 - Create: `src/lib/jsonl-parser.ts`
 - Create: `tests/lib/jsonl-parser.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test cases:
 - Parse a user message line with string content → extracts text
@@ -164,9 +164,9 @@ Test cases:
 - Handle malformed JSON line → return null (don't throw)
 - `parseJsonlMetadata(lines)` → extracts firstPrompt, model, version, permissionMode, gitBranch, slug, isSidechain from first ~10 lines
 
-- [ ] **Step 2: Run tests — expect FAIL**
+- [x] **Step 2: Run tests — expect FAIL**
 
-- [ ] **Step 3: Implement parser**
+- [x] **Step 3: Implement parser**
 
 `parseJsonlLine(line: string) → ConversationEntry | null`: Parse JSON, check type against SKIP_TYPES, map to ConversationEntry.
 
@@ -174,57 +174,57 @@ Test cases:
 
 `jsonlToConversationEntries(lines: string[]) → ConversationEntry[]`: Map all lines through `parseJsonlLine`, filter nulls. Assign sequential turn numbers on system/turn_duration boundaries.
 
-- [ ] **Step 4: Run tests — expect PASS**
+- [x] **Step 4: Run tests — expect PASS**
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat(T2.2): frontend JSONL parser with metadata extraction"`
 
 **Verification**
 
 *Unit tests* (`tests/lib/jsonl-parser.test.ts`):
-- [ ] case 1: user message with `content` as plain string → `ConversationEntry { kind: "user", text }` (DESIGN-CONTEXT §2 / spec §11)
-- [ ] case 2: user message with `content` as `tool_result` array (with `is_error: true`) → tool-call entry with `isError: true`
-- [ ] case 3: assistant message with text block array → extracts `text` + `model`
-- [ ] case 4: assistant message with `tool_use` block → extracts `toolName` + `toolInput`
-- [ ] case 5: each SKIP_TYPES line returns `null` (permission-mode, file-history-snapshot, attachment, queue-operation, last-prompt)
-- [ ] case 6: malformed JSON line returns `null` (does NOT throw)
-- [ ] case 7: truncated final line (no trailing newline) returns `null` without throwing
-- [ ] case 8: `parseJsonlMetadata` extracts firstPrompt, model, version (12-char SHA), permissionMode, gitBranch, slug, isSidechain from first 10 lines
-- [ ] case 9: session with NO `slug` field — `parseJsonlMetadata` returns `slug: undefined` (spec §3 — slug present in only 9/20 files)
-- [ ] case 10: `jsonlToConversationEntries` assigns sequential turn numbers on `system/turn_duration` boundaries
-- [ ] case 11: noisy session with ~80% `progress` lines — they are skipped, output count matches user+assistant+tool only
+- [x] case 1: user message with `content` as plain string → `ConversationEntry { kind: "user", text }` (DESIGN-CONTEXT §2 / spec §11)
+- [x] case 2: user message with `content` as `tool_result` array (with `is_error: true`) → tool-call entry with `isError: true`
+- [x] case 3: assistant message with text block array → extracts `text` + `model`
+- [x] case 4: assistant message with `tool_use` block → extracts `toolName` + `toolInput`
+- [x] case 5: each SKIP_TYPES line returns `null` (permission-mode, file-history-snapshot, attachment, queue-operation, last-prompt)
+- [x] case 6: malformed JSON line returns `null` (does NOT throw)
+- [x] case 7: truncated final line (no trailing newline) returns `null` without throwing
+- [x] case 8: `parseJsonlMetadata` extracts firstPrompt, model, version (12-char SHA), permissionMode, gitBranch, slug, isSidechain from first 10 lines
+- [x] case 9: session with NO `slug` field — `parseJsonlMetadata` returns `slug: undefined` (spec §3 — slug present in only 9/20 files)
+- [x] case 10: `jsonlToConversationEntries` assigns sequential turn numbers on `system/turn_duration` boundaries
+- [x] case 11: noisy session with ~80% `progress` lines — they are skipped, output count matches user+assistant+tool only
 
 *Component / integration tests* — N/A (pure parser, no React surface)
 
 *Data-fixture tests* (task reads JSONL):
-- [ ] fixture `tests/fixtures/jsonl-parser/normal.jsonl` — happy path session
-- [ ] fixture `tests/fixtures/jsonl-parser/with-permission-mode.jsonl` — DESIGN-CONTEXT §2.7 (one of 6 permission modes)
-- [ ] fixture `tests/fixtures/jsonl-parser/version-sha.jsonl` — `version` field as 12-char SHA (spec §3)
-- [ ] fixture `tests/fixtures/jsonl-parser/no-slug.jsonl` — DESIGN-CONTEXT §2 / spec §3
-- [ ] fixture `tests/fixtures/jsonl-parser/noisy-progress.jsonl` — ~80% `progress` lines
-- [ ] fixture `tests/fixtures/jsonl-parser/truncated.jsonl` — final line cut mid-JSON
-- [ ] parser returns expected normalized `ConversationEntry[]` shape per fixture
-- [ ] (DB) — N/A (no schema change in this task)
+- [x] fixture `tests/fixtures/jsonl-parser/normal.jsonl` — happy path session
+- [x] fixture `tests/fixtures/jsonl-parser/with-permission-mode.jsonl` — DESIGN-CONTEXT §2.7 (one of 6 permission modes)
+- [x] fixture `tests/fixtures/jsonl-parser/version-sha.jsonl` — `version` field as 12-char SHA (spec §3)
+- [x] fixture `tests/fixtures/jsonl-parser/no-slug.jsonl` — DESIGN-CONTEXT §2 / spec §3
+- [x] fixture `tests/fixtures/jsonl-parser/noisy-progress.jsonl` — ~80% `progress` lines
+- [x] fixture `tests/fixtures/jsonl-parser/truncated.jsonl` — final line cut mid-JSON
+- [x] parser returns expected normalized `ConversationEntry[]` shape per fixture
+- [x] (DB) — N/A (no schema change in this task)
 
 *Rust checks* — N/A (no `src-tauri/` changes)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* (large JSONL):
-- [ ] parsing 5MB JSONL (≈5000 lines) completes < 200ms in vitest (synchronous path)
-- [ ] mean across 20 fixture files (total ≈5MB) < 500ms
+- [x] parsing 5MB JSONL (≈5000 lines) completes < 200ms in vitest (synchronous path)
+- [x] mean across 20 fixture files (total ≈5MB) < 500ms
 
 *Manual UI / E2E smoke* — N/A (parser has no UI surface; verified via Task 11)
 - *Existing notes:* (none)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §3, §5.1, §5.8, §11
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T2.2): frontend JSONL parser with metadata extraction`
+- [x] All checks above pass
+- [x] Behavior matches spec §3, §5.1, §5.8, §11
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T2.2): frontend JSONL parser with metadata extraction`
 
 ---
 
