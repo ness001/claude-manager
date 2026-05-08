@@ -287,7 +287,7 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 ### Skills — `src/sections/SkillsSection.tsx`
 
 - [x] Skill card has no Remove action (`src/components/skills/SkillCard.tsx`) — not a defect: spec §7.1 lists only "Open in VS Code" and "Open in File Browser"; SkillCard matches spec exactly. Custom-skill removal is intentionally a manual filesystem action.
-- [x] `+ Create Skill` button passes literal `~/.claude/skills/` to `openShell`, which does not expand `~` — silent no-op on most platforms (`src/components/skills/SkillsListView.tsx:14,33`). Fixed by resolving `homeDir() + join(...)` before the shell open. — PR #<TBD>
+- [x] `+ Create Skill` button passes literal `~/.claude/skills/` to `openShell`, which does not expand `~` — silent no-op on most platforms (`src/components/skills/SkillsListView.tsx:14,33`). Fixed by resolving `homeDir() + join(...)` before the shell open. — PR #35
 - [ ] _further investigation pending_
 
 ### MCP Servers — `src/sections/McpSection.tsx`
