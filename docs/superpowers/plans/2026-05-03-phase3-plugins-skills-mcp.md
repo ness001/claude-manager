@@ -878,61 +878,61 @@ Replace placeholder with McpPanel. Load servers on mount. Refresh status on 15s 
 
 ### Task 13: Integration Verification
 
-- [ ] **Step 1: Run all tests** — `npx vitest run` — expect PASS
+- [x] **Step 1: Run all tests** — `npx vitest run` — expect PASS
 
-- [ ] **Step 2: Rust compilation** — `cargo check` — expect clean
+- [x] **Step 2: Rust compilation** — `cargo check` — expect clean
 
-- [ ] **Step 3: Dev build verification**
+- [x] **Step 3: Dev build verification**
 
 `npx tauri dev` — Navigate to Plugins, Skills, MCP sections. Verify:
 - Plugins: shows installed plugins from `~/.claude/plugins/` with correct states
 - Skills: shows custom skills from `~/.claude/skills/`
 - MCP: shows servers from `~/.claude.json`, can add/edit/remove servers
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 `git commit -m "chore: Phase 3 Plugins/Skills/MCP complete"`
 
 **Verification**
 
 *Unit tests*:
-- [ ] case 1: `npx vitest run` — full Phase 3 suite green
-- [ ] case 2: vitest reports zero unhandled rejections / console errors
+- [x] case 1: `npx vitest run` — full Phase 3 suite green
+- [x] case 2: vitest reports zero unhandled rejections / console errors
 
 *Component / integration tests* (RTL + jsdom; `@tauri-apps/api/core` + `@tauri-apps/plugin-sql` + `@tauri-apps/plugin-fs` mocked across the suite):
-- [ ] mounts without console errors across Plugins / Skills / MCP sections
-- [ ] cross-section navigation: Plugins → Skills → MCP retains state
-- [ ] dark + light theme parity across all three sections
+- [x] mounts without console errors across Plugins / Skills / MCP sections
+- [x] cross-section navigation: Plugins → Skills → MCP retains state
+- [x] dark + light theme parity across all three sections
 
 *Data-fixture tests*:
-- [ ] all Phase 3 fixtures (`tests/fixtures/plugin-loader/`, `skill-loader/`, `mcp-loader/`, `mcp-ui/`) loaded by their respective tests still pass
-- [ ] DESIGN-CONTEXT edge cases asserted: §2.1 (MCP in `~/.claude.json` + scope precedence project > local > user), §2.5 (semver + 12-char SHA), §2.9 (no `plugin.json` → `marketplace.json` fallback)
-- [ ] zero invocations of the real `claude mcp list` subprocess across the entire test run (spec §5 / §8.3)
+- [x] all Phase 3 fixtures (`tests/fixtures/plugin-loader/`, `skill-loader/`, `mcp-loader/`, `mcp-ui/`) loaded by their respective tests still pass
+- [x] DESIGN-CONTEXT edge cases asserted: §2.1 (MCP in `~/.claude.json` + scope precedence project > local > user), §2.5 (semver + 12-char SHA), §2.9 (no `plugin.json` → `marketplace.json` fallback)
+- [x] zero invocations of the real `claude mcp list` subprocess across the entire test run (spec §5 / §8.3)
 
 *Rust checks*:
-- [ ] `cd src-tauri && cargo check` clean
-- [ ] `cargo test` green (if any)
+- [x] `cd src-tauri && cargo check` clean
+- [x] `cargo test` green (if any)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget*:
-- [ ] scanning ~50 plugin installations < 1s end-to-end
-- [ ] each plugin manifest parse < 100ms
-- [ ] MCP refresh tick at 15s does not block UI (frame budget < 16ms during refresh)
+- [x] scanning ~50 plugin installations < 1s end-to-end
+- [x] each plugin manifest parse < 100ms
+- [x] MCP refresh tick at 15s does not block UI (frame budget < 16ms during refresh)
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
-- [ ] Plugins: shows installed plugins from `~/.claude/plugins/` with correct states (active/disabled/broken/orphaned/update-available)
-- [ ] Skills: shows custom skills from `~/.claude/skills/`
-- [ ] MCP: shows servers from `~/.claude.json` and project `.mcp.json`; can add/edit/remove servers; status refreshes
-- [ ] dark + light render correctly across all three sections
-- [ ] sidebar keyboard shortcuts for each section work
-- [ ] DevTools Console: zero errors
+- [x] Plugins: shows installed plugins from `~/.claude/plugins/` with correct states (active/disabled/broken/orphaned/update-available)
+- [x] Skills: shows custom skills from `~/.claude/skills/`
+- [x] MCP: shows servers from `~/.claude.json` and project `.mcp.json`; can add/edit/remove servers; status refreshes
+- [x] dark + light render correctly across all three sections
+- [x] sidebar keyboard shortcuts for each section work
+- [x] DevTools Console: zero errors
 - *Existing notes:* Steps 1-3 above (vitest, cargo check, tauri dev navigation) are the original integration gate
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §4, §5, §7, §8, §10, §13, §17
-- [ ] All Phase 3 plan checkboxes `[x]`
-- [ ] Commit: `chore(T3.13): Phase 3 Plugins/Skills/MCP complete`
+- [x] All checks above pass
+- [x] Behavior matches spec §4, §5, §7, §8, §10, §13, §17
+- [x] All Phase 3 plan checkboxes `[x]`
+- [x] Commit: `chore(T3.13): Phase 3 Plugins/Skills/MCP complete`
