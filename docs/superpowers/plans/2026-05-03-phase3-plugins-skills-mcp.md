@@ -732,7 +732,7 @@ Computed: `serversByScope()` — group into user/local/project arrays.
 **Files:**
 - Create: all files under `src/components/mcp/`
 
-- [ ] **Step 1: Implement McpServerCard**
+- [x] **Step 1: Implement McpServerCard**
 
 Card: status dot (green=connected, gray hollow=disconnected, red=error, amber pulsing=starting per spec §8.3). Name, type pill (stdio/sse/http), scope pill (user/local/project). Expand/collapse toggle. Actions vary by connection state per spec §8.3:
 - Connected: Restart, View Tools, View Logs, Edit, Remove
@@ -742,11 +742,11 @@ Card: status dot (green=connected, gray hollow=disconnected, red=error, amber pu
 
 Remove requires confirmation dialog. Shadowed servers are dimmed with "Overridden by [scope]" badge.
 
-- [ ] **Step 2: Implement McpServerDetail**
+- [x] **Step 2: Implement McpServerDetail**
 
 Expanded card content: command + args (for stdio), URL (for sse/http), env vars (masked values with reveal), headers, tools list if available.
 
-- [ ] **Step 3: Implement McpServerForm**
+- [x] **Step 3: Implement McpServerForm**
 
 Modal dialog for Add/Edit. Fields per spec §17.10:
 - Name: text, required, unique within scope, alphanumeric + hyphens
@@ -760,7 +760,7 @@ Modal dialog for Add/Edit. Fields per spec §17.10:
 
 Save action calls mcp-loader's `saveMcpServer()`.
 
-- [ ] **Step 4: Implement McpPanel**
+- [x] **Step 4: Implement McpPanel**
 
 Header: "MCP Servers" title + [+ Add Server] button + [Refresh Status] button + search bar. Body: grouped by scope with scope headers ("User Scope (available in all projects)", "Local Scope", "Project Scope"). Each group lists its McpServerCards. Empty state per spec §17.6.
 
@@ -775,50 +775,50 @@ Header: "MCP Servers" title + [+ Add Server] button + [Refresh Status] button + 
 *Unit tests* — N/A (UI components covered by RTL below)
 
 *Component / integration tests* (`tests/components/mcp/McpServerCard.test.tsx`, `McpServerDetail.test.tsx`, `McpServerForm.test.tsx`, `McpPanel.test.tsx`; RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-fs` — never invoke real subprocess):
-- [ ] mounts without console errors
-- [ ] McpServerCard: status dot per state — green=connected, gray hollow=disconnected, red=error, amber pulsing=starting (spec §8.3)
-- [ ] McpServerCard: action set varies per state (Connected: Restart/View Tools/View Logs/Edit/Remove; Disconnected: Connect/View Logs/Edit/Remove; Error: Retry/View Logs/Edit/Remove; Starting: Cancel after >10s/View Logs)
-- [ ] McpServerCard: shadowed server is dimmed and shows "Overridden by [scope]" badge
-- [ ] McpServerCard: Remove → confirmation dialog → calls store removeServer
-- [ ] McpServerDetail: stdio shows command + args; sse/http shows URL; env values masked with reveal toggle; headers preserved
-- [ ] McpServerForm: type radio swaps fields; validation — name required + alphanumeric/hyphens + unique within scope; URL validation for sse/http
-- [ ] McpServerForm: `${ENV_VAR}` placeholder accepted in headers
-- [ ] McpServerForm: Save calls `saveMcpServer` (mocked); Cancel closes without write
-- [ ] McpPanel: header "MCP Servers", [+ Add Server], [Refresh Status], search bar
-- [ ] McpPanel: groups rendered with scope headers ("User Scope (available in all projects)", "Local Scope", "Project Scope")
-- [ ] McpPanel: search filters by name + command + args (stdio) + url (sse/http) (spec §17.7)
-- [ ] McpPanel: matching segments highlighted with `bg-accent/20` (spec §17.7)
-- [ ] McpPanel: loading shows 2 skeleton cards per scope group; empty state per spec §17.6
-- [ ] dark + light theme parity
+- [x] mounts without console errors
+- [x] McpServerCard: status dot per state — green=connected, gray hollow=disconnected, red=error, amber pulsing=starting (spec §8.3)
+- [x] McpServerCard: action set varies per state (Connected: Restart/View Tools/View Logs/Edit/Remove; Disconnected: Connect/View Logs/Edit/Remove; Error: Retry/View Logs/Edit/Remove; Starting: Cancel after >10s/View Logs)
+- [x] McpServerCard: shadowed server is dimmed and shows "Overridden by [scope]" badge
+- [x] McpServerCard: Remove → confirmation dialog → calls store removeServer
+- [x] McpServerDetail: stdio shows command + args; sse/http shows URL; env values masked with reveal toggle; headers preserved
+- [x] McpServerForm: type radio swaps fields; validation — name required + alphanumeric/hyphens + unique within scope; URL validation for sse/http
+- [x] McpServerForm: `${ENV_VAR}` placeholder accepted in headers
+- [x] McpServerForm: Save calls `saveMcpServer` (mocked); Cancel closes without write
+- [x] McpPanel: header "MCP Servers", [+ Add Server], [Refresh Status], search bar
+- [x] McpPanel: groups rendered with scope headers ("User Scope (available in all projects)", "Local Scope", "Project Scope")
+- [x] McpPanel: search filters by name + command + args (stdio) + url (sse/http) (spec §17.7)
+- [x] McpPanel: matching segments highlighted with `bg-accent/20` (spec §17.7)
+- [x] McpPanel: loading shows 2 skeleton cards per scope group; empty state per spec §17.6
+- [x] dark + light theme parity
 
 *Data-fixture tests* (only because each card variant needs scope/state fixtures):
-- [ ] fixture at `tests/fixtures/mcp-ui/` covering all four states (connected/disconnected/error/starting), all three types (stdio/sse/http), and a shadowed pair to exercise "Overridden" badge — verifies scope precedence (project > local > user)
-- [ ] fixture asserts NO subprocess for `claude mcp list` is invoked during component tests (spec §5 / §8.3)
+- [x] fixture at `tests/fixtures/mcp-ui/` covering all four states (connected/disconnected/error/starting), all three types (stdio/sse/http), and a shadowed pair to exercise "Overridden" badge — verifies scope precedence (project > local > user)
+- [x] fixture asserts NO subprocess for `claude mcp list` is invoked during component tests (spec §5 / §8.3)
 
 *Rust checks* — N/A (no `src-tauri/` changes)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A (typically <20 cards)
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
-- [ ] navigate to MCP; servers grouped by scope render
-- [ ] expand/collapse a card → details visible/hidden
-- [ ] add a stdio server via form → appears in correct scope group
-- [ ] edit existing server → form pre-populates; save persists
-- [ ] remove with confirmation
-- [ ] dark + light render correctly
-- [ ] DevTools Console: zero errors
+- [x] navigate to MCP; servers grouped by scope render
+- [x] expand/collapse a card → details visible/hidden
+- [x] add a stdio server via form → appears in correct scope group
+- [x] edit existing server → form pre-populates; save persists
+- [x] remove with confirmation
+- [x] dark + light render correctly
+- [x] DevTools Console: zero errors
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §5, §8.1, §8.3, §17.6, §17.7, §17.10
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.11): add MCP server UI components`
+- [x] All checks above pass
+- [x] Behavior matches spec §5, §8.1, §8.3, §17.6, §17.7, §17.10
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.11): add MCP server UI components`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat: add MCP server UI components"`
 
