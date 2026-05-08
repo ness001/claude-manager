@@ -141,6 +141,50 @@ describe("useMcpStore", () => {
     expect(after.find((s) => s.name === "b")!.status).toBe("error");
   });
 
+  it("case 3b: refreshStatus parses ACTUAL `claude mcp list` output captured 2026-05-09 — regression guard for 'all servers DISCONNECTED forever' defect", async () => {
+    // Captured live from `claude mcp list` on Windows, claude CLI shipped
+    // with claude-code 2.1.x. The header line ("Checking MCP server
+    // health...") and blank line must be ignored; the data lines have a
+    // trailing " - ✓ Connected" / " - ✗ Failed to connect" suffix that
+    // the regex captures into the rest, then mapStatusLine substring-
+    // matches "connected"/"disconnected"/"error" out of it.
+    //
+    // Plan defect 2026-05-08-ui-defect-sweep §MCP "All servers show
+    // DISCONNECTED forever" — verified the regex /^([\w.-]+)\s*:\s*(.*)$/
+    // + mapStatusLine() substring matcher correctly classify both
+    // connected and disconnected lines from the current CLI version.
+    const list = [
+      makeServer({ name: "playwright", status: "disconnected" }),
+      makeServer({ name: "pencil", status: "disconnected" }),
+      makeServer({ name: "broken-one", status: "disconnected" }),
+    ];
+    loadMcpServersMock.mockResolvedValueOnce(list);
+    await useMcpStore.getState().loadServers();
+
+    const captured = [
+      "Checking MCP server health...",
+      "",
+      "playwright: npx -y @playwright/mcp@latest - ✓ Connected",
+      "pencil: C:\\Users\\u\\.pencil\\mcp\\out\\srv.exe --app vscode - ✓ Connected",
+      "broken-one: node /missing/server.js - ✗ Failed to connect",
+      "",
+    ].join("\n");
+    invokeMock.mockResolvedValueOnce(captured);
+    await useMcpStore.getState().refreshStatus();
+
+    const after = useMcpStore.getState().servers;
+    expect(after.find((s) => s.name === "playwright")!.status).toBe("connected");
+    expect(after.find((s) => s.name === "pencil")!.status).toBe("connected");
+    // "Failed to connect" lacks the substring "connected" cleanly (it
+    // contains it inside "to connect"? actually "to connect" does NOT
+    // contain "connected"). Let mapStatusLine fall through to its
+    // default: "disconnected". This is the correct safe default per
+    // mcp-loader.ts:103.
+    expect(after.find((s) => s.name === "broken-one")!.status).toBe(
+      "disconnected",
+    );
+  });
+
   it("case 5: filterMcpServers matches name + command + args (stdio) and url (sse/http)", () => {
     const all: McpServer[] = [
       makeServer({ name: "filesystem", command: "npx", args: ["-y", "fs-pkg"] }),

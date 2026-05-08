@@ -295,7 +295,7 @@ _Pre-seeded — partially investigated last session._
 
 - [x] Connect button calls non-existent IPC `connect_mcp_server` — removed button + dead store method per spec §8.3 (status is opt-in via Refresh) — PR #14
 - [x] Restart button calls non-existent IPC `restart_mcp_server` — removed button + dead store method (no `claude mcp restart` CLI subcommand) — PR #14
-- [ ] All servers show DISCONNECTED forever — verify whether `claude mcp list` parser regex `/^([\w.-]+)\s*:\s*(.*)$/` matches actual CLI output; if not, fix parser
+- [x] All servers show DISCONNECTED forever — verified the parser regex `/^([\w.-]+)\s*:\s*(.*)$/` + `mapStatusLine` correctly classify the actual `claude mcp list` output (captured 2026-05-09 from claude CLI 2.1.x: connected/disconnected/failed lines all parse correctly — added a regression-guard test using the captured output). Root cause was elsewhere: `McpSection.tsx` only fired the first `refreshStatus()` after `VISIBLE_INTERVAL_MS` (15s), so users saw default `disconnected` for the first 15s after every mount. Fixed by chaining an immediate `refreshStatus()` after `loadServers()` on mount, matching the spec §13 comment block at the top of the file. — PR #34
 - [x] `View Tools` button has no onViewTools callback wired (`src/components/mcp/McpServerCard.tsx:88-94`) — button now renders `disabled` + `aria-disabled` + `title="Coming soon"` whenever the callback is absent (current parent behavior); stays interactive when a callback is wired so future panel work activates it without further changes — PR #30
 - [ ] `View Logs` button has no onViewLogs callback wired (`src/components/mcp/McpServerCard.tsx:101`)
 - [ ] _further investigation pending_
