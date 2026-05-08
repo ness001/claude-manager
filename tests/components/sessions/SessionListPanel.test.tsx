@@ -138,7 +138,12 @@ describe("SessionListPanel", () => {
 
   it("New Session button is reachable", () => {
     render(<SessionListPanel />);
-    expect(screen.getByTestId("new-session-btn")).toBeInTheDocument();
+    const btn = screen.getByTestId("new-session-btn");
+    expect(btn).toBeInTheDocument();
+    // Until the IPC is wired, the button must be disabled with a tooltip
+    // explaining why — clickable-but-dead is worse than visibly-not-yet.
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute("title");
   });
 
   // Perf gate per spec §17.8 — render 100 sessions in well under 100ms.
