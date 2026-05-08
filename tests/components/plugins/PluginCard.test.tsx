@@ -98,6 +98,17 @@ describe("PluginCard", () => {
     expect(btn.title.toLowerCase()).toContain("not yet wired");
   });
 
+  // Same treatment for Remove — no `claude plugin uninstall` IPC yet.
+  it("Remove button is disabled with an explanatory title (no IPC backing yet)", () => {
+    render(
+      <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
+    );
+    const btn = screen.getByTestId("remove-btn") as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(btn.title.length).toBeGreaterThan(0);
+    expect(btn.title.toLowerCase()).toContain("not yet wired");
+  });
+
   it("disabled plugin renders 70% opacity (opacity-70 utility)", () => {
     render(
       <PluginCard

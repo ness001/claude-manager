@@ -124,7 +124,9 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
             <button
               type="button"
               data-testid="remove-btn"
-              className="rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary"
+              disabled
+              title="Remove is not yet wired — run `claude plugin uninstall` from the terminal for now"
+              className="cursor-not-allowed rounded border border-border px-2 py-1 text-[11px] text-text-secondary opacity-50"
             >
               Remove
             </button>
