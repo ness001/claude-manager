@@ -23,7 +23,7 @@ describe("QuickActions", () => {
     expect(errs).toEqual([]);
   });
 
-  it("renders 4 buttons present and clickable", () => {
+  it("renders 4 buttons present and disabled (handlers deferred to later phase)", () => {
     render(<QuickActions />);
     expect(screen.getByTestId("action-new-session")).toBeInTheDocument();
     expect(screen.getByTestId("action-resume-latest")).toBeInTheDocument();
@@ -31,7 +31,10 @@ describe("QuickActions", () => {
     expect(screen.getByTestId("action-rebuild-stats")).toBeInTheDocument();
     // All four buttons exist.
     const root = screen.getByTestId("quick-actions");
-    expect(root.querySelectorAll("button")).toHaveLength(4);
+    const buttons = root.querySelectorAll("button");
+    expect(buttons).toHaveLength(4);
+    // Buttons are disabled until handler wiring lands.
+    buttons.forEach((b) => expect(b).toBeDisabled());
   });
 
   it("New Session button uses the prominent accent variant", () => {
