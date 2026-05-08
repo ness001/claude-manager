@@ -52,6 +52,18 @@ function setupInvoke() {
   invokeMock.mockImplementation(async (cmd: string) => {
     if (cmd === "read_installed_plugins") return REGISTRY;
     if (cmd === "read_settings_enabled_plugins") return SETTINGS;
+    if (cmd === "read_plugin_contents") {
+      // Per-plugin contents are not what these list-shape tests assert;
+      // return empty so loadPlugins' hydration step is a no-op for counts.
+      return {
+        skills: [],
+        agents: [],
+        hooks: [],
+        hasClaudeMd: false,
+        manifestName: "",
+        manifestDescription: "",
+      };
+    }
     throw new Error(`unexpected invoke ${cmd}`);
   });
 }
@@ -177,6 +189,91 @@ describe("plugin-loader: loadPlugins", () => {
     expect(names).toEqual(sorted);
   });
 
+  // Regression: list view used to show "0 skills / 0 agents / 0 hooks" for
+  // every plugin because loadPlugins skipped read_plugin_contents. The fix
+  // hydrates counts in parallel during the initial load.
+  it("hydrates skill/agent/hook counts during loadPlugins (per-installPath read_plugin_contents)", async () => {
+    invokeMock.mockImplementation(async (cmd: string, payload?: unknown) => {
+      if (cmd === "read_installed_plugins") return REGISTRY;
+      if (cmd === "read_settings_enabled_plugins") return SETTINGS;
+      if (cmd === "read_plugin_contents") {
+        const path = (payload as { installPath: string }).installPath;
+        // Return distinct counts per installPath so we can verify each
+        // plugin gets its own contents merged in (no cross-contamination).
+        const tag = path.length % 7;
+        return {
+          skills: Array.from({ length: tag }, (_, i) => ({
+            name: `s${i}`,
+            description: "",
+          })),
+          agents: Array.from({ length: tag + 1 }, (_, i) => ({
+            name: `a${i}`,
+            description: "",
+          })),
+          hooks: Array.from({ length: tag + 2 }, (_, i) => ({
+            name: `h${i}`,
+            description: "",
+          })),
+          hasClaudeMd: tag % 2 === 0,
+          manifestName: "",
+          manifestDescription: "",
+        };
+      }
+      throw new Error(`unexpected invoke ${cmd}`);
+    });
+    existsMock.mockImplementation(defaultExists);
+
+    const out = await loadPlugins();
+
+    // Every plugin with a real installPath should have its counts populated.
+    for (const p of out) {
+      if (!p.installPath) continue;
+      const expectedTag = p.installPath.length % 7;
+      expect(p.skillCount).toBe(expectedTag);
+      expect(p.agentCount).toBe(expectedTag + 1);
+      expect(p.hookCount).toBe(expectedTag + 2);
+      expect(p.hasClaudeMd).toBe(expectedTag % 2 === 0);
+    }
+
+    // Orphaned entries (no installPath) keep zero counts.
+    const orphan = out.find((p) => p.installPath === "");
+    expect(orphan).toBeDefined();
+    expect(orphan?.skillCount).toBe(0);
+    expect(orphan?.agentCount).toBe(0);
+    expect(orphan?.hookCount).toBe(0);
+  });
+
+  // A single failing read_plugin_contents must NOT poison the rest of the
+  // list — that plugin keeps zero counts, the others hydrate normally.
+  it("isolates per-plugin contents-read failures (one bad plugin does not zero out the list)", async () => {
+    invokeMock.mockImplementation(async (cmd: string, payload?: unknown) => {
+      if (cmd === "read_installed_plugins") return REGISTRY;
+      if (cmd === "read_settings_enabled_plugins") return SETTINGS;
+      if (cmd === "read_plugin_contents") {
+        const path = (payload as { installPath: string }).installPath;
+        if (path.includes("missing-on-disk")) {
+          throw new Error("simulated FS error");
+        }
+        return {
+          skills: [{ name: "s", description: "" }],
+          agents: [],
+          hooks: [],
+          hasClaudeMd: false,
+          manifestName: "",
+          manifestDescription: "",
+        };
+      }
+      throw new Error(`unexpected invoke ${cmd}`);
+    });
+    existsMock.mockImplementation(defaultExists);
+
+    const out = await loadPlugins();
+    const broken = out.find((p) => p.name === "broken-plugin");
+    const others = out.filter((p) => p.name !== "broken-plugin" && p.installPath);
+    expect(broken?.skillCount).toBe(0); // failure left at zero
+    expect(others.every((p) => p.skillCount === 1)).toBe(true);
+  });
+
   // Perf budget (plan T3.2): scanning ~50 plugin installations < 1s
   // end-to-end. We run with a synthetic registry of 50 entries; the
   // mocked `exists` resolves immediately so this measures only the
@@ -196,6 +293,16 @@ describe("plugin-loader: loadPlugins", () => {
       if (cmd === "read_installed_plugins")
         return JSON.stringify({ plugins: synthetic });
       if (cmd === "read_settings_enabled_plugins") return "";
+      if (cmd === "read_plugin_contents") {
+        return {
+          skills: [],
+          agents: [],
+          hooks: [],
+          hasClaudeMd: false,
+          manifestName: "",
+          manifestDescription: "",
+        };
+      }
       throw new Error(`unexpected invoke ${cmd}`);
     });
     existsMock.mockResolvedValue(true);
