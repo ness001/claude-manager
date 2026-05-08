@@ -184,7 +184,7 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
             title="Directory not found"
             className="flex items-center gap-1 text-status-yellow"
           >
-            <AlertTriangle size={14} />
+            <AlertTriangle size={14} role="img" aria-label="Directory not found" />
           </span>
         )}
 
