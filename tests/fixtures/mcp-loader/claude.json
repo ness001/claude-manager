@@ -1,0 +1,43 @@
+{
+  "theme": "dark",
+  "mcpServers": {
+    "fs": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+      "env": {}
+    },
+    "remote-only-user": {
+      "type": "http",
+      "url": "https://api.example.com/mcp",
+      "headers": { "Authorization": "Bearer ${API_TOKEN}" },
+      "env": {}
+    },
+    "shared": {
+      "type": "stdio",
+      "command": "user-cmd",
+      "args": [],
+      "env": {}
+    }
+  },
+  "projects": {
+    "C:/work/proj-a": {
+      "mcpServers": {
+        "shared": {
+          "type": "stdio",
+          "command": "local-cmd",
+          "args": ["--local"],
+          "env": { "FOO": "bar" }
+        },
+        "local-only": {
+          "type": "sse",
+          "url": "https://sse.example.com/stream",
+          "headers": {},
+          "env": {}
+        }
+      },
+      "enabledMcpjsonServers": ["proj-trusted"],
+      "disabledMcpjsonServers": ["proj-untrusted"]
+    }
+  }
+}

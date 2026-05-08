@@ -1,4 +1,5 @@
 mod db;
+mod mcp;
 mod plugins;
 mod sessions;
 mod skills;
@@ -37,6 +38,11 @@ pub fn run() {
             plugins::commands::write_plugin_enabled,
             plugins::commands::check_plugin_updates,
             skills::commands::scan_custom_skills,
+            mcp::commands::read_claude_json,
+            mcp::commands::read_mcp_json,
+            mcp::commands::write_mcp_server,
+            mcp::commands::remove_mcp_server,
+            mcp::commands::check_mcp_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -587,13 +587,13 @@ Per spec §8.1: configs are in `~/.claude.json` (NOT settings.json). Three scope
 - Create: `src-tauri/src/mcp/mod.rs`, `src-tauri/src/mcp/commands.rs`
 - Modify: `src-tauri/src/lib.rs`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test: parses user-scope servers from `~/.claude.json` → `$.mcpServers`, local-scope from `$.projects["path"].mcpServers`, detects shadowing when same name exists at multiple scopes.
 
-- [ ] **Step 2: Run tests — expect FAIL**
+- [x] **Step 2: Run tests — expect FAIL**
 
-- [ ] **Step 3: Implement Rust commands**
+- [x] **Step 3: Implement Rust commands**
 
 `read_claude_json()`: Read `~/.claude.json`, return as String.
 
@@ -605,7 +605,7 @@ Test: parses user-scope servers from `~/.claude.json` → `$.mcpServers`, local-
 
 `check_mcp_status()`: Run `claude mcp list` and parse output for connection status. **Warning per spec §8.3:** This actually spawns servers for health checks. Use timeout. Only invoke when panel is visible.
 
-- [ ] **Step 4: Implement frontend mcp-loader.ts**
+- [x] **Step 4: Implement frontend mcp-loader.ts**
 
 `loadMcpServers()`:
 1. Read `~/.claude.json`
@@ -618,51 +618,51 @@ Test: parses user-scope servers from `~/.claude.json` → `$.mcpServers`, local-
 `saveMcpServer(server: McpServer)`: Call Rust write command.
 `deleteMcpServer(scope, name)`: Call Rust remove command.
 
-- [ ] **Step 5: Run tests — expect PASS**
+- [x] **Step 5: Run tests — expect PASS**
 
 **Verification**
 
 *Unit tests* (`tests/lib/mcp-loader.test.ts`):
-- [ ] case 1: parses user-scope servers from `$.mcpServers` in `~/.claude.json`
-- [ ] case 2: parses local-scope servers from `$.projects["<cwd>"].mcpServers`
-- [ ] case 3: parses project-scope servers from `<project_root>/.mcp.json`; missing file → empty list, no throw
-- [ ] case 4: scope precedence (project > local > user) — same name at multiple scopes resolves to most-specific; shadowed entries flagged via `isOverridden` + `overriddenBy`
-- [ ] case 5: stdio server fixture (command + args + env) round-trips
-- [ ] case 6: sse / http server fixtures with `${ENV_VAR}` placeholder headers preserved verbatim
-- [ ] case 7: `isTrusted` derived from `enabledMcpjsonServers` / `disabledMcpjsonServers` for project-scope only
-- [ ] case 8: `check_mcp_status()` is mocked — test asserts the loader NEVER calls the real `claude mcp list` subprocess (spec §5 / §8.3 warning)
-- [ ] case 9: status mapping covers `connected`, `disconnected`, `error`, `starting`
-- [ ] case 10: atomic write — `saveMcpServer` round-trips through write-to-temp-then-rename (mocked `@tauri-apps/plugin-fs`)
-- [ ] case 11: `deleteMcpServer` removes the correct JSON path for each scope
+- [x] case 1: parses user-scope servers from `$.mcpServers` in `~/.claude.json`
+- [x] case 2: parses local-scope servers from `$.projects["<cwd>"].mcpServers`
+- [x] case 3: parses project-scope servers from `<project_root>/.mcp.json`; missing file → empty list, no throw
+- [x] case 4: scope precedence (project > local > user) — same name at multiple scopes resolves to most-specific; shadowed entries flagged via `isOverridden` + `overriddenBy`
+- [x] case 5: stdio server fixture (command + args + env) round-trips
+- [x] case 6: sse / http server fixtures with `${ENV_VAR}` placeholder headers preserved verbatim
+- [x] case 7: `isTrusted` derived from `enabledMcpjsonServers` / `disabledMcpjsonServers` for project-scope only
+- [x] case 8: `check_mcp_status()` is mocked — test asserts the loader NEVER calls the real `claude mcp list` subprocess (spec §5 / §8.3 warning)
+- [x] case 9: status mapping covers `connected`, `disconnected`, `error`, `starting`
+- [x] case 10: atomic write — `saveMcpServer` round-trips through write-to-temp-then-rename (mocked `@tauri-apps/plugin-fs`)
+- [x] case 11: `deleteMcpServer` removes the correct JSON path for each scope
 
 *Component / integration tests* — N/A (loader is non-UI)
 
 *Data-fixture tests* (this task reads JSON config + filesystem):
-- [ ] fixture at `tests/fixtures/mcp-loader/` with `~/.claude.json` covering user (`$.mcpServers`), local (`$.projects[<path>].mcpServers`), and a project-root `.mcp.json` (DESIGN-CONTEXT §2.1)
-- [ ] fixture exercises "Overridden" badge logic (same name at user + local; project + user)
-- [ ] fixture for stdio + sse + http types with env / headers placeholders
-- [ ] scope precedence (project > local > user) verified against fixture
+- [x] fixture at `tests/fixtures/mcp-loader/` with `~/.claude.json` covering user (`$.mcpServers`), local (`$.projects[<path>].mcpServers`), and a project-root `.mcp.json` (DESIGN-CONTEXT §2.1)
+- [x] fixture exercises "Overridden" badge logic (same name at user + local; project + user)
+- [x] fixture for stdio + sse + http types with env / headers placeholders
+- [x] scope precedence (project > local > user) verified against fixture
 
 *Rust checks* (touches `src-tauri/`):
-- [ ] `cd src-tauri && cargo check` clean
-- [ ] `cargo test` green (if any)
-- [ ] subprocess for `claude mcp list` is gated behind a mockable trait/fn so tests never spawn it (spec §5 / §8.3)
+- [x] `cd src-tauri && cargo check` clean
+- [x] `cargo test` green (if any)
+- [x] subprocess for `claude mcp list` is gated behind a mockable trait/fn so tests never spawn it (spec §5 / §8.3)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A (typically <20 servers across scopes)
 
 *Manual UI / E2E smoke* — deferred to T3.12
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §5, §8.1, §8.3, §10 (refresh strategy)
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.9): add MCP server loader with scope resolution`
+- [x] All checks above pass
+- [x] Behavior matches spec §5, §8.1, §8.3, §10 (refresh strategy)
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.9): add MCP server loader with scope resolution`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 `git commit -m "feat: add MCP server loader with scope resolution"`
 
