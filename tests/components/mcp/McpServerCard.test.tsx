@@ -225,4 +225,35 @@ describe("McpServerCard", () => {
     fireEvent.click(btn);
     expect(onViewTools).toHaveBeenCalledWith(FIX_CONNECTED);
   });
+
+  it("View Logs button is disabled with 'Coming soon' across all 4 states when no onViewLogs callback is wired", () => {
+    const noop = () => {};
+    for (const fix of [FIX_CONNECTED, FIX_DISCONNECTED, FIX_ERROR, FIX_STARTING]) {
+      const { unmount } = render(
+        <McpServerCard server={fix} onEdit={noop} onRemove={noop} />,
+      );
+      const btn = screen.getByTestId("action-view-logs");
+      expect(btn, `disabled for status=${fix.status}`).toBeDisabled();
+      expect(btn).toHaveAttribute("aria-disabled", "true");
+      expect(btn).toHaveAttribute("title", "Coming soon");
+      unmount();
+    }
+  });
+
+  it("View Logs button is enabled and fires onViewLogs when wired", () => {
+    const noop = () => {};
+    const onViewLogs = vi.fn();
+    render(
+      <McpServerCard
+        server={FIX_CONNECTED}
+        onEdit={noop}
+        onRemove={noop}
+        onViewLogs={onViewLogs}
+      />,
+    );
+    const btn = screen.getByTestId("action-view-logs");
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
+    expect(onViewLogs).toHaveBeenCalledWith(FIX_CONNECTED);
+  });
 });

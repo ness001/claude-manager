@@ -101,13 +101,23 @@ export function McpServerCard({
             >
               View Tools
             </ActionButton>
-            <ActionButton testid="action-view-logs" onClick={() => onViewLogs?.(server)}>
+            <ActionButton
+              testid="action-view-logs"
+              onClick={() => onViewLogs?.(server)}
+              disabled={!onViewLogs}
+              title={onViewLogs ? undefined : "Coming soon"}
+            >
               View Logs
             </ActionButton>
           </>
         )}
         {server.status === "disconnected" && (
-          <ActionButton testid="action-view-logs" onClick={() => onViewLogs?.(server)}>
+          <ActionButton
+            testid="action-view-logs"
+            onClick={() => onViewLogs?.(server)}
+            disabled={!onViewLogs}
+            title={onViewLogs ? undefined : "Coming soon"}
+          >
             View Logs
           </ActionButton>
         )}
@@ -125,6 +135,8 @@ export function McpServerCard({
               testid="action-view-logs"
               onClick={() => onViewLogs?.(server)}
               prominent
+              disabled={!onViewLogs}
+              title={onViewLogs ? undefined : "Coming soon"}
             >
               View Logs
             </ActionButton>
@@ -140,7 +152,12 @@ export function McpServerCard({
             >
               Cancel
             </ActionButton>
-            <ActionButton testid="action-view-logs" onClick={() => onViewLogs?.(server)}>
+            <ActionButton
+              testid="action-view-logs"
+              onClick={() => onViewLogs?.(server)}
+              disabled={!onViewLogs}
+              title={onViewLogs ? undefined : "Coming soon"}
+            >
               View Logs
             </ActionButton>
           </>
