@@ -152,4 +152,15 @@ describe("PluginListView", () => {
       document.documentElement.classList.remove("dark");
     }
   });
+
+  it("Install Plugin header button is disabled (no IPC; CLI hint only)", () => {
+    render(<PluginListView />);
+    const btn = screen.getByTestId("install-plugin-btn");
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(btn).toHaveAttribute(
+      "title",
+      "Run `claude plugins install <name>` in your terminal",
+    );
+  });
 });

@@ -57,8 +57,10 @@ export function PluginListView() {
             <button
               type="button"
               data-testid="install-plugin-btn"
+              disabled
+              aria-disabled="true"
               title="Run `claude plugins install <name>` in your terminal"
-              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+              className="flex cursor-not-allowed items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary opacity-50"
             >
               <Plus size={14} />
               Install Plugin
