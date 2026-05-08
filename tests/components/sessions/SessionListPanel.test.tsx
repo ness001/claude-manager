@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 
 import { SessionListPanel } from "../../../src/components/sessions/SessionListPanel";
@@ -88,7 +88,14 @@ describe("SessionListPanel", () => {
   });
 
   it("Timeline view: emits Today / Yesterday / This Week buckets", () => {
-    const now = Date.now();
+    // Anchor to a fixed local-noon "now" so day-boundary math is
+    // deterministic — the test used to flake within ~2h after midnight
+    // because `now - 26h` could fall 2 calendar days back instead of 1.
+    const fixedNow = new Date(2026, 4, 15, 12, 0, 0); // 2026-05-15 12:00 local
+    vi.useFakeTimers();
+    vi.setSystemTime(fixedNow);
+
+    const now = fixedNow.getTime();
     useSessionStore.setState({
       sessions: [
         makeSession({ sessionId: "today", startedAt: new Date(now - 60_000).toISOString() }),
@@ -102,6 +109,8 @@ describe("SessionListPanel", () => {
     expect(labels.some((t) => t.startsWith("Today"))).toBe(true);
     expect(labels.some((t) => t.startsWith("Yesterday"))).toBe(true);
     expect(labels.some((t) => t.startsWith("This Week"))).toBe(true);
+
+    vi.useRealTimers();
   });
 
   it("virtual scroller activates when filtered.length > 50 (spec §17.8)", () => {
