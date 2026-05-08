@@ -262,7 +262,7 @@ _Investigation pending. Likely focus: rail button accessible names, active-state
 
 _Investigation pending. Likely focus: stat tiles showing 0 when stats-cache exists, recent-sessions list, quick-action buttons._
 
-- [ ] QuickActions: all 4 buttons (New Session / Resume Latest / Open CWD / Rebuild Stats) are dead — no `onClick` handlers (`src/components/dashboard/QuickActions.tsx:36-51`). Comment at line 6 calls this out as deferred-to-later-phase wiring, but the buttons currently look clickable while doing nothing. Minimal fix: add `disabled` until wired (or remove until needed); full fix is the Phase 3 wiring itself.
+- [x] QuickActions: all 4 buttons (New Session / Resume Latest / Open CWD / Rebuild Stats) are dead — no `onClick` handlers (`src/components/dashboard/QuickActions.tsx:36-51`). Minimal fix: render `disabled` + `aria-disabled` + `title="Coming soon"` until handler wiring lands in a later phase — PR #22
 - [ ] Dashboard store silently swallows SQLite load errors and renders empty stats (`src/stores/dashboard-store.ts:104-169`) — user sees "0 sessions" with no indication the load failed. Add an `error` flag + soft inline error so users know data may be stale.
 
 ### Sessions — `src/sections/SessionsSection.tsx`

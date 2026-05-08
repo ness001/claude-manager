@@ -2,8 +2,8 @@
 //
 // Four buttons: New Session (prominent accent), Resume Latest, Open CWD,
 // Rebuild Stats. Wiring of the actual actions (CLI commands, FS dialogs)
-// is deferred to later phases — Phase 2 only ships the UI surface so the
-// layout is verifiable.
+// is deferred to later phases — until then the buttons render as disabled
+// so users don't click no-ops.
 
 import { FolderOpen, Play, Plus, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
@@ -38,11 +38,15 @@ export function QuickActions() {
             key={a.id}
             type="button"
             data-testid={`action-${a.id}`}
+            disabled
+            aria-disabled="true"
+            title="Coming soon"
             className={[
               "flex items-center justify-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium",
+              "cursor-not-allowed opacity-50",
               a.variant === "accent"
-                ? "bg-accent text-white hover:bg-accent-hover"
-                : "border border-border bg-bg-secondary text-text-primary hover:bg-bg-tertiary",
+                ? "bg-accent text-white"
+                : "border border-border bg-bg-secondary text-text-primary",
             ].join(" ")}
           >
             {a.icon}
