@@ -270,7 +270,10 @@ _Investigation pending. Likely focus: stat tiles showing 0 when stats-cache exis
 _Investigation pending. Likely focus: session list render, JSONL preview, PID file freshness indicator._
 
 - [x] `SessionListPanel.test.tsx` "Timeline view" test flaked daily within ~2h after midnight — `now - 26h` straddled a calendar boundary, so the "yesterday" assertion failed because the session got bucketed as "This Week" instead. Anchor the test with `vi.useFakeTimers` + a fixed local-noon "now" — PR #20
-- [ ] _further investigation pending_
+- [ ] "+ New Session" button is dead — no `onClick` handler (`src/components/sessions/SessionListPanel.tsx:189-196`). Same situation as Dashboard QuickActions: the button looks interactive but does nothing because backend wiring is later-phase. Minimal fix: disable + tooltip until wired.
+- [ ] `SessionInfoBar.handleAction` is a no-op for every action except the `stop` confirmation prompt (`src/components/sessions/SessionInfoBar.tsx:142-153`). After the user confirms "Stop", nothing happens — no SIGTERM, no toast, no error. Code comment acknowledges this as deferred. Minimal fix: surface a "not yet implemented" UI cue (or disable the action buttons whose handler is a no-op).
+- [ ] `setSessionDisplayName` updates only the in-memory Zustand store (`src/stores/session-store.ts:57-62`); SQLite persistence is explicitly deferred per `src/lib/session-loader.ts:28-31`. The user renames a session, sees it persist visually, and loses the rename on next reload. Either persist via a Tauri command or label the rename UI as session-scoped.
+- [ ] Dead-CWD warning AlertTriangle icon has no `aria-label` (`src/components/sessions/SessionInfoBar.tsx:181-188`). Parent span carries `title="Directory not found"` but screen readers won't always surface that. Add `aria-label="Directory not found"` on the icon (or `aria-hidden` + a screen-reader-only span).
 
 ### Plugins — `src/sections/PluginsSection.tsx`
 
