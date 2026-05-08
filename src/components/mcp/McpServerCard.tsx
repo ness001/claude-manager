@@ -16,8 +16,6 @@ interface McpServerCardProps {
   server: McpServer;
   onEdit: (server: McpServer) => void;
   onRemove: (server: McpServer) => void;
-  onRestart?: (server: McpServer) => void;
-  onConnect?: (server: McpServer) => void;
   onRetry?: (server: McpServer) => void;
   onCancel?: (server: McpServer) => void;
   onViewLogs?: (server: McpServer) => void;
@@ -30,8 +28,6 @@ export function McpServerCard({
   server,
   onEdit,
   onRemove,
-  onRestart,
-  onConnect,
   onRetry,
   onCancel,
   onViewLogs,
@@ -82,9 +78,6 @@ export function McpServerCard({
       <div className="flex flex-wrap gap-2">
         {server.status === "connected" && (
           <>
-            <ActionButton testid="action-restart" onClick={() => onRestart?.(server)}>
-              Restart
-            </ActionButton>
             <ActionButton testid="action-view-tools" onClick={() => onViewTools?.(server)}>
               View Tools
             </ActionButton>
@@ -94,14 +87,9 @@ export function McpServerCard({
           </>
         )}
         {server.status === "disconnected" && (
-          <>
-            <ActionButton testid="action-connect" onClick={() => onConnect?.(server)}>
-              Connect
-            </ActionButton>
-            <ActionButton testid="action-view-logs" onClick={() => onViewLogs?.(server)}>
-              View Logs
-            </ActionButton>
-          </>
+          <ActionButton testid="action-view-logs" onClick={() => onViewLogs?.(server)}>
+            View Logs
+          </ActionButton>
         )}
         {server.status === "error" && (
           <>

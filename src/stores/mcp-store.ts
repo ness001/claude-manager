@@ -41,8 +41,6 @@ interface McpStoreState {
   updateServer: (server: McpServer) => Promise<void>;
   removeServer: (scope: McpScope, name: string) => Promise<void>;
   refreshStatus: () => Promise<void>;
-  restartServer: (name: string) => Promise<void>;
-  connectServer: (name: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   startEditing: (server: McpServer) => void;
   stopEditing: () => void;
@@ -122,26 +120,6 @@ export const useMcpStore = create<McpStoreState>((set, get) => ({
     }));
   },
 
-  restartServer: async (name) => {
-    setStatus(set, name, "starting");
-    try {
-      await invoke("restart_mcp_server", { name });
-    } catch (err) {
-      set({ error: errorMessage(err) });
-    }
-    await get().refreshStatus();
-  },
-
-  connectServer: async (name) => {
-    setStatus(set, name, "starting");
-    try {
-      await invoke("connect_mcp_server", { name });
-    } catch (err) {
-      set({ error: errorMessage(err) });
-    }
-    await get().refreshStatus();
-  },
-
   setSearchQuery: (query) => set({ searchQuery: query }),
   startEditing: (server) => set({ editingServer: server }),
   stopEditing: () => set({ editingServer: null }),
@@ -177,20 +155,6 @@ export function filterMcpServers(
     if (s.url && s.url.toLowerCase().includes(q)) return true;
     return false;
   });
-}
-
-function setStatus(
-  set: (
-    fn: (state: McpStoreState) => Partial<McpStoreState>,
-  ) => void,
-  name: string,
-  status: McpServer["status"],
-): void {
-  set((state) => ({
-    servers: state.servers.map((s) =>
-      s.name === name ? { ...s, status } : s,
-    ),
-  }));
 }
 
 function errorMessage(err: unknown): string {

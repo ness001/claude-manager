@@ -172,8 +172,8 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 
 _Pre-seeded — partially investigated last session._
 
-- [ ] Connect button calls non-existent IPC `connect_mcp_server` (`src/stores/mcp-store.ts:138`) — decide: implement Rust command, or remove the button per spec §8.3
-- [ ] Restart button calls non-existent IPC `restart_mcp_server` (`src/stores/mcp-store.ts:128`) — same decision
+- [x] Connect button calls non-existent IPC `connect_mcp_server` — removed button + dead store method per spec §8.3 (status is opt-in via Refresh) — PR #14
+- [x] Restart button calls non-existent IPC `restart_mcp_server` — removed button + dead store method (no `claude mcp restart` CLI subcommand) — PR #14
 - [ ] All servers show DISCONNECTED forever — verify whether `claude mcp list` parser regex `/^([\w.-]+)\s*:\s*(.*)$/` matches actual CLI output; if not, fix parser
 - [ ] `View Tools` button has no onViewTools callback wired (`src/components/mcp/McpServerCard.tsx:88-94`)
 - [ ] `View Logs` button has no onViewLogs callback wired (`src/components/mcp/McpServerCard.tsx:101`)
