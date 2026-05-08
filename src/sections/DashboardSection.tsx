@@ -9,6 +9,7 @@
 // and live updates are deferred to Phase 4 Task 10.
 
 import { useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 
 import { ActivityChart } from "../components/dashboard/ActivityChart";
 import { ModelDonut } from "../components/dashboard/ModelDonut";
@@ -38,6 +39,7 @@ export function DashboardSection() {
   const activityData = useDashboardStore((s) => s.activityData);
   const modelUsage = useDashboardStore((s) => s.modelUsage);
   const recentSessions = useDashboardStore((s) => s.recentSessions);
+  const loadError = useDashboardStore((s) => s.loadError);
   const loadDashboard = useDashboardStore((s) => s.loadDashboard);
 
   useEffect(() => {
@@ -51,6 +53,20 @@ export function DashboardSection() {
       data-testid="dashboard-section"
       className="flex flex-col gap-4 p-6 h-full overflow-auto"
     >
+      {loadError ? (
+        <div
+          data-testid="dashboard-load-error"
+          role="alert"
+          className="flex items-center gap-2 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs text-text-primary"
+        >
+          <AlertTriangle size={14} className="shrink-0 text-yellow-500" aria-hidden />
+          <span>
+            Couldn&apos;t load some dashboard stats — figures may be stale.
+            <span className="ml-1 text-text-muted">({loadError})</span>
+          </span>
+        </div>
+      ) : null}
+
       {/* Row 1 — 4 stat cards */}
       <div data-testid="dashboard-row-1" className="grid grid-cols-4 gap-4">
         <StatCard value={totalSessions} label="Sessions" accent="green" />

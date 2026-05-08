@@ -30,6 +30,7 @@ beforeEach(() => {
     modelUsage: [],
     recentSessions: [],
     isLoading: false,
+    loadError: null,
   });
   dbSelectMock.mockReset();
   readStatsCacheMock.mockReset();
@@ -40,7 +41,7 @@ afterEach(() => {
 });
 
 describe("dashboard-store", () => {
-  it("case 1: initial state — all numeric 0, all arrays empty, isLoading false", () => {
+  it("case 1: initial state — all numeric 0, all arrays empty, isLoading false, loadError null", () => {
     const s = useDashboardStore.getState();
     expect(s.totalSessions).toBe(0);
     expect(s.totalMessages).toBe(0);
@@ -50,6 +51,7 @@ describe("dashboard-store", () => {
     expect(s.modelUsage).toEqual([]);
     expect(s.recentSessions).toEqual([]);
     expect(s.isLoading).toBe(false);
+    expect(s.loadError).toBeNull();
   });
 
   it("case 2: loadDashboard sets isLoading true then false; populates aggregates", async () => {
@@ -156,7 +158,7 @@ describe("dashboard-store", () => {
     expect(s.recentSessions[0].startedAt).toBe(1_700_000_000_000);
   });
 
-  it("case 5: failed SQLite read → falls back to safe defaults, does NOT throw", async () => {
+  it("case 5: failed SQLite read → falls back to safe defaults + sets loadError, does NOT throw", async () => {
     dbSelectMock.mockRejectedValue(new Error("sqlite is sad"));
     readStatsCacheMock.mockResolvedValue({
       costUSD: 0,
@@ -173,6 +175,25 @@ describe("dashboard-store", () => {
     expect(s.longestSession).toBeNull();
     expect(s.activeSince).toBeNull();
     expect(s.recentSessions).toEqual([]);
+    expect(s.loadError).toBe("sqlite is sad");
+  });
+
+  it("case 5b: successful reload after a failed one clears loadError", async () => {
+    // First load fails.
+    dbSelectMock.mockRejectedValueOnce(new Error("flaky"));
+    readStatsCacheMock.mockResolvedValue({
+      costUSD: 0,
+      hourCounts: Array(24).fill(0),
+      dailyActivity: [],
+      dailyModelTokens: [],
+    });
+    await useDashboardStore.getState().loadDashboard();
+    expect(useDashboardStore.getState().loadError).toBe("flaky");
+
+    // Second load succeeds.
+    dbSelectMock.mockResolvedValue([]);
+    await useDashboardStore.getState().loadDashboard();
+    expect(useDashboardStore.getState().loadError).toBeNull();
   });
 
   it("integration: mocks resolve correctly during loadDashboard — no unhandled rejections", async () => {
