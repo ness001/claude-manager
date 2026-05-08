@@ -164,4 +164,11 @@ describe("PluginListView", () => {
       document.documentElement.classList.remove("dark");
     }
   });
+
+  it("Install Plugin button is disabled until IPC is wired", () => {
+    render(<PluginListView />);
+    const btn = screen.getByTestId("install-plugin-btn");
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute("title");
+  });
 });
