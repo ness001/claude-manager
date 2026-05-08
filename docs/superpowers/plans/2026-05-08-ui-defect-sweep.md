@@ -255,7 +255,7 @@ Each section starts empty. The Explore subagent populates checkboxes during its 
 
 _Investigation pending. Likely focus: rail button accessible names, active-state visual, keyboard navigation, collapse/expand if applicable._
 
-- [x] Rail buttons missing `aria-current="page"`, no focus-visible ring for keyboard nav, tooltip didn't show the documented `Ctrl+N` shortcut (`src/components/SidebarRail.tsx`, `src/components/SidebarRailItem.tsx`) — PR #TBD
+- [x] Rail buttons missing `aria-current="page"`, no focus-visible ring for keyboard nav, tooltip didn't show the documented `Ctrl+N` shortcut (`src/components/SidebarRail.tsx`, `src/components/SidebarRailItem.tsx`) — PR #17
 - [ ] _further investigation pending_
 
 ### Dashboard — `src/sections/DashboardSection.tsx`
