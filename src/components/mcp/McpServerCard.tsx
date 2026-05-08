@@ -78,7 +78,12 @@ export function McpServerCard({
       <div className="flex flex-wrap gap-2">
         {server.status === "connected" && (
           <>
-            <ActionButton testid="action-view-tools" onClick={() => onViewTools?.(server)}>
+            <ActionButton
+              testid="action-view-tools"
+              onClick={() => onViewTools?.(server)}
+              disabled={!onViewTools}
+              title={onViewTools ? undefined : "Coming soon"}
+            >
               View Tools
             </ActionButton>
             <ActionButton testid="action-view-logs" onClick={() => onViewLogs?.(server)}>
@@ -227,20 +232,29 @@ function ActionButton({
   onClick,
   children,
   prominent = false,
+  disabled = false,
+  title,
 }: {
   testid: string;
   onClick: () => void;
   children: React.ReactNode;
   prominent?: boolean;
+  disabled?: boolean;
+  title?: string;
 }) {
-  const cls = prominent
-    ? "border-status-error text-status-error hover:bg-status-error hover:text-white"
-    : "border-border text-text-secondary hover:bg-bg-tertiary";
+  const cls = disabled
+    ? "border-border text-text-secondary cursor-not-allowed opacity-50"
+    : prominent
+      ? "border-status-error text-status-error hover:bg-status-error hover:text-white"
+      : "border-border text-text-secondary hover:bg-bg-tertiary";
   return (
     <button
       type="button"
       data-testid={testid}
       onClick={onClick}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
+      title={title}
       className={`rounded border px-2 py-1 text-[11px] ${cls}`}
     >
       {children}
