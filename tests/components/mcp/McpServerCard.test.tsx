@@ -155,4 +155,36 @@ describe("McpServerCard", () => {
     fireEvent.click(screen.getByTestId("remove-confirm"));
     expect(onRemove).toHaveBeenCalledWith(FIX_CONNECTED);
   });
+
+  it("View Tools button is disabled when no onViewTools callback is wired", () => {
+    const noop = () => {};
+    render(
+      <McpServerCard
+        server={FIX_CONNECTED}
+        onEdit={noop}
+        onRemove={noop}
+      />,
+    );
+    const btn = screen.getByTestId("action-view-tools");
+    expect(btn).toBeDisabled();
+    expect(btn).toHaveAttribute("aria-disabled", "true");
+    expect(btn).toHaveAttribute("title", "Coming soon");
+  });
+
+  it("View Tools button is enabled and fires onViewTools when wired", () => {
+    const noop = () => {};
+    const onViewTools = vi.fn();
+    render(
+      <McpServerCard
+        server={FIX_CONNECTED}
+        onEdit={noop}
+        onRemove={noop}
+        onViewTools={onViewTools}
+      />,
+    );
+    const btn = screen.getByTestId("action-view-tools");
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
+    expect(onViewTools).toHaveBeenCalledWith(FIX_CONNECTED);
+  });
 });
