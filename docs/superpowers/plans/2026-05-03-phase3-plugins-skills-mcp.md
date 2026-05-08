@@ -468,63 +468,63 @@ Test: scans directory structure, parses SKILL.md frontmatter, handles missing/ma
 - Create: `src/components/skills/SkillsListView.tsx`, `src/components/skills/SkillCard.tsx`
 - Modify: `src/sections/SkillsSection.tsx`
 
-- [ ] **Step 1: Implement skill store**
+- [x] **Step 1: Implement skill store**
 
 State: `skills: CustomSkill[]`, `searchQuery: string`, `isLoading: boolean`.
 Actions: `loadSkills()`, `setSearchQuery(q)`.
 
-- [ ] **Step 2: Implement SkillCard**
+- [x] **Step 2: Implement SkillCard**
 
 Card: skill name, description, file path, actions (Open in VS Code, Open in File Browser).
 
-- [ ] **Step 3: Implement SkillsListView**
+- [x] **Step 3: Implement SkillsListView**
 
 Header: "Custom Skills" title + skill count + path (`~/.claude/skills/`) + [+ Create Skill] button (opens file browser to create directory) + search bar. Body: list of SkillCards. Info box at bottom explaining custom skills and linking to Plugins panel for plugin-bundled skills. Empty state per spec §17.6.
 
-- [ ] **Step 4: Wire up SkillsSection**
+- [x] **Step 4: Wire up SkillsSection**
 
 Replace placeholder with SkillsListView. Load skills on mount.
 
 **Verification**
 
 *Unit tests* (`tests/stores/skill-store.test.ts`):
-- [ ] case 1: `loadSkills()` populates `skills` and clears `isLoading`
-- [ ] case 2: `setSearchQuery` filters by name and description
-- [ ] case 3: error path — loader rejects → store records error, no partial mutation
+- [x] case 1: `loadSkills()` populates `skills` and clears `isLoading`
+- [x] case 2: `setSearchQuery` filters by name and description
+- [x] case 3: error path — loader rejects → store records error, no partial mutation
 
 *Component / integration tests* (`tests/components/skills/SkillCard.test.tsx`, `SkillsListView.test.tsx`, `tests/components/sections/SkillsSection.test.tsx`; RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-fs` + `@tauri-apps/plugin-shell`):
-- [ ] mounts without console errors
-- [ ] SkillCard: renders name, description, file path; "Open in VS Code" / "Open in File Browser" actions invoke shell open (mocked)
-- [ ] SkillsListView: header shows skill count + path `~/.claude/skills/`; search filters cards
-- [ ] SkillsListView: empty state matches spec §17.6
-- [ ] SkillsListView: info box references plugin-bundled skills via Plugins panel
-- [ ] SkillsSection: replaces placeholder with `SkillsListView` and triggers load on mount
-- [ ] dark + light theme parity
+- [x] mounts without console errors
+- [x] SkillCard: renders name, description, file path; "Open in VS Code" / "Open in File Browser" actions invoke shell open (mocked)
+- [x] SkillsListView: header shows skill count + path `~/.claude/skills/`; search filters cards
+- [x] SkillsListView: empty state matches spec §17.6
+- [x] SkillsListView: info box references plugin-bundled skills via Plugins panel
+- [x] SkillsSection: replaces placeholder with `SkillsListView` and triggers load on mount
+- [x] dark + light theme parity
 
 *Data-fixture tests* — N/A (reuses T3.6 fixtures via mocked loader)
 
 *Rust checks* — N/A
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
-- [ ] sidebar → Skills → 8 known custom skills render
-- [ ] search box filters list
-- [ ] "Open in VS Code" opens the SKILL.md file
-- [ ] dark + light render correctly
-- [ ] DevTools Console: zero errors
+- [x] sidebar → Skills → 8 known custom skills render
+- [x] search box filters list
+- [x] "Open in VS Code" opens the SKILL.md file
+- [x] dark + light render correctly
+- [x] DevTools Console: zero errors
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §7, §17.6, §17.7
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.7): add Skills list view`
+- [x] All checks above pass
+- [x] Behavior matches spec §7, §17.6, §17.7
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.7): add Skills list view`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat: add Skills list view"`
 
