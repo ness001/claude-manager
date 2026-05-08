@@ -3,13 +3,6 @@ name: ui-sweep-ci
 on:
   pull_request:
     branches: [master]
-    paths:
-      - "src/**"
-      - "src-tauri/**"
-      - "tests/**"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/ui-sweep-ci.yml"
   push:
     branches: [master]
 

@@ -101,6 +101,121 @@ If CI fails: do NOT force-merge. Investigate, push fix to same branch, let auto-
 
 ---
 
+## Iteration procedure (the ralph-loop reads this each turn)
+
+Each ralph-loop iteration runs these steps in order. Do not skip steps.
+
+### 1. Sync
+
+```bash
+git fetch origin master
+```
+
+### 2. Wait for prior fix PRs (subagent)
+
+Dispatch a general-purpose subagent named `pr-watcher` with this task:
+
+> Poll `gh pr list --state open --search "fix(ui)" --author @me` every 60s for up to 30 minutes. For each open PR, check `statusCheckRollup`. Return a structured report:
+> - **merged** — list PRs that landed during the wait
+> - **failing** — for each failing PR: `{pr_number, failing_job, log_excerpt, root_cause_hypothesis, suggested_fix}` (fetch the failing job log via `gh run view <run-id> --log-failed`)
+> - **conflicting** — for each conflict: `{pr_number, conflicting_files}`
+> - **still_running** — list PRs whose checks are still in progress at the 30-min cap
+>
+> Return when all open `fix/ui-*` PRs are either merged, have actionable feedback, or hit the 30-min cap. Do NOT modify any code.
+
+Wait for `pr-watcher` to return before continuing.
+
+### 3. Handle feedback
+
+If `pr-watcher` reported failing or conflicting PRs, **fix those first**:
+- Push the fix to the existing branch (do NOT open a new PR)
+- For conflicts: rebase onto `origin/master`, resolve, force-push with lease
+- Re-run local verify (step 6 below) before pushing
+
+Only proceed to step 4 when all prior `fix/ui-*` PRs are merged or have a fresh fix pushed.
+
+### 4. Pick next defect (Explore subagent)
+
+For the next section in the ledger that has unchecked items, dispatch an `Explore` subagent with the prompt from "Per-section investigation procedure" above. Skip already-checked items. Pick the #1 defect from the returned list.
+
+If the next section's ledger is empty (`_to be discovered_`), the Explore subagent populates it; the loop iteration is "discovery only" — no fix PR this turn — and ends after committing the populated checklist (`docs(plan): seed <section> ledger`).
+
+### 5. Branch
+
+```bash
+git checkout -b fix/ui-<section>-<slug> origin/master
+```
+
+### 6. Fix + local verify (HARD GATE)
+
+Implement the root-cause fix per CLAUDE.md karpathy rules. Update tests. Then run **all** of the following — every one must pass before push:
+
+```bash
+npx tsc --noEmit
+npm test
+cd src-tauri && cargo check --locked && cd ..
+npm run build
+```
+
+For changes with positive UI behavior to verify (not pure deletions):
+
+```bash
+npx tauri dev   # in background
+# manually invoke the affected control
+# capture screenshot to docs/_screenshots/<branch>-after.png
+```
+
+If any gate fails, fix and re-run until green. Do NOT push with a failing gate.
+
+### 7. Commit
+
+Commit message format: `fix(ui/<section>): <subject>`. Body MUST contain:
+- Root cause (1 paragraph)
+- Fix description (1 paragraph)
+- Local verification list (each gate from step 6 with ✓)
+- Plan reference (path + checkbox text)
+- Tick the checkbox in this plan file with ` — PR #<n>` (use placeholder if PR not yet created; fix in step 8)
+
+### 8. Push + PR + auto-merge
+
+```bash
+git push -u origin HEAD
+gh pr create --base master --title "..." --body-file <generated>
+gh pr merge --squash --auto
+```
+
+If the placeholder PR number in the plan was wrong, push a follow-up commit fixing it (or amend before push).
+
+### 9. Loop
+
+Return to step 1 for the next iteration. The ralph-loop's stop hook re-feeds the same prompt; the agent reads this section again and continues from step 1.
+
+---
+
+## Done condition
+
+Output `<promise>UI_DEFECT_SWEEP_PLAN_FULLY_CHECKED</promise>` if and ONLY if **all** of the following hold simultaneously:
+
+1. Every checkbox in every section ledger is `- [x]` with a `— PR #<n>` reference, OR explicitly marked `~~not a defect~~ — investigated, see PR #<n>`.
+2. A clean-sweep iteration has dispatched the Explore subagent against every section in the same loop turn and returned **zero new candidates** in every section.
+3. The clean-sweep iteration's screenshots are committed under `docs/_screenshots/clean-sweep-<date>/`.
+4. `gh pr list --state open --search "fix(ui)"` returns empty.
+5. No `fix/ui-*` PR is in failing-checks state on GitHub.
+
+If any condition fails, do not output the promise. Continue iterating.
+
+---
+
+## Anti-loop guard
+
+If the same PR fails CI 3+ consecutive iterations after fix attempts:
+- Do NOT continue blind retries
+- Stop the loop turn early
+- Leave a comment on the PR via `gh pr comment <n>` describing what was tried and why it's stuck
+- Wait for human input next iteration (the loop will re-feed the prompt; the human may have addressed the PR by then)
+
+---
+
 ## PR body template
 
 ```markdown
