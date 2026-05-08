@@ -161,6 +161,31 @@ export async function loadPlugins(): Promise<PluginMeta[]> {
   }
 
   out.sort((a, b) => a.name.localeCompare(b.name));
+
+  // Hydrate skill/agent/hook counts so the list view doesn't show "0 X"
+  // for every plugin until the user clicks one. Done in parallel; entries
+  // without an installPath (orphaned) stay at zero.
+  await Promise.all(
+    out.map(async (meta, idx) => {
+      if (!meta.installPath) return;
+      try {
+        const wire = await invoke<PluginContentsWire>("read_plugin_contents", {
+          installPath: meta.installPath,
+        });
+        out[idx] = {
+          ...meta,
+          skillCount: wire.skills.length,
+          agentCount: wire.agents.length,
+          hookCount: wire.hooks.length,
+          hasClaudeMd: wire.hasClaudeMd,
+        };
+      } catch {
+        // Per-plugin failure must not poison the whole list — leave the
+        // counts at zero for this entry and continue.
+      }
+    }),
+  );
+
   return out;
 }
 
