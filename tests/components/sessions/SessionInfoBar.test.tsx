@@ -175,6 +175,16 @@ describe("SessionInfoBar", () => {
     expect(updated?.displayName).toBe("Brand New Name");
   });
 
+  it("name field surfaces 'session-scoped — not persisted' affordance via title + aria-label", () => {
+    // Until SQLite persistence is wired (session-loader.ts:28-31), renames
+    // only live in the in-memory Zustand store. The input must label this
+    // so users — including SR users — know edits won't survive reload.
+    render(<SessionInfoBar session={makeSession()} />);
+    const input = screen.getByTestId("session-name-input");
+    expect(input.getAttribute("title")).toMatch(/not yet saved across reloads/i);
+    expect(input.getAttribute("aria-label")).toMatch(/session-scoped/i);
+  });
+
   it("renders state pill, model badge, message count, entrypoint badge", () => {
     render(
       <SessionInfoBar
