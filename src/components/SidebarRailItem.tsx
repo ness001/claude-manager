@@ -9,6 +9,8 @@ export interface SidebarRailItemProps {
   active: boolean;
   /** Click handler — typically dispatches navigation. */
   onClick: () => void;
+  /** Optional keyboard shortcut shown in the tooltip (e.g. "Ctrl+1"). */
+  shortcut?: string;
 }
 
 /**
@@ -21,19 +23,22 @@ export function SidebarRailItem({
   Icon,
   active,
   onClick,
+  shortcut,
 }: SidebarRailItemProps) {
   const base =
-    "relative flex h-12 w-12 items-center justify-center border-l-[3px] transition-colors";
+    "relative flex h-12 w-12 items-center justify-center border-l-[3px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset";
   const activeClasses =
     "bg-sidebar-active border-accent text-accent";
   const inactiveClasses =
     "border-transparent text-text-secondary hover:bg-sidebar-active/50 hover:text-text-primary";
+  const title = shortcut ? `${label} (${shortcut})` : label;
 
   return (
     <button
       type="button"
       aria-label={label}
-      title={label}
+      aria-current={active ? "page" : undefined}
+      title={title}
       data-active={active ? "true" : "false"}
       onClick={onClick}
       className={`${base} ${active ? activeClasses : inactiveClasses}`}
