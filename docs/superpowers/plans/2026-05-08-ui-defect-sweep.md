@@ -310,7 +310,7 @@ _Investigation pending._
 
 _Investigation pending. Candidates: theme toggle, modal escape-key, toast dismissal, error boundary fallback UI._
 
-- [x] McpServerForm modal does not close on Escape key — backdrop click works but keyboard users had no way to dismiss the dialog (`src/components/mcp/McpServerForm.tsx`, `role="dialog"`). Fixed with a `useEffect` keydown listener on `document`. — PR #<TBD>
+- [x] McpServerForm modal does not close on Escape key — backdrop click works but keyboard users had no way to dismiss the dialog (`src/components/mcp/McpServerForm.tsx`, `role="dialog"`). Fixed with a `useEffect` keydown listener on `document`. — PR #36
 - [ ] _further investigation pending_
 
 ---
