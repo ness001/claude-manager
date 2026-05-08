@@ -215,6 +215,9 @@ describe("McpServerForm", () => {
   });
 
   it("Save and Cancel buttons have a focus-visible ring", () => {
+
+  it("Escape key closes the form without saving (a11y: dialog pattern)", () => {
+    const onClose = vi.fn();
     render(
       <McpServerForm
         existingNames={EMPTY_NAMES}
@@ -228,6 +231,13 @@ describe("McpServerForm", () => {
       expect(cls).toContain("focus-visible:ring-2");
       expect(cls).toContain("focus-visible:ring-accent");
     }
+        onClose={onClose}
+        onSaved={() => {}}
+      />,
+    );
+    fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(saveMock).not.toHaveBeenCalled();
   });
 });
 
