@@ -274,7 +274,7 @@ _Investigation pending. Likely focus: session list render, JSONL preview, PID fi
 
 _Pre-seeded from prior debugging — these are known but the loop must still re-verify each before fixing (memory may be stale)._
 
-- [x] List shows 0 skills/0 agents/0 hooks for every plugin (list view doesn't fetch details — see `src/lib/plugin-loader.ts:135-139`) — PR #TBD
+- [x] List shows 0 skills/0 agents/0 hooks for every plugin (list view doesn't fetch details — see `src/lib/plugin-loader.ts:135-139`) — PR #19
 - [ ] Reinstall button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`)
 - [ ] Remove button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`)
 - [ ] "Install Plugin" header button has no onClick handler (`src/components/plugins/PluginListView.tsx:59-65`)
