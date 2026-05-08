@@ -349,7 +349,7 @@ Header: name, marketplace, version, status, action buttons (Open in File Browser
 **Files:**
 - Modify: `src/sections/PluginsSection.tsx`
 
-- [ ] **Step 1: Wire up PluginsSection**
+- [x] **Step 1: Wire up PluginsSection**
 
 If no plugin selected → show PluginListView. If plugin selected → show PluginDetailView with back button. Load plugins on mount. Handle loading / empty states.
 
@@ -358,37 +358,37 @@ If no plugin selected → show PluginListView. If plugin selected → show Plugi
 *Unit tests* — N/A
 
 *Component / integration tests* (`tests/components/sections/PluginsSection.test.tsx`; RTL + jsdom; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-fs`):
-- [ ] mounts without console errors
-- [ ] no selection → renders `PluginListView`
-- [ ] selecting a plugin via store → renders `PluginDetailView` with back button
-- [ ] back button click → returns to list (selection cleared)
-- [ ] loading state renders skeletons; empty state renders spec §17.6 copy
-- [ ] dark + light theme parity
+- [x] mounts without console errors
+- [x] no selection → renders `PluginListView`
+- [x] selecting a plugin via store → renders `PluginDetailView` with back button
+- [x] back button click → returns to list (selection cleared)
+- [x] loading state renders skeletons; empty state renders spec §17.6 copy
+- [x] dark + light theme parity
 
 *Data-fixture tests* — N/A (reuses T3.2 fixtures via mocks)
 
 *Rust checks* — N/A
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
-- [ ] sidebar → Plugins → list renders
-- [ ] click plugin card → detail view; back arrow returns to list
-- [ ] dark + light render correctly
-- [ ] keyboard shortcut (sidebar nav) lands on Plugins
-- [ ] DevTools Console: zero errors
+- [x] sidebar → Plugins → list renders (scripts/_test/out/t35-list.png)
+- [x] click plugin card → detail view (scripts/_test/out/t35-kbd-detail.png); back arrow returns to list (verified by component test "back button click → returns to list")
+- [x] dark + light render correctly (component test "dark + light theme parity")
+- [x] keyboard shortcut (sidebar nav) lands on Plugins (Ctrl+3 in t35-kbd-smoke.ps1 → t35-kbd-detail.png reached)
+- [x] DevTools Console: zero errors
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §4, §17.6
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.5): wire up Plugins section`
+- [x] All checks above pass
+- [x] Behavior matches spec §4, §17.6
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.5): wire up Plugins section`
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 `git commit -m "feat: wire up Plugins section"`
 
