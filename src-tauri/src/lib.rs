@@ -1,6 +1,7 @@
 mod db;
 mod plugins;
 mod sessions;
+mod skills;
 
 use tauri::Manager;
 
@@ -35,6 +36,7 @@ pub fn run() {
             plugins::commands::read_plugin_contents,
             plugins::commands::write_plugin_enabled,
             plugins::commands::check_plugin_updates,
+            skills::commands::scan_custom_skills,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

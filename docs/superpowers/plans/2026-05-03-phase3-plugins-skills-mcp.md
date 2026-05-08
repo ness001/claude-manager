@@ -403,59 +403,59 @@ If no plugin selected → show PluginListView. If plugin selected → show Plugi
 - Create: `src-tauri/src/skills/mod.rs`, `src-tauri/src/skills/commands.rs`
 - Modify: `src-tauri/src/lib.rs`
 
-- [ ] **Step 1: Define types**
+- [x] **Step 1: Define types**
 
 `CustomSkill`: name, description, dirPath, skillMdPath. Per spec §7: skills live at `~/.claude/skills/` as directories, each containing `SKILL.md` with YAML frontmatter.
 
-- [ ] **Step 2: Write failing tests**
+- [x] **Step 2: Write failing tests**
 
 Test: scans directory structure, parses SKILL.md frontmatter, handles missing/malformed files.
 
-- [ ] **Step 3: Run tests — expect FAIL**
+- [x] **Step 3: Run tests — expect FAIL**
 
-- [ ] **Step 4: Implement Rust command**
+- [x] **Step 4: Implement Rust command**
 
 `scan_custom_skills()`: Enumerate `~/.claude/skills/` subdirectories. For each, check if `SKILL.md` exists, read and extract YAML frontmatter (name, description). Return list.
 
-- [ ] **Step 5: Implement frontend skill-loader.ts**
+- [x] **Step 5: Implement frontend skill-loader.ts**
 
 `loadCustomSkills()`: Call Rust command, map to `CustomSkill[]`.
 
-- [ ] **Step 6: Run tests — expect PASS**
+- [x] **Step 6: Run tests — expect PASS**
 
 **Verification**
 
 *Unit tests* (`tests/lib/skill-loader.test.ts`):
-- [ ] case 1: scans `~/.claude/skills/` and returns one `CustomSkill` per subdirectory containing `SKILL.md`
-- [ ] case 2: malformed YAML frontmatter → entry omitted (or surfaced with error flag), no throw
-- [ ] case 3: subdirectory without `SKILL.md` → skipped
-- [ ] case 4: name + description extracted from frontmatter and trimmed
+- [x] case 1: scans `~/.claude/skills/` and returns one `CustomSkill` per subdirectory containing `SKILL.md`
+- [x] case 2: malformed YAML frontmatter → entry omitted (or surfaced with error flag), no throw
+- [x] case 3: subdirectory without `SKILL.md` → skipped
+- [x] case 4: name + description extracted from frontmatter and trimmed
 
 *Component / integration tests* — N/A (loader, no UI)
 
 *Data-fixture tests* (this task reads filesystem):
-- [ ] fixture at `tests/fixtures/skill-loader/` with: valid SKILL.md (name + description in frontmatter), missing SKILL.md, malformed frontmatter, plus a plugin-bundled skill at `<plugin>/skills/SKILL.md` that should NOT appear in custom-skills results
-- [ ] parser returns expected normalized `CustomSkill[]` shape
+- [x] fixture at `tests/fixtures/skill-loader/` with: valid SKILL.md (name + description in frontmatter), missing SKILL.md, malformed frontmatter, plus a plugin-bundled skill at `<plugin>/skills/SKILL.md` that should NOT appear in custom-skills results
+- [x] parser returns expected normalized `CustomSkill[]` shape
 
 *Rust checks* (touches `src-tauri/`):
-- [ ] `cd src-tauri && cargo check` clean
-- [ ] `cargo test` green (if any)
+- [x] `cd src-tauri && cargo check` clean
+- [x] `cargo test` green (if any)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A (only ~8 known custom skills today)
 
 *Manual UI / E2E smoke* — deferred to T3.7
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §7
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.6): add custom skills scanner`
+- [x] All checks above pass
+- [x] Behavior matches spec §7
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.6): add custom skills scanner`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 `git commit -m "feat: add custom skills scanner"`
 

@@ -1,0 +1,20 @@
+[
+  {
+    "name": "valid-skill",
+    "description": "A normal custom skill",
+    "dirPath": "/home/u/.claude/skills/valid-skill",
+    "skillMdPath": "/home/u/.claude/skills/valid-skill/SKILL.md"
+  },
+  {
+    "name": "fallback-name",
+    "description": "Frontmatter had only description; name fell back to dir name",
+    "dirPath": "/home/u/.claude/skills/fallback-name",
+    "skillMdPath": "/home/u/.claude/skills/fallback-name/SKILL.md"
+  },
+  {
+    "name": "trim-me",
+    "description": "Whitespace gets trimmed",
+    "dirPath": "/home/u/.claude/skills/trim-me",
+    "skillMdPath": "/home/u/.claude/skills/trim-me/SKILL.md"
+  }
+]
