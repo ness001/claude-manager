@@ -674,13 +674,13 @@ Test: parses user-scope servers from `~/.claude.json` → `$.mcpServers`, local-
 - Create: `src/stores/mcp-store.ts`
 - Create: `tests/stores/mcp-store.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Test: loads servers grouped by scope, adds a server, removes a server, refreshes status.
 
-- [ ] **Step 2: Run tests — expect FAIL**
+- [x] **Step 2: Run tests — expect FAIL**
 
-- [ ] **Step 3: Implement MCP store**
+- [x] **Step 3: Implement MCP store**
 
 State: `servers: McpServer[]`, `searchQuery: string`, `isLoading: boolean`, `editingServer: McpServer | null` (for form dialog).
 
@@ -688,18 +688,18 @@ Actions: `loadServers()`, `addServer(server)`, `updateServer(server)`, `removeSe
 
 Computed: `serversByScope()` — group into user/local/project arrays.
 
-- [ ] **Step 4: Run tests — expect PASS**
+- [x] **Step 4: Run tests — expect PASS**
 
 **Verification**
 
 *Unit tests* (`tests/stores/mcp-store.test.ts`):
-- [ ] case 1: `loadServers()` populates list grouped by scope via `serversByScope()`
-- [ ] case 2: `addServer` / `updateServer` / `removeServer` call mocked loader writers and refresh state
-- [ ] case 3: `refreshStatus()` updates each server's `status` from mocked `check_mcp_status()` — never calls the real subprocess
-- [ ] case 4: `restartServer` / `connectServer` invoke the mocked Rust commands and reflect transient `starting` state
-- [ ] case 5: `setSearchQuery` filters by name + command + args (stdio) and url (sse/http) per spec §17.7
-- [ ] case 6: `startEditing` / `stopEditing` toggle `editingServer` cleanly
-- [ ] case 7: error path — write rejection rolls back optimistic state
+- [x] case 1: `loadServers()` populates list grouped by scope via `serversByScope()`
+- [x] case 2: `addServer` / `updateServer` / `removeServer` call mocked loader writers and refresh state
+- [x] case 3: `refreshStatus()` updates each server's `status` from mocked `check_mcp_status()` — never calls the real subprocess
+- [x] case 4: `restartServer` / `connectServer` invoke the mocked Rust commands and reflect transient `starting` state
+- [x] case 5: `setSearchQuery` filters by name + command + args (stdio) and url (sse/http) per spec §17.7
+- [x] case 6: `startEditing` / `stopEditing` toggle `editingServer` cleanly
+- [x] case 7: error path — write rejection rolls back optimistic state
 
 *Component / integration tests* — N/A (Zustand store, no DOM)
 
@@ -708,20 +708,20 @@ Computed: `serversByScope()` — group into user/local/project arrays.
 *Rust checks* — N/A (no `src-tauri/` changes here)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A
 
 *Manual UI / E2E smoke* — deferred to T3.12
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §5, §8.3, §17.7
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.10): add MCP Zustand store`
+- [x] All checks above pass
+- [x] Behavior matches spec §5, §8.3, §17.7
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.10): add MCP Zustand store`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `git commit -m "feat: add MCP Zustand store"`
 
