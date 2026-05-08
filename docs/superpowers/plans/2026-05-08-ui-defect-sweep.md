@@ -311,7 +311,8 @@ _Investigation pending._
 
 _Investigation pending. Candidates: theme toggle, modal escape-key, toast dismissal, error boundary fallback UI._
 
-- [ ] _to be discovered_
+- [x] No top-level React error boundary — any unhandled render error in any section blanks the entire window with no user feedback (`src/main.tsx` previously rendered `<App />` bare). Fixed by adding `ErrorBoundary` component and wrapping `<App />` in `main.tsx`; fallback shows the error message + a Reload button (`role="alert"`). — PR #37
+- [ ] _further investigation pending_
 
 ---
 
