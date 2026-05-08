@@ -535,7 +535,7 @@ Replace placeholder with SkillsListView. Load skills on mount.
 **Files:**
 - Create: `src/lib/mcp-types.ts`
 
-- [ ] **Step 1: Define MCP types**
+- [x] **Step 1: Define MCP types**
 
 `McpScope = "user" | "local" | "project"`.
 `McpServerType = "stdio" | "sse" | "http"`.
@@ -550,8 +550,8 @@ Per spec §8.1: configs are in `~/.claude.json` (NOT settings.json). Three scope
 **Verification**
 
 *Unit tests* (`tests/lib/mcp-types.test.ts`):
-- [ ] case 1: `McpScope` / `McpServerType` / `McpServerState` unions accept exactly the documented literals (`// @ts-expect-error` rejects others)
-- [ ] case 2: `McpServer` type permits `isTrusted: boolean | undefined` only on project-scope construction (compile-time assertion via fixture)
+- [x] case 1: `McpScope` / `McpServerType` / `McpServerState` unions accept exactly the documented literals (`// @ts-expect-error` rejects others)
+- [x] case 2: `McpServer` type permits `isTrusted: boolean | undefined` only on project-scope construction (compile-time assertion via fixture)
 
 *Component / integration tests* — N/A (types only)
 
@@ -560,20 +560,20 @@ Per spec §8.1: configs are in `~/.claude.json` (NOT settings.json). Three scope
 *Rust checks* — N/A (no `src-tauri/` changes)
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A
 
 *Manual UI / E2E smoke* — N/A (no user-visible surface)
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §5 (MCP Data Model), §8.1 (scopes + trust)
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.8): add MCP server type definitions`
+- [x] All checks above pass
+- [x] Behavior matches spec §5 (MCP Data Model), §8.1 (scopes + trust)
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.8): add MCP server type definitions`
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 `git commit -m "feat: add MCP server type definitions"`
 
