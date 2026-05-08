@@ -87,7 +87,6 @@ describe("McpServerCard", () => {
       [
         FIX_CONNECTED,
         [
-          "action-restart",
           "action-view-tools",
           "action-view-logs",
           "action-edit",
@@ -96,7 +95,7 @@ describe("McpServerCard", () => {
       ],
       [
         FIX_DISCONNECTED,
-        ["action-connect", "action-view-logs", "action-edit", "action-remove"],
+        ["action-view-logs", "action-edit", "action-remove"],
       ],
       [
         FIX_ERROR,

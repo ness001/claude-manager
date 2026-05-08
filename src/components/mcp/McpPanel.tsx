@@ -32,8 +32,6 @@ export function McpPanel() {
   const startEditing = useMcpStore((s) => s.startEditing);
   const removeServer = useMcpStore((s) => s.removeServer);
   const refreshStatus = useMcpStore((s) => s.refreshStatus);
-  const restartServer = useMcpStore((s) => s.restartServer);
-  const connectServer = useMcpStore((s) => s.connectServer);
 
   const filtered = useMemo(
     () => filterMcpServers(servers, searchQuery),
@@ -155,12 +153,6 @@ export function McpPanel() {
                     onEdit={startEditing}
                     onRemove={(srv) => {
                       void removeServer(srv.scope, srv.name);
-                    }}
-                    onRestart={(srv) => {
-                      void restartServer(srv.name);
-                    }}
-                    onConnect={(srv) => {
-                      void connectServer(srv.name);
                     }}
                   />
                 ))}

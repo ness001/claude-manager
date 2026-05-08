@@ -141,46 +141,6 @@ describe("useMcpStore", () => {
     expect(after.find((s) => s.name === "b")!.status).toBe("error");
   });
 
-  it("case 4: restartServer / connectServer invoke Rust commands and reflect transient starting state", async () => {
-    const list = [makeServer({ name: "a", status: "connected" })];
-    loadMcpServersMock.mockResolvedValueOnce(list);
-    await useMcpStore.getState().loadServers();
-
-    let resolveRestart: (() => void) | null = null;
-    invokeMock.mockImplementation((cmd: string) => {
-      if (cmd === "check_mcp_status") {
-        return Promise.resolve("a: ✔ connected\n");
-      }
-      return new Promise<void>((res) => {
-        resolveRestart = res;
-      });
-    });
-
-    const promise = useMcpStore.getState().restartServer("a");
-    // Mid-flight state is "starting".
-    expect(useMcpStore.getState().servers[0].status).toBe("starting");
-    resolveRestart!();
-    await promise;
-    expect(invokeMock.mock.calls[0][0]).toBe("restart_mcp_server");
-
-    // connectServer follows the same pattern.
-    invokeMock.mockReset();
-    let resolveConnect: (() => void) | null = null;
-    invokeMock.mockImplementation((cmd: string) => {
-      if (cmd === "check_mcp_status") {
-        return Promise.resolve("a: ✔ connected\n");
-      }
-      return new Promise<void>((res) => {
-        resolveConnect = res;
-      });
-    });
-    const p2 = useMcpStore.getState().connectServer("a");
-    expect(useMcpStore.getState().servers[0].status).toBe("starting");
-    resolveConnect!();
-    await p2;
-    expect(invokeMock.mock.calls[0][0]).toBe("connect_mcp_server");
-  });
-
   it("case 5: filterMcpServers matches name + command + args (stdio) and url (sse/http)", () => {
     const all: McpServer[] = [
       makeServer({ name: "filesystem", command: "npx", args: ["-y", "fs-pkg"] }),
