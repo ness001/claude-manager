@@ -65,4 +65,39 @@ describe("SidebarRail", () => {
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     expect(useNavigationStore.getState().activeSection).toBe("settings");
   });
+
+  it("active button has aria-current='page' and inactive buttons do not", () => {
+    render(<SidebarRail />);
+    expect(
+      screen.getByRole("button", { name: "Dashboard" }),
+    ).toHaveAttribute("aria-current", "page");
+    for (const label of labels.filter((l) => l !== "Dashboard")) {
+      expect(
+        screen.getByRole("button", { name: label }),
+      ).not.toHaveAttribute("aria-current");
+    }
+  });
+
+  it("tooltip (title attr) includes the keyboard shortcut", () => {
+    render(<SidebarRail />);
+    const pairs: Array<[string, string]> = [
+      ["Dashboard", "Ctrl+1"],
+      ["Sessions", "Ctrl+2"],
+      ["Plugins", "Ctrl+3"],
+      ["Skills", "Ctrl+4"],
+      ["MCP Servers", "Ctrl+5"],
+      ["Settings", "Ctrl+6"],
+    ];
+    for (const [label, shortcut] of pairs) {
+      expect(
+        screen.getByRole("button", { name: label }),
+      ).toHaveAttribute("title", `${label} (${shortcut})`);
+    }
+  });
+
+  it("buttons have a focus-visible ring class for keyboard navigation", () => {
+    render(<SidebarRail />);
+    const btn = screen.getByRole("button", { name: "Dashboard" });
+    expect(btn.className).toContain("focus-visible:ring-2");
+  });
 });
