@@ -86,6 +86,18 @@ describe("PluginCard", () => {
     expect(screen.getByTestId("remove-btn")).toBeInTheDocument();
   });
 
+  // Reinstall has no IPC backing yet — render it disabled with an
+  // explanatory tooltip rather than as a clickable lie.
+  it("Reinstall button is disabled with an explanatory title (no IPC backing yet)", () => {
+    render(
+      <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
+    );
+    const btn = screen.getByTestId("reinstall-btn") as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(btn.title.length).toBeGreaterThan(0);
+    expect(btn.title.toLowerCase()).toContain("not yet wired");
+  });
+
   it("disabled plugin renders 70% opacity (opacity-70 utility)", () => {
     render(
       <PluginCard
