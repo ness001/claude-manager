@@ -829,7 +829,7 @@ Header: "MCP Servers" title + [+ Add Server] button + [Refresh Status] button + 
 **Files:**
 - Modify: `src/sections/McpSection.tsx`
 
-- [ ] **Step 1: Wire up McpSection**
+- [x] **Step 1: Wire up McpSection**
 
 Replace placeholder with McpPanel. Load servers on mount. Refresh status on 15s interval when panel visible, 60s when backgrounded, 2s after action (per spec §13). Show McpServerForm as modal when adding/editing.
 
@@ -838,39 +838,39 @@ Replace placeholder with McpPanel. Load servers on mount. Refresh status on 15s 
 *Unit tests* — N/A
 
 *Component / integration tests* (`tests/components/sections/McpSection.test.tsx`; RTL + jsdom + fake timers; mock `@tauri-apps/api/core` + `@tauri-apps/plugin-fs`):
-- [ ] mounts without console errors and renders `McpPanel`
-- [ ] load on mount calls store `loadServers` once
-- [ ] refresh interval — 15s when panel visible, 60s when document hidden (toggle visibilityState), 2s burst after add/edit/remove (vitest fake timers)
-- [ ] add/edit click → `McpServerForm` modal mounts; close on Cancel/Save
-- [ ] subprocess for `claude mcp list` is mocked end-to-end — never invoked (spec §5 / §8.3)
-- [ ] dark + light theme parity
+- [x] mounts without console errors and renders `McpPanel`
+- [x] load on mount calls store `loadServers` once
+- [x] refresh interval — 15s when panel visible, 60s when document hidden (toggle visibilityState), 2s burst after add/edit/remove (vitest fake timers)
+- [x] add/edit click → `McpServerForm` modal mounts; close on Cancel/Save
+- [x] subprocess for `claude mcp list` is mocked end-to-end — never invoked (spec §5 / §8.3)
+- [x] dark + light theme parity
 
 *Data-fixture tests* — N/A (reuses T3.9 fixtures via mocks)
 
 *Rust checks* — N/A
 
 *Type-check + lint gate*:
-- [ ] `npx tsc --noEmit` zero errors
-- [ ] no new `any` / `@ts-ignore` / `eslint-disable`
+- [x] `npx tsc --noEmit` zero errors
+- [x] no new `any` / `@ts-ignore` / `eslint-disable`
 
 *Perf budget* — N/A
 
 *Manual UI / E2E smoke* (run `npx tauri dev`):
-- [ ] sidebar → MCP Servers → groups render
-- [ ] [+ Add Server] opens modal; save persists
-- [ ] [Refresh Status] triggers an immediate refresh
-- [ ] tab away then return → refresh cadence resumes
-- [ ] dark + light render correctly
-- [ ] keyboard shortcut for sidebar nav lands on MCP
-- [ ] DevTools Console: zero errors
+- [x] sidebar → MCP Servers → groups render
+- [x] [+ Add Server] opens modal; save persists
+- [x] [Refresh Status] triggers an immediate refresh
+- [x] tab away then return → refresh cadence resumes
+- [x] dark + light render correctly
+- [x] keyboard shortcut for sidebar nav lands on MCP
+- [x] DevTools Console: zero errors
 
 *Definition of Done*:
-- [ ] All checks above pass
-- [ ] Behavior matches spec §5, §8.3, §10 (refresh strategy), §13
-- [ ] Plan checkbox `[x]`
-- [ ] Commit: `feat(T3.12): wire up MCP Servers section`
+- [x] All checks above pass
+- [x] Behavior matches spec §5, §8.3, §10 (refresh strategy), §13
+- [x] Plan checkbox `[x]`
+- [x] Commit: `feat(T3.12): wire up MCP Servers section`
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 `git commit -m "feat: wire up MCP Servers section"`
 
