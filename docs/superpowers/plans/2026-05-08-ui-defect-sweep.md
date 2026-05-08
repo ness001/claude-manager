@@ -268,7 +268,8 @@ _Investigation pending. Likely focus: stat tiles showing 0 when stats-cache exis
 
 _Investigation pending. Likely focus: session list render, JSONL preview, PID file freshness indicator._
 
-- [ ] _to be discovered_
+- [x] `SessionListPanel.test.tsx` "Timeline view" test flaked daily within ~2h after midnight — `now - 26h` straddled a calendar boundary, so the "yesterday" assertion failed because the session got bucketed as "This Week" instead. Anchor the test with `vi.useFakeTimers` + a fixed local-noon "now" — PR #TBD
+- [ ] _further investigation pending_
 
 ### Plugins — `src/sections/PluginsSection.tsx`
 
