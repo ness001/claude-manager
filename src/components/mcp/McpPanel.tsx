@@ -1,0 +1,174 @@
+// MCP servers full-page panel — see spec §8.4 (layout), §17.6 (loading +
+// empty), §17.7 (search). Header has "MCP Servers" title + [+ Add Server]
+// + [Refresh Status] + search bar. Body groups by scope with the spec's
+// scope headers, each rendering its McpServerCard list. Empty state per
+// spec §17.6: "No MCP servers configured. Add one to extend Claude's
+// capabilities." + [+ Add Server].
+
+import { useMemo } from "react";
+import { Plus, RefreshCw, Search } from "lucide-react";
+
+import {
+  filterMcpServers,
+  serversByScope,
+  useMcpStore,
+} from "../../stores/mcp-store";
+import type { McpScope, McpServer } from "../../lib/mcp-types";
+import { McpServerCard } from "./McpServerCard";
+
+const SCOPE_HEADERS: Record<McpScope, string> = {
+  user: "User Scope (available in all projects)",
+  local: "Local Scope (private to current project)",
+  project: "Project Scope",
+};
+
+const SCOPE_ORDER: McpScope[] = ["user", "local", "project"];
+
+export function McpPanel() {
+  const servers = useMcpStore((s) => s.servers);
+  const searchQuery = useMcpStore((s) => s.searchQuery);
+  const setSearchQuery = useMcpStore((s) => s.setSearchQuery);
+  const isLoading = useMcpStore((s) => s.isLoading);
+  const startEditing = useMcpStore((s) => s.startEditing);
+  const removeServer = useMcpStore((s) => s.removeServer);
+  const refreshStatus = useMcpStore((s) => s.refreshStatus);
+  const restartServer = useMcpStore((s) => s.restartServer);
+  const connectServer = useMcpStore((s) => s.connectServer);
+
+  const filtered = useMemo(
+    () => filterMcpServers(servers, searchQuery),
+    [servers, searchQuery],
+  );
+  const grouped = useMemo(() => serversByScope(filtered), [filtered]);
+
+  const onAdd = () => {
+    startEditing({
+      name: "",
+      type: "stdio",
+      scope: "user",
+      status: "disconnected",
+      env: {},
+      isOverridden: false,
+    } as McpServer);
+  };
+
+  return (
+    <section
+      data-testid="mcp-panel"
+      className="flex h-full flex-col gap-4 p-6"
+    >
+      <header className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-text-primary">
+            MCP Servers
+          </h1>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              data-testid="add-server-btn"
+              onClick={onAdd}
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+            >
+              <Plus size={14} />
+              Add Server
+            </button>
+            <button
+              type="button"
+              data-testid="refresh-status-btn"
+              onClick={() => {
+                void refreshStatus();
+              }}
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+            >
+              <RefreshCw size={14} />
+              Refresh Status
+            </button>
+          </div>
+        </div>
+        <div className="relative">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-text-muted"
+          />
+          <input
+            type="search"
+            data-testid="mcp-search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search servers by name, command, args, or URL…"
+            className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+          />
+        </div>
+      </header>
+
+      {isLoading && servers.length === 0 ? (
+        <div data-testid="loading-skeleton" className="flex flex-col gap-4">
+          {SCOPE_ORDER.map((scope) => (
+            <div key={scope} className="flex flex-col gap-2">
+              <h2 className="text-sm font-semibold text-text-secondary">
+                {SCOPE_HEADERS[scope]}
+              </h2>
+              <div className="h-16 animate-pulse rounded-md bg-bg-tertiary" />
+              <div className="h-16 animate-pulse rounded-md bg-bg-tertiary" />
+            </div>
+          ))}
+        </div>
+      ) : servers.length === 0 ? (
+        <div
+          data-testid="empty-state"
+          className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-sm text-text-muted"
+        >
+          No MCP servers configured. Add one to extend Claude's capabilities.
+          <button
+            type="button"
+            data-testid="empty-add-btn"
+            onClick={onAdd}
+            className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+          >
+            <Plus size={14} />
+            Add Server
+          </button>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div
+          data-testid="no-matches"
+          className="flex flex-1 items-center justify-center text-center text-sm text-text-muted"
+        >
+          No results for "{searchQuery}"
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4 overflow-auto">
+          {SCOPE_ORDER.map((scope) =>
+            grouped[scope].length === 0 ? null : (
+              <div key={scope} className="flex flex-col gap-2">
+                <h2
+                  data-testid={`scope-header-${scope}`}
+                  className="text-sm font-semibold text-text-secondary"
+                >
+                  {SCOPE_HEADERS[scope]}
+                </h2>
+                {grouped[scope].map((s) => (
+                  <McpServerCard
+                    key={`${s.scope}:${s.name}`}
+                    server={s}
+                    highlightQuery={searchQuery}
+                    onEdit={startEditing}
+                    onRemove={(srv) => {
+                      void removeServer(srv.scope, srv.name);
+                    }}
+                    onRestart={(srv) => {
+                      void restartServer(srv.name);
+                    }}
+                    onConnect={(srv) => {
+                      void connectServer(srv.name);
+                    }}
+                  />
+                ))}
+              </div>
+            ),
+          )}
+        </div>
+      )}
+    </section>
+  );
+}

@@ -21,7 +21,7 @@ describe("ContentArea", () => {
   // sections remain placeholders.
   const headingCases: Array<{ section: Section; heading: string }> = [
     { section: "plugins", heading: "Plugins" },
-    { section: "skills", heading: "Skills" },
+    { section: "skills", heading: "Custom Skills" },
     { section: "mcp", heading: "MCP Servers" },
     { section: "settings", heading: "Settings" },
   ];

@@ -1,10 +1,18 @@
+import { useEffect } from "react";
+
+import { SkillsListView } from "../components/skills/SkillsListView";
+import { useSkillStore } from "../stores/skill-store";
+
 export function SkillsSection() {
+  const loadSkills = useSkillStore((s) => s.loadSkills);
+
+  useEffect(() => {
+    void loadSkills();
+  }, [loadSkills]);
+
   return (
-    <section className="flex flex-col p-8 gap-2">
-      <h1 className="text-2xl font-semibold text-text-primary">Skills</h1>
-      <p className="text-text-secondary">
-        Browse user-installed and project skills
-      </p>
+    <section data-testid="skills-section" className="flex h-full">
+      <SkillsListView />
     </section>
   );
 }

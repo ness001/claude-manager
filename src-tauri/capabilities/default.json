@@ -30,6 +30,7 @@
       "allow": [{ "path": "$HOME/.claude/**" }]
     },
     "notification:default",
+    "shell:allow-open",
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
     "core:window:allow-close",

@@ -1,0 +1,240 @@
+// Tests for the MCP store (T3.10). Mocks at module boundaries:
+//   - `../../src/lib/mcp-loader` → loadMcpServers / saveMcpServer /
+//     deleteMcpServer / mapStatusLine
+//   - `@tauri-apps/api/core`     → invoke (check_mcp_status, restart, connect)
+// We never mock the store under test.
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const loadMcpServersMock = vi.fn();
+const saveMcpServerMock = vi.fn();
+const deleteMcpServerMock = vi.fn();
+const invokeMock = vi.fn();
+
+vi.mock("../../src/lib/mcp-loader", async () => {
+  const actual =
+    await vi.importActual<typeof import("../../src/lib/mcp-loader")>(
+      "../../src/lib/mcp-loader",
+    );
+  return {
+    ...actual,
+    loadMcpServers: (...args: unknown[]) => loadMcpServersMock(...args),
+    saveMcpServer: (...args: unknown[]) => saveMcpServerMock(...args),
+    deleteMcpServer: (...args: unknown[]) => deleteMcpServerMock(...args),
+  };
+});
+
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: (...args: unknown[]) => invokeMock(...args),
+}));
+
+import {
+  filterMcpServers,
+  serversByScope,
+  useMcpStore,
+} from "../../src/stores/mcp-store";
+import type { McpServer } from "../../src/lib/mcp-types";
+
+function makeServer(overrides: Partial<McpServer> = {}): McpServer {
+  return {
+    name: "fs",
+    type: "stdio",
+    scope: "user",
+    status: "disconnected",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-filesystem"],
+    env: {},
+    isOverridden: false,
+    ...overrides,
+  };
+}
+
+beforeEach(() => {
+  useMcpStore.setState({
+    servers: [],
+    searchQuery: "",
+    isLoading: false,
+    error: null,
+    editingServer: null,
+    cwd: "",
+  });
+  loadMcpServersMock.mockReset();
+  saveMcpServerMock.mockReset();
+  deleteMcpServerMock.mockReset();
+  invokeMock.mockReset();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("useMcpStore", () => {
+  it("case 1: loadServers populates state and serversByScope groups them", async () => {
+    const list: McpServer[] = [
+      makeServer({ name: "a", scope: "user" }),
+      makeServer({ name: "b", scope: "local" }),
+      makeServer({ name: "c", scope: "project", isTrusted: true }),
+    ];
+    loadMcpServersMock.mockResolvedValueOnce(list);
+    await useMcpStore.getState().loadServers();
+    expect(useMcpStore.getState().servers).toEqual(list);
+    expect(useMcpStore.getState().isLoading).toBe(false);
+
+    const grouped = serversByScope(useMcpStore.getState().servers);
+    expect(grouped.user.map((s) => s.name)).toEqual(["a"]);
+    expect(grouped.local.map((s) => s.name)).toEqual(["b"]);
+    expect(grouped.project.map((s) => s.name)).toEqual(["c"]);
+  });
+
+  it("case 2: addServer / updateServer / removeServer call writers and refresh state", async () => {
+    const initial = [makeServer({ name: "a", scope: "user" })];
+    loadMcpServersMock.mockResolvedValue(initial);
+    await useMcpStore.getState().loadServers();
+
+    saveMcpServerMock.mockResolvedValue(undefined);
+    deleteMcpServerMock.mockResolvedValue(undefined);
+
+    const newSrv = makeServer({ name: "b", scope: "user" });
+    loadMcpServersMock.mockResolvedValueOnce([...initial, newSrv]);
+    await useMcpStore.getState().addServer(newSrv);
+    expect(saveMcpServerMock).toHaveBeenCalledWith(
+      newSrv,
+      expect.objectContaining({ cwd: "" }),
+    );
+    expect(useMcpStore.getState().servers.map((s) => s.name)).toEqual([
+      "a",
+      "b",
+    ]);
+
+    const updated = { ...newSrv, command: "uvx" };
+    loadMcpServersMock.mockResolvedValueOnce([initial[0], updated]);
+    await useMcpStore.getState().updateServer(updated);
+    expect(saveMcpServerMock).toHaveBeenCalledTimes(2);
+
+    loadMcpServersMock.mockResolvedValueOnce([initial[0]]);
+    await useMcpStore.getState().removeServer("user", "b");
+    expect(deleteMcpServerMock).toHaveBeenCalledWith(
+      "user",
+      "b",
+      expect.objectContaining({ cwd: "" }),
+    );
+    expect(useMcpStore.getState().servers.map((s) => s.name)).toEqual(["a"]);
+  });
+
+  it("case 3: refreshStatus updates server.status from mocked check_mcp_status; never spawns the real CLI", async () => {
+    const list = [
+      makeServer({ name: "a", status: "disconnected" }),
+      makeServer({ name: "b", status: "disconnected" }),
+    ];
+    loadMcpServersMock.mockResolvedValueOnce(list);
+    await useMcpStore.getState().loadServers();
+
+    invokeMock.mockResolvedValueOnce(
+      "a: ✔ connected\nb: error: timeout\n",
+    );
+    await useMcpStore.getState().refreshStatus();
+
+    const calls = invokeMock.mock.calls.map((c) => c[0]);
+    expect(calls).toEqual(["check_mcp_status"]);
+    const after = useMcpStore.getState().servers;
+    expect(after.find((s) => s.name === "a")!.status).toBe("connected");
+    expect(after.find((s) => s.name === "b")!.status).toBe("error");
+  });
+
+  it("case 4: restartServer / connectServer invoke Rust commands and reflect transient starting state", async () => {
+    const list = [makeServer({ name: "a", status: "connected" })];
+    loadMcpServersMock.mockResolvedValueOnce(list);
+    await useMcpStore.getState().loadServers();
+
+    let resolveRestart: (() => void) | null = null;
+    invokeMock.mockImplementation((cmd: string) => {
+      if (cmd === "check_mcp_status") {
+        return Promise.resolve("a: ✔ connected\n");
+      }
+      return new Promise<void>((res) => {
+        resolveRestart = res;
+      });
+    });
+
+    const promise = useMcpStore.getState().restartServer("a");
+    // Mid-flight state is "starting".
+    expect(useMcpStore.getState().servers[0].status).toBe("starting");
+    resolveRestart!();
+    await promise;
+    expect(invokeMock.mock.calls[0][0]).toBe("restart_mcp_server");
+
+    // connectServer follows the same pattern.
+    invokeMock.mockReset();
+    let resolveConnect: (() => void) | null = null;
+    invokeMock.mockImplementation((cmd: string) => {
+      if (cmd === "check_mcp_status") {
+        return Promise.resolve("a: ✔ connected\n");
+      }
+      return new Promise<void>((res) => {
+        resolveConnect = res;
+      });
+    });
+    const p2 = useMcpStore.getState().connectServer("a");
+    expect(useMcpStore.getState().servers[0].status).toBe("starting");
+    resolveConnect!();
+    await p2;
+    expect(invokeMock.mock.calls[0][0]).toBe("connect_mcp_server");
+  });
+
+  it("case 5: filterMcpServers matches name + command + args (stdio) and url (sse/http)", () => {
+    const all: McpServer[] = [
+      makeServer({ name: "filesystem", command: "npx", args: ["-y", "fs-pkg"] }),
+      makeServer({
+        name: "remote",
+        type: "http",
+        command: undefined,
+        args: undefined,
+        url: "https://api.example.com/mcp",
+      }),
+      makeServer({ name: "alpha", command: "alpha-cmd", args: [] }),
+    ];
+
+    expect(filterMcpServers(all, "file").map((s) => s.name)).toEqual([
+      "filesystem",
+    ]);
+    expect(filterMcpServers(all, "alpha-cmd").map((s) => s.name)).toEqual([
+      "alpha",
+    ]);
+    expect(filterMcpServers(all, "fs-pkg").map((s) => s.name)).toEqual([
+      "filesystem",
+    ]);
+    expect(filterMcpServers(all, "example.com").map((s) => s.name)).toEqual([
+      "remote",
+    ]);
+    // Empty query → all.
+    expect(filterMcpServers(all, "").length).toBe(3);
+    // Case-insensitive.
+    expect(filterMcpServers(all, "FILE").map((s) => s.name)).toEqual([
+      "filesystem",
+    ]);
+  });
+
+  it("case 6: startEditing / stopEditing toggle editingServer cleanly", () => {
+    const srv = makeServer({ name: "a" });
+    useMcpStore.getState().startEditing(srv);
+    expect(useMcpStore.getState().editingServer).toEqual(srv);
+    useMcpStore.getState().stopEditing();
+    expect(useMcpStore.getState().editingServer).toBeNull();
+  });
+
+  it("case 7: error path — write rejection rolls back optimistic state", async () => {
+    const initial = [makeServer({ name: "a", scope: "user" })];
+    loadMcpServersMock.mockResolvedValueOnce(initial);
+    await useMcpStore.getState().loadServers();
+
+    saveMcpServerMock.mockRejectedValueOnce(new Error("boom"));
+    const newSrv = makeServer({ name: "b", scope: "user" });
+    await expect(useMcpStore.getState().addServer(newSrv)).rejects.toThrow(
+      "boom",
+    );
+
+    // No reload happened, so list stays as before; error is set.
+    expect(useMcpStore.getState().servers.map((s) => s.name)).toEqual(["a"]);
+    expect(useMcpStore.getState().error).toContain("boom");
+  });
+});

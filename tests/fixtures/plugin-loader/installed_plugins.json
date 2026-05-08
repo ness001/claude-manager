@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "plugins": {
+    "doc-skills@anthropic-agent-skills": [
+      {
+        "scope": "user",
+        "installPath": "/fixture/cache/anthropic-agent-skills/doc-skills/a5bcdd7e58cd",
+        "version": "a5bcdd7e58cd",
+        "installedAt": "2026-02-04T05:39:01.774Z",
+        "lastUpdated": "2026-02-04T05:39:01.774Z",
+        "gitCommitSha": "a5bcdd7e58cdff48566bf876f0a72a2008dcefbc"
+      }
+    ],
+    "superpowers@claude-plugins-official": [
+      {
+        "scope": "project",
+        "projectPath": "E:/example/proj",
+        "installPath": "/fixture/cache/claude-plugins-official/superpowers/5.0.7",
+        "version": "5.0.7",
+        "installedAt": "2026-04-20T06:18:47.050Z",
+        "lastUpdated": "2026-04-20T06:18:47.050Z",
+        "gitCommitSha": "b55764852ac78870e65c6565fb585b6cd8b3c5c9"
+      },
+      {
+        "scope": "user",
+        "installPath": "/fixture/cache/claude-plugins-official/superpowers/5.0.7-USER",
+        "version": "5.0.7",
+        "installedAt": "2026-05-03T07:08:49.656Z",
+        "lastUpdated": "2026-05-03T07:08:49.656Z",
+        "gitCommitSha": "b55764852ac78870e65c6565fb585b6cd8b3c5c9"
+      }
+    ],
+    "broken-plugin@some-marketplace": [
+      {
+        "scope": "user",
+        "installPath": "/fixture/cache/missing-on-disk",
+        "version": "1.0.0",
+        "installedAt": "2026-01-01T00:00:00.000Z",
+        "lastUpdated": "2026-01-01T00:00:00.000Z",
+        "gitCommitSha": "0000000000000000000000000000000000000000"
+      }
+    ]
+  }
+}

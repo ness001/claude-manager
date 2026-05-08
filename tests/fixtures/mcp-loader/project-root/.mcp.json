@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "shared": {
+      "type": "stdio",
+      "command": "project-cmd",
+      "args": ["--project"],
+      "env": {}
+    },
+    "proj-trusted": {
+      "type": "stdio",
+      "command": "trusted",
+      "args": [],
+      "env": {}
+    },
+    "proj-untrusted": {
+      "type": "stdio",
+      "command": "untrusted",
+      "args": [],
+      "env": {}
+    }
+  }
+}
