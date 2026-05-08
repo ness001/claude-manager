@@ -6,8 +6,9 @@
 //
 // Failure handling: any error in the SQLite reads is caught and the store
 // falls back to safe defaults so the Dashboard renders empty states instead
-// of crashing. Stats-reader already swallows its own errors and returns
-// EMPTY_STATS on failure, so we don't double-wrap it.
+// of crashing. The error message is captured on `loadError` so the UI can
+// surface a soft "couldn't load stats" banner. Stats-reader already swallows
+// its own errors and returns EMPTY_STATS on failure, so we don't double-wrap it.
 
 import { create } from "zustand";
 
@@ -41,6 +42,8 @@ interface DashboardState {
   modelUsage: ModelUsageEntry[];
   recentSessions: RecentSessionEntry[];
   isLoading: boolean;
+  /** Non-null when the most recent SQLite read failed; UI surfaces it as a soft banner. */
+  loadError: string | null;
 
   loadDashboard: () => Promise<void>;
 }
@@ -54,6 +57,7 @@ const INITIAL_STATE = {
   modelUsage: [],
   recentSessions: [],
   isLoading: false,
+  loadError: null,
 } satisfies Omit<DashboardState, "loadDashboard">;
 
 /** Aggregate query row shape. */
@@ -101,17 +105,19 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   ...INITIAL_STATE,
 
   loadDashboard: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true, loadError: null });
 
     // Stats cache never throws — it returns EMPTY_STATS on any error.
     const stats = await readStatsCache();
 
     // SQLite reads are wrapped together; a failure in any of them resets
     // the SQLite-derived fields to safe defaults but still surfaces the
-    // chart series we already have.
+    // chart series we already have, plus a non-null loadError so the UI
+    // can warn the user that stats may be stale.
     let agg: AggregateRow = { totalSessions: 0, totalMessages: 0, activeSince: null };
     let longest: LongestRow | undefined;
     let recents: RecentRow[] = [];
+    let loadError: string | null = null;
     try {
       const aggRows = await dbSelect<AggregateRow>(
         `SELECT
@@ -141,11 +147,14 @@ export const useDashboardStore = create<DashboardState>((set) => ({
          ORDER BY started_at DESC
          LIMIT 8`,
       );
-    } catch {
-      // Fall back to safe defaults; do not throw.
+    } catch (err) {
+      // Fall back to safe defaults; do not throw. Capture the message so
+      // the Dashboard can render a soft "couldn't load stats" banner
+      // instead of silently showing zeros.
       agg = { totalSessions: 0, totalMessages: 0, activeSince: null };
       longest = undefined;
       recents = [];
+      loadError = err instanceof Error ? err.message : "Failed to load dashboard stats";
     }
 
     set({
@@ -165,6 +174,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         startedAt: r.started_at ?? 0,
       })),
       isLoading: false,
+      loadError,
     });
   },
 }));
