@@ -128,6 +128,11 @@ describe("SessionInfoBar", () => {
     await waitFor(() => {
       expect(screen.getByTestId("dead-cwd-warning")).toBeInTheDocument();
     });
+    // a11y: the warning icon must expose an accessible name to SR users —
+    // a parent `title` attribute is unreliable across AT vendors.
+    expect(
+      screen.getByRole("img", { name: "Directory not found" }),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("action-open-cwd")).toBeDisabled();
     expect(screen.getByTestId("action-open-vscode")).toBeDisabled();
   });
