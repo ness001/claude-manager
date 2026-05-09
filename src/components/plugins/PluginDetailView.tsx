@@ -93,6 +93,7 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
             onClick={() => setTab(t)}
             className={[
               "px-3 py-1.5 text-sm capitalize",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
               tab === t
                 ? "border-b-2 border-accent text-text-primary"
                 : "text-text-secondary hover:text-text-primary",
