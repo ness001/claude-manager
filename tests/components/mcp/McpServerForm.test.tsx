@@ -200,6 +200,19 @@ describe("McpServerForm", () => {
     expect(saveMock).toHaveBeenCalledTimes(1);
     expect(saveMock.mock.calls[0][1]).toEqual({ cwd: "C:/proj" });
   });
+  it("command input has an accessible name (aria-label)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    expect(screen.getByTestId("form-command").getAttribute("aria-label")).toBe(
+      "Command",
+    );
+  });
 });
 
 async function actClick(testid: string) {
