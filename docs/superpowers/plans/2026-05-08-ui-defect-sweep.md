@@ -317,6 +317,7 @@ _Investigation pending._
 _Investigation pending. Candidates: theme toggle, modal escape-key, toast dismissal, error boundary fallback UI._
 
 - [x] No top-level React error boundary — any unhandled render error in any section blanks the entire window with no user feedback (`src/main.tsx` previously rendered `<App />` bare). Fixed by adding `ErrorBoundary` component and wrapping `<App />` in `main.tsx`; fallback shows the error message + a Reload button (`role="alert"`). — PR #37
+- [x] `McpServerCard` and `McpServerForm` reference Tailwind utility classes for tokens that don't exist (`bg-status-success`, `text-status-error`, `border-status-warning`, etc.) — the canonical CSS tokens in `src/index.css` are `--color-status-green/red/yellow/blue/amber`, but 12 sites across the MCP code use the semantic-name variants. Tailwind v4 silently drops the unknown classes, so the MCP server status dots, status pills, error remove-confirm border, and form error text all render colorless (verified: `grep status-success dist/assets/*.css` returns 0 before fix). Added `--color-status-success/error/warning` aliases to both light and dark `@theme` blocks in `src/index.css`, mapping to the same hex values as their green/red/yellow counterparts (built CSS now contains the rules). One-file fix; doesn't touch any of the open MCP PR territories. — PR #47
 - [ ] _further investigation pending_
 
 ---
