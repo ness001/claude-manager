@@ -264,6 +264,7 @@ _Investigation pending. Likely focus: stat tiles showing 0 when stats-cache exis
 
 - [x] QuickActions: all 4 buttons (New Session / Resume Latest / Open CWD / Rebuild Stats) are dead — no `onClick` handlers (`src/components/dashboard/QuickActions.tsx:36-51`). Minimal fix: render `disabled` + `aria-disabled` + `title="Coming soon"` until handler wiring lands in a later phase — PR #22
 - [x] Dashboard store silently swallows SQLite load errors and renders empty stats (`src/stores/dashboard-store.ts:104-169`) — added `loadError: string | null` to the store; DashboardSection renders a soft yellow banner (role="alert") when set, so users know stats may be stale instead of seeing silent zeros — PR #25
+- [x] RecentSessions rows have a misleading `hover:bg-bg-tertiary` cue but no click handler — visual implies clickability, click is a no-op (`src/components/dashboard/RecentSessions.tsx:47`). Spec §4.1 documents only the `View All Sessions` link as the affordance; rather than invent unspecified per-row navigation, the hover cue is removed so the row no longer pretends to be interactive. — PR #<TBD>
 
 ### Sessions — `src/sections/SessionsSection.tsx`
 
