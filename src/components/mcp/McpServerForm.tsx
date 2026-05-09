@@ -234,6 +234,7 @@ export function McpServerForm({
                     }
                   }}
                   placeholder="add arg + Enter"
+                  aria-label="Add command argument"
                   className="flex-1 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary"
                 />
               </div>

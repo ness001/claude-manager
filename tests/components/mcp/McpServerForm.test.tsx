@@ -226,6 +226,12 @@ describe("McpServerForm", () => {
   // (or "Remove row" when the key is still empty), and a stable testid so
   // tests can target it.
   it("KeyValueEditor remove button has an aria-label naming the key being removed", () => {
+
+  // WCAG 4.1.2 (Name, Role, Value): the args input had only `placeholder=
+  // "add arg + Enter"` for its accessible name, and placeholders don't
+  // count. Mirrors the search-input fix in PRs #45 / #50 / #51 / #60: add
+  // an explicit aria-label so screen readers announce a real name.
+  it("form-arg-input has an accessible name (aria-label)", () => {
     render(
       <McpServerForm
         existingNames={EMPTY_NAMES}
@@ -279,6 +285,8 @@ describe("McpServerForm", () => {
     expect(
       screen.getByTestId("form-env-remove-0").getAttribute("aria-label"),
     ).toBe("Remove TOKEN");
+    const input = screen.getByTestId("form-arg-input");
+    expect(input.getAttribute("aria-label")).toBe("Add command argument");
   });
 });
 
