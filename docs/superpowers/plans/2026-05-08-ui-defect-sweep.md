@@ -264,16 +264,20 @@ _Investigation pending. Likely focus: stat tiles showing 0 when stats-cache exis
 
 - [x] QuickActions: all 4 buttons (New Session / Resume Latest / Open CWD / Rebuild Stats) are dead — no `onClick` handlers (`src/components/dashboard/QuickActions.tsx:36-51`). Minimal fix: render `disabled` + `aria-disabled` + `title="Coming soon"` until handler wiring lands in a later phase — PR #22
 - [x] Dashboard store silently swallows SQLite load errors and renders empty stats (`src/stores/dashboard-store.ts:104-169`) — added `loadError: string | null` to the store; DashboardSection renders a soft yellow banner (role="alert") when set, so users know stats may be stale instead of seeing silent zeros — PR #25
+- [x] SystemHealth status dots are color-only (`aria-hidden="true"` on each dot, `src/components/dashboard/SystemHealth.tsx:124`) — SR users get no status signal at all, and MCP/Plugins/CLI rows have no visible status word either. Fixed by giving each dot `role="img"` + `aria-label={STATUS_LABEL[status]}`. Sighted color-blind users still need visible status text on MCP/Plugins/CLI rows — that's a deeper redesign deferred to a follow-up. — PR #39
 
 ### Sessions — `src/sections/SessionsSection.tsx`
 
 _Investigation pending. Likely focus: session list render, JSONL preview, PID file freshness indicator._
 
 - [x] `SessionListPanel.test.tsx` "Timeline view" test flaked daily within ~2h after midnight — `now - 26h` straddled a calendar boundary, so the "yesterday" assertion failed because the session got bucketed as "This Week" instead. Anchor the test with `vi.useFakeTimers` + a fixed local-noon "now" — PR #20
-- [ ] "+ New Session" button is dead — no `onClick` handler (`src/components/sessions/SessionListPanel.tsx:189-196`). Same situation as Dashboard QuickActions: the button looks interactive but does nothing because backend wiring is later-phase. Minimal fix: disable + tooltip until wired.
-- [ ] `SessionInfoBar.handleAction` is a no-op for every action except the `stop` confirmation prompt (`src/components/sessions/SessionInfoBar.tsx:142-153`). After the user confirms "Stop", nothing happens — no SIGTERM, no toast, no error. Code comment acknowledges this as deferred. Minimal fix: surface a "not yet implemented" UI cue (or disable the action buttons whose handler is a no-op).
-- [ ] `setSessionDisplayName` updates only the in-memory Zustand store (`src/stores/session-store.ts:57-62`); SQLite persistence is explicitly deferred per `src/lib/session-loader.ts:28-31`. The user renames a session, sees it persist visually, and loses the rename on next reload. Either persist via a Tauri command or label the rename UI as session-scoped.
+- [x] "+ New Session" button is dead — no `onClick` handler (`src/components/sessions/SessionListPanel.tsx:189-196`). Same situation as Dashboard QuickActions: the button looks interactive but does nothing because backend wiring is later-phase. Minimal fix: disable + tooltip until wired. — PR #26
+- [x] `SessionInfoBar.handleAction` is a no-op for every action except the `stop` confirmation prompt (`src/components/sessions/SessionInfoBar.tsx:142-153`). After the user confirms "Stop", nothing happens — no SIGTERM, no toast, no error. Code comment acknowledges this as deferred. Disabled all action buttons with `title="Coming soon"` (dead-CWD case still wins with "Directory not found"); removed the unreachable `handleAction` since every button is now `disabled`. — PR #31
+- [x] `setSessionDisplayName` updates only the in-memory Zustand store (`src/stores/session-store.ts:57-62`); SQLite persistence is explicitly deferred per `src/lib/session-loader.ts:28-31`. The user renames a session, sees it persist visually, and loses the rename on next reload. Took the "label the rename UI as session-scoped" branch — added `title="Renames are session-scoped — not yet saved across reloads"` and an SR-friendly `aria-label="Session name (session-scoped — not yet saved across reloads)"` to the input. Persistence wiring stays for a later phase when DB schema work is in scope. — PR #33
 - [x] Dead-CWD warning AlertTriangle icon has no `aria-label` (`src/components/sessions/SessionInfoBar.tsx:181-188`). Parent span carries `title="Directory not found"` but screen readers won't always surface that. Add `aria-label="Directory not found"` on the icon (or `aria-hidden` + a screen-reader-only span). — PR #24
+- [x] `ConversationViewer` Ctrl+ArrowUp/Down keynav (`src/components/conversation/ConversationViewer.tsx:262-276`) had no input-focus guard, so typing into the in-viewer "Turn N / M" number input (or any focused text input) while holding Ctrl + arrow hijacked into a turn jump. Mirrored App.tsx's `INPUT|TEXTAREA|isContentEditable` skip pattern. — PR #40
+- [x] `SessionCard` status dot is `aria-hidden` so screen-reader users have no signal of session state (alive/ended/orphaned/archived) — color is the only indicator (`src/components/sessions/SessionCard.tsx:74-78`). Mirrored PR #39's pattern: `role="img"` + per-state `aria-label` (Alive / Ended / Orphaned / Archived). WCAG 1.4.1 Use of Color + 4.1.2 Name, Role, Value. — PR #41
+- [x] `SessionSearch` strips the focus outline (`focus:outline-none`) without providing a replacement focus indicator (`src/components/sessions/SessionSearch.tsx:60`). Keyboard users who Tab into the search box have zero visual signal that focus is there. Other search inputs (SkillsListView, McpPanel) replace the outline with `focus:border-accent`; this one didn't. Added `border border-transparent focus-within:border-accent` to the wrapping `<label>` to mirror that pattern. WCAG 2.4.7 Focus Visible. — PR #45
 
 ### Plugins — `src/sections/PluginsSection.tsx`
 
@@ -286,7 +290,9 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 
 ### Skills — `src/sections/SkillsSection.tsx`
 
-- [ ] Skill card has no Remove action (`src/components/skills/SkillCard.tsx`)
+- [x] Skill card has no Remove action (`src/components/skills/SkillCard.tsx`) — not a defect: spec §7.1 lists only "Open in VS Code" and "Open in File Browser"; SkillCard matches spec exactly. Custom-skill removal is intentionally a manual filesystem action.
+- [x] `+ Create Skill` button passes literal `~/.claude/skills/` to `openShell`, which does not expand `~` — silent no-op on most platforms (`src/components/skills/SkillsListView.tsx:14,33`). Fixed by resolving `homeDir() + join(...)` before the shell open. — PR #35
+- [x] `Open in VS Code` on a `SkillCard` builds the URI as `vscode://file/${skill.skillMdPath}` without converting backslashes (`src/components/skills/SkillCard.tsx:22-28`). On Windows, `skillMdPath` is backslash-separated, so the URI is malformed and VS Code's URI handler silently rejects it. Same fix as PR #42 for the Plugins side: `\\` → `/` before composing the URI. — PR #43
 - [ ] _further investigation pending_
 
 ### MCP Servers — `src/sections/McpSection.tsx`
@@ -297,7 +303,7 @@ _Pre-seeded — partially investigated last session._
 - [x] Restart button calls non-existent IPC `restart_mcp_server` — removed button + dead store method (no `claude mcp restart` CLI subcommand) — PR #14
 - [ ] All servers show DISCONNECTED forever — verify whether `claude mcp list` parser regex `/^([\w.-]+)\s*:\s*(.*)$/` matches actual CLI output; if not, fix parser
 - [x] `View Tools` button has no onViewTools callback wired (`src/components/mcp/McpServerCard.tsx:88-94`) — button now renders `disabled` + `aria-disabled` + `title="Coming soon"` whenever the callback is absent (current parent behavior); stays interactive when a callback is wired so future panel work activates it without further changes — PR #30
-- [x] `View Logs` button has no onViewLogs callback wired (`src/components/mcp/McpServerCard.tsx:101`) — same fix as View Tools (PR #30): button renders `disabled` + `aria-disabled` + `title="Coming soon"` whenever the callback is absent across all 4 status branches; stays interactive when wired. — PR #32
+- [ ] `View Logs` button has no onViewLogs callback wired (`src/components/mcp/McpServerCard.tsx:101`)
 - [ ] _further investigation pending_
 
 ### Settings — `src/sections/SettingsSection.tsx`
@@ -310,7 +316,8 @@ _Investigation pending._
 
 _Investigation pending. Candidates: theme toggle, modal escape-key, toast dismissal, error boundary fallback UI._
 
-- [ ] _to be discovered_
+- [x] No top-level React error boundary — any unhandled render error in any section blanks the entire window with no user feedback (`src/main.tsx` previously rendered `<App />` bare). Fixed by adding `ErrorBoundary` component and wrapping `<App />` in `main.tsx`; fallback shows the error message + a Reload button (`role="alert"`). — PR #37
+- [ ] _further investigation pending_
 
 ---
 

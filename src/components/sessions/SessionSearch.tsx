@@ -49,7 +49,7 @@ export function SessionSearch() {
   }, [local, setSearchQuery]);
 
   return (
-    <label className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-bg-tertiary text-text-secondary">
+    <label className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-bg-tertiary text-text-secondary border border-transparent focus-within:border-accent">
       <Search size={14} aria-hidden="true" />
       <input
         type="search"
