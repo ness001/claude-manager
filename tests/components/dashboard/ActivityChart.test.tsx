@@ -114,4 +114,25 @@ describe("ActivityChart", () => {
     const t1 = performance.now();
     expect(t1 - t0).toBeLessThan(50);
   });
+
+  // WCAG 2.4.7 Focus Visible: the Period (7d/30d/90d/All) and Series
+  // (Messages/Tool Calls) tab buttons only carried hover/active color
+  // classes. Keyboard users tabbing through them had no visible focus
+  // indicator. Same defect class as ViewModeToggle (PR #48).
+  it("each Period and Series tab carries a focus-visible ring class", () => {
+    render(<ActivityChart data={makeData(7)} />);
+    const ids = [
+      "period-7d",
+      "period-30d",
+      "period-90d",
+      "period-all",
+      "series-messages",
+      "series-toolCalls",
+    ];
+    for (const id of ids) {
+      const btn = screen.getByTestId(id);
+      expect(btn.className).toContain("focus-visible:ring-2");
+      expect(btn.className).toContain("focus-visible:ring-accent");
+    }
+  });
 });
