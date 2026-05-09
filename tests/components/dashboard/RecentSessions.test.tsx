@@ -72,4 +72,13 @@ describe("RecentSessions", () => {
     const row = screen.getByTestId("recent-session-row");
     expect(row.textContent).toContain("5m ago");
   });
+
+  it("section label uses an <h3> heading (WCAG 1.3.1 / 2.4.6)", () => {
+    // Defect: visual section label rendered as a <div>, so screen-reader
+    // users couldn't navigate to it via the headings list. Mirrors PR #61
+    // (SystemHealth), PR #63 (ModelDonut), PR #64 (QuickActions).
+    render(<RecentSessions data={[]} />);
+    const heading = screen.getByRole("heading", { name: "Recent Sessions", level: 3 });
+    expect(heading.tagName).toBe("H3");
+  });
 });

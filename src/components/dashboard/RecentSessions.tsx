@@ -21,9 +21,9 @@ export function RecentSessions({ data }: RecentSessionsProps) {
       className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
       <div className="flex items-center justify-between">
-        <div className="text-xs uppercase tracking-wide text-text-muted">
+        <h3 className="text-xs uppercase tracking-wide text-text-muted">
           Recent Sessions
-        </div>
+        </h3>
         <button
           type="button"
           data-testid="view-all-sessions"
