@@ -295,6 +295,7 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 - [ ] "Install Plugin" header button has no onClick handler (`src/components/plugins/PluginListView.tsx:59-65`)
 - [x] `PluginCard` body button (`src/components/plugins/PluginCard.tsx:63-69`) had no `focus-visible:ring` — the body is the keyboard target for selecting a plugin, but tabbing through gave no visible focus indicator. WCAG 2.4.7 Focus Visible. Added the established class trio mirroring PRs #17/#45/#48/#49/#56. — PR #57
 - [x] `PluginDetailView` Skills/Agents/Hooks tab buttons (`src/components/plugins/PluginDetailView.tsx:87-108`) had no `focus-visible:ring` — keyboard users tabbing through the plugin detail tabs had no visible focus indicator (only an active border-accent + hover color swap). WCAG 2.4.7 Focus Visible. Mirrored PRs #48 (ViewModeToggle) and #49 (ActivityChart tabs): added the established class trio. — PR #67
+- [x] `PluginsSection` "Back to plugins" button (`src/sections/PluginsSection.tsx:31-41`) had a decorative `ArrowLeft` lucide icon next to the visible "Back to plugins" label without `aria-hidden`, so screen readers announced "ArrowLeft, Back to plugins" — redundant noise. WCAG 4.1.2 (Name, Role, Value). Mirrored PR #58 (SkillCard) and PR #66 (PluginDetailView header buttons): added `aria-hidden="true"` to the icon. — PR #71
 
 ### Skills — `src/sections/SkillsSection.tsx`
 
