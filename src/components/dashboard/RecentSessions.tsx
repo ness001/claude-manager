@@ -44,7 +44,7 @@ export function RecentSessions({ data }: RecentSessionsProps) {
             <li
               key={s.sessionId}
               data-testid="recent-session-row"
-              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-bg-tertiary text-sm min-w-0"
+              className="flex items-center gap-2 px-2 py-1.5 rounded text-sm min-w-0"
             >
               {/* Recent sessions are by definition not "alive" anymore in
                   Phase 2 (no live state on this row); use the neutral muted
