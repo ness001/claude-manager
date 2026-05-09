@@ -144,6 +144,17 @@ describe("ToolCallBlock", () => {
     expect(block.className).toMatch(/border-l-status-red/);
     expect(block).toHaveTextContent("Error");
   });
+
+  // Regression (WCAG 4.1.2): the chevron is decorative — the toolName <span>
+  // already provides the toggle's accessible name. Without aria-hidden, some
+  // screen readers announce the icon's computed name redundantly.
+  it("hides the decorative chevron from assistive tech (aria-hidden)", () => {
+    render(<ToolCallBlock toolName="Bash" toolInput={{ cmd: "ls" }} />);
+    const toggle = screen.getByTestId("tool-call-toggle");
+    const svg = toggle.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(svg!.getAttribute("aria-hidden")).toBe("true");
+  });
 });
 
 describe("SystemDivider", () => {
