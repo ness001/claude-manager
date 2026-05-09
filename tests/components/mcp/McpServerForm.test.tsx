@@ -201,6 +201,7 @@ describe("McpServerForm", () => {
     expect(saveMock.mock.calls[0][1]).toEqual({ cwd: "C:/proj" });
   });
   it("command input has an accessible name (aria-label)", () => {
+  it("name input has an accessible name (aria-label)", () => {
     render(
       <McpServerForm
         existingNames={EMPTY_NAMES}
@@ -301,6 +302,10 @@ describe("McpServerForm", () => {
     expect(
       screen.getByTestId("form-arg-remove-0").getAttribute("aria-label"),
     ).toBe("Remove --port");
+  });
+    expect(screen.getByTestId("form-name").getAttribute("aria-label")).toBe(
+      "Server name",
+    );
   });
 });
 

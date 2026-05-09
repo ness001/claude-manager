@@ -152,6 +152,7 @@ export function McpServerForm({
           <input
             data-testid="form-name"
             type="text"
+            aria-label="Server name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-sm text-text-primary"
