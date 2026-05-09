@@ -105,5 +105,20 @@ describe("PluginDetailView", () => {
       expect(btn.className).toContain("focus-visible:ring-2");
       expect(btn.className).toContain("focus-visible:ring-accent");
     }
+  it("Open in VS Code converts Windows backslashes to forward slashes (URI scheme)", () => {
+    // installed_plugins.json on Windows stores backslash-separated paths
+    // (see plugin-loader.ts → installPath). The vscode://file/ URI scheme
+    // requires forward slashes; backslashes silently break the open.
+    render(
+      <PluginDetailView
+        plugin={makeDetail({
+          installPath: "C:\\Users\\me\\.claude\\plugins\\cache\\foo\\bar\\1.0.0",
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("open-vscode-btn"));
+    expect(openShellMock).toHaveBeenCalledWith(
+      "vscode://file/C:/Users/me/.claude/plugins/cache/foo/bar/1.0.0",
+    );
   });
 });

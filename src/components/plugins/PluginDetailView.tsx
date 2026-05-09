@@ -29,7 +29,11 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
   };
   const openInVsCode = async () => {
     try {
-      await openShell(`vscode://file/${plugin.installPath}`);
+      // The vscode://file/ URI scheme is RFC 3986; Windows paths like
+      // "C:\Users\..." must use forward slashes, otherwise VS Code's URI
+      // handler rejects them and the open silently no-ops.
+      const uriPath = plugin.installPath.replace(/\\/g, "/");
+      await openShell(`vscode://file/${uriPath}`);
     } catch (err) {
       console.error("Failed to open in VS Code:", err);
     }
