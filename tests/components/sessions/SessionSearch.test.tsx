@@ -74,4 +74,16 @@ describe("SessionSearch", () => {
 
     expect(input.value).toBe("");
   });
+
+  it("renders a focus indicator on the wrapping label (a11y: WCAG 2.4.7)", () => {
+    // The input itself uses `focus:outline-none`, so the only focus signal
+    // for keyboard users is `focus-within:border-accent` on the label. If
+    // someone removes that class, keyboard users lose all focus indication
+    // when the search box is active.
+    render(<SessionSearch />);
+    const input = screen.getByLabelText("Search sessions") as HTMLInputElement;
+    const label = input.closest("label");
+    expect(label).not.toBeNull();
+    expect(label!.className).toMatch(/focus-within:border-accent/);
+  });
 });
