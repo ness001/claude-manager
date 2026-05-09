@@ -60,7 +60,7 @@ export function SkillsListView() {
             }}
             className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
           >
-            <Plus size={14} />
+            <Plus size={14} aria-hidden="true" />
             Create Skill
           </button>
         </div>
