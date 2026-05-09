@@ -240,6 +240,8 @@ describe("McpServerForm", () => {
   // arg they were about to delete. Now carries aria-label="Remove <ARG>"
   // and a stable testid (form-arg-remove-<i>).
   it("arg-tag remove button has an aria-label naming the arg being removed", () => {
+
+  it("url input has an accessible name (aria-label)", () => {
     render(
       <McpServerForm
         existingNames={EMPTY_NAMES}
@@ -305,6 +307,9 @@ describe("McpServerForm", () => {
   });
     expect(screen.getByTestId("form-name").getAttribute("aria-label")).toBe(
       "Server name",
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    expect(screen.getByTestId("form-url").getAttribute("aria-label")).toBe(
+      "URL",
     );
   });
 });
