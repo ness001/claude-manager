@@ -66,7 +66,7 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
         onClick={() => {
           void selectPlugin(plugin);
         }}
-        className="flex w-full flex-col items-start gap-1 text-left"
+        className="flex w-full flex-col items-start gap-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <div className="flex w-full items-center gap-2">
           <span
