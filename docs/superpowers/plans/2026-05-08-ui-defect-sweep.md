@@ -268,6 +268,7 @@ _Investigation pending. Likely focus: stat tiles showing 0 when stats-cache exis
 - [x] QuickActions buttons each contain a leading lucide icon next to fully-readable label text (`src/components/dashboard/QuickActions.tsx:20-23`). The icons are decorative but lacked `aria-hidden`, so screen readers may announce the SVG's computed name (Plus / Play / FolderOpen / RefreshCw) redundantly with the button label. WCAG 4.1.2 (Name, Role, Value). Mirrored ToolCallBlock chevron fix (PR #53): added `aria-hidden="true"` to all four icon JSX nodes. — PR #55
 - [x] SystemHealth section label "System Health" rendered as a `<div>` (`src/components/dashboard/SystemHealth.tsx:91-93`) — screen-reader users couldn't navigate to it via the headings list. WCAG 1.3.1 (Info & Relationships) / 2.4.6 (Headings & Labels). Mirrored PR #52 (SessionListPanel group headers): switched to `<h3>`. — PR #61
 - [x] ModelDonut section label "Model Usage" rendered as a `<div>` (`src/components/dashboard/ModelDonut.tsx:62-64`) — same heading-semantics defect as SystemHealth. WCAG 1.3.1 / 2.4.6. Mirrored PR #61: switched to `<h3>`. — PR #63
+- [x] RecentSessions section label "Recent Sessions" rendered as a `<div>` (`src/components/dashboard/RecentSessions.tsx:24-26`) — same heading-semantics defect. WCAG 1.3.1 / 2.4.6. Mirrored PR #61: switched to `<h3>`. — PR #65
 
 ### Sessions — `src/sections/SessionsSection.tsx`
 
