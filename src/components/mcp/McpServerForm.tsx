@@ -367,6 +367,8 @@ function KeyValueEditor({
           />
           <button
             type="button"
+            data-testid={`${testidPrefix}-remove-${i}`}
+            aria-label={k ? `Remove ${k}` : "Remove row"}
             onClick={() => onChange(entries.filter((_, j) => j !== i))}
             className="px-1 text-text-muted hover:text-status-error"
           >
