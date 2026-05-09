@@ -94,6 +94,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
               onClick={() => setPeriod(p)}
               className={[
                 "rounded px-2 py-0.5 text-xs",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
                 period === p
                   ? "bg-accent text-white"
                   : "text-text-secondary hover:bg-bg-tertiary",
@@ -117,6 +118,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
             onClick={() => setSeries("messages")}
             className={[
               "rounded px-2 py-0.5 text-xs",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
               series === "messages"
                 ? "bg-bg-tertiary text-text-primary"
                 : "text-text-secondary hover:bg-bg-tertiary",
@@ -132,6 +134,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
             onClick={() => setSeries("toolCalls")}
             className={[
               "rounded px-2 py-0.5 text-xs",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
               series === "toolCalls"
                 ? "bg-bg-tertiary text-text-primary"
                 : "text-text-secondary hover:bg-bg-tertiary",
