@@ -32,8 +32,15 @@ export function McpSection() {
   const lastServerCount = useRef(servers.length);
 
   useEffect(() => {
-    void loadServers();
-  }, [loadServers]);
+    // Spec §13: load + immediate first status refresh. Without the
+    // chained refresh, servers stay at default `disconnected` for up to
+    // VISIBLE_INTERVAL_MS (15s) — presenting as "all servers
+    // DISCONNECTED forever" until the first poll-tick fires.
+    void (async () => {
+      await loadServers();
+      await refreshStatus();
+    })();
+  }, [loadServers, refreshStatus]);
 
   // Poll cadence — switches based on document visibility (spec §13).
   useEffect(() => {

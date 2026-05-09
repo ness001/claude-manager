@@ -100,26 +100,44 @@ describe("McpSection", () => {
     expect(loadMcpServersMock).toHaveBeenCalledTimes(1);
   });
 
+  it("kicks off an immediate status refresh on mount (regression: 'all servers DISCONNECTED forever')", async () => {
+    // Without the immediate refresh, servers stay at the default
+    // `disconnected` for VISIBLE_INTERVAL_MS (15s) before the first
+    // poll-tick fires — presenting as "all servers DISCONNECTED forever"
+    // until the user notices something change. Spec §13 mandates an
+    // initial refresh chained after loadServers.
+    await act(async () => {
+      render(<McpSection />);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const statusCalls = invokeMock.mock.calls.filter(
+      (c) => c[0] === "check_mcp_status",
+    ).length;
+    expect(statusCalls).toBe(1);
+  });
+
   it("refresh interval: 15s when visible, 60s when hidden, 2s burst after action", async () => {
     vi.useFakeTimers();
     await act(async () => {
       render(<McpSection />);
       await Promise.resolve();
+      await Promise.resolve();
     });
 
-    // Mount load is via loadMcpServers, not check_mcp_status. Filter to the
-    // calls we care about.
+    // Mount load is via loadMcpServers + an immediate refreshStatus().
+    // From here, interval ticks add to that baseline.
     const statusCalls = () =>
       invokeMock.mock.calls.filter((c) => c[0] === "check_mcp_status").length;
 
-    expect(statusCalls()).toBe(0);
+    expect(statusCalls()).toBe(1);
 
-    // Visible cadence: tick 15s → one refresh.
+    // Visible cadence: tick 15s → one more refresh.
     await act(async () => {
       vi.advanceTimersByTime(15_000);
       await Promise.resolve();
     });
-    expect(statusCalls()).toBe(1);
+    expect(statusCalls()).toBe(2);
 
     // Switch to hidden — interval re-arms at 60s.
     await act(async () => {
@@ -135,13 +153,13 @@ describe("McpSection", () => {
       vi.advanceTimersByTime(15_000);
       await Promise.resolve();
     });
-    expect(statusCalls()).toBe(1);
+    expect(statusCalls()).toBe(2);
     // Total 60s after switch → fires.
     await act(async () => {
       vi.advanceTimersByTime(45_000);
       await Promise.resolve();
     });
-    expect(statusCalls()).toBe(2);
+    expect(statusCalls()).toBe(3);
 
     // Post-action burst: server count change triggers a 2s refresh.
     await act(async () => {
