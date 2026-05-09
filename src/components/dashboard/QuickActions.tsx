@@ -29,9 +29,9 @@ export function QuickActions() {
       data-testid="quick-actions"
       className="flex flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
-      <div className="text-xs uppercase tracking-wide text-text-muted">
+      <h3 className="text-xs uppercase tracking-wide text-text-muted">
         Quick Actions
-      </div>
+      </h3>
       <div className="grid grid-cols-2 gap-2">
         {ACTIONS.map((a) => (
           <button
