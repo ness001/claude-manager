@@ -98,4 +98,13 @@ describe("SystemHealth", () => {
       expect(dot.getAttribute("aria-hidden")).toBeNull();
     }
   });
+
+  it("section label uses an <h3> heading (WCAG 1.3.1 / 2.4.6)", () => {
+    // Defect: visual section label rendered as a <div>, so screen-reader
+    // users couldn't navigate to it via headings list. Mirrors PR #52
+    // (SessionListPanel group headers).
+    render(<SystemHealth skipApiCheck />);
+    const heading = screen.getByRole("heading", { name: "System Health", level: 3 });
+    expect(heading.tagName).toBe("H3");
+  });
 });
