@@ -264,6 +264,7 @@ _Investigation pending. Likely focus: stat tiles showing 0 when stats-cache exis
 
 - [x] QuickActions: all 4 buttons (New Session / Resume Latest / Open CWD / Rebuild Stats) are dead — no `onClick` handlers (`src/components/dashboard/QuickActions.tsx:36-51`). Minimal fix: render `disabled` + `aria-disabled` + `title="Coming soon"` until handler wiring lands in a later phase — PR #22
 - [x] Dashboard store silently swallows SQLite load errors and renders empty stats (`src/stores/dashboard-store.ts:104-169`) — added `loadError: string | null` to the store; DashboardSection renders a soft yellow banner (role="alert") when set, so users know stats may be stale instead of seeing silent zeros — PR #25
+- [x] SystemHealth status dots are color-only (`aria-hidden="true"` on each dot, `src/components/dashboard/SystemHealth.tsx:124`) — SR users get no status signal at all, and MCP/Plugins/CLI rows have no visible status word either. Fixed by giving each dot `role="img"` + `aria-label={STATUS_LABEL[status]}`. Sighted color-blind users still need visible status text on MCP/Plugins/CLI rows — that's a deeper redesign deferred to a follow-up. — PR #39
 
 ### Sessions — `src/sections/SessionsSection.tsx`
 

@@ -121,7 +121,8 @@ function Indicator({ label, status, value, testId }: IndicatorProps) {
       className="flex items-center gap-2"
     >
       <span
-        aria-hidden="true"
+        role="img"
+        aria-label={STATUS_LABEL[status]}
         data-testid="health-dot"
         className={`inline-block h-2 w-2 rounded-full shrink-0 ${STATUS_COLOR[status]}`}
       />
