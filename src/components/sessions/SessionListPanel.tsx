@@ -189,7 +189,10 @@ export function SessionListPanel() {
       <button
         type="button"
         data-testid="new-session-btn"
-        className="flex items-center justify-center gap-1 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover"
+        disabled
+        aria-disabled="true"
+        title="Coming soon — launch a new Claude session from here once the IPC is wired"
+        className="flex items-center justify-center gap-1 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white opacity-50 cursor-not-allowed"
       >
         <Plus size={14} />
         New Session
