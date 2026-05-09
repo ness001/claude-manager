@@ -63,7 +63,7 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
               }}
               className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
             >
-              <FolderOpen size={14} />
+              <FolderOpen size={14} aria-hidden="true" />
               Open in File Browser
             </button>
             <button
@@ -74,7 +74,7 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
               }}
               className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
             >
-              <ExternalLink size={14} />
+              <ExternalLink size={14} aria-hidden="true" />
               Open in VS Code
             </button>
           </div>
