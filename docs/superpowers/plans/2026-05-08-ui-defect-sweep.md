@@ -300,6 +300,7 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 - [x] Skill card has no Remove action (`src/components/skills/SkillCard.tsx`) — not a defect: spec §7.1 lists only "Open in VS Code" and "Open in File Browser"; SkillCard matches spec exactly. Custom-skill removal is intentionally a manual filesystem action.
 - [x] `+ Create Skill` button passes literal `~/.claude/skills/` to `openShell`, which does not expand `~` — silent no-op on most platforms (`src/components/skills/SkillsListView.tsx:14,33`). Fixed by resolving `homeDir() + join(...)` before the shell open. — PR #35
 - [x] `Open in VS Code` on a `SkillCard` builds the URI as `vscode://file/${skill.skillMdPath}` without converting backslashes (`src/components/skills/SkillCard.tsx:22-28`). On Windows, `skillMdPath` is backslash-separated, so the URI is malformed and VS Code's URI handler silently rejects it. Same fix as PR #42 for the Plugins side: `\\` → `/` before composing the URI. — PR #43
+- [x] `SkillsListView` "Create Skill" header button (`src/components/skills/SkillsListView.tsx:55-65`) had a leading lucide Plus icon next to fully-readable label text but lacked `aria-hidden`, so screen readers announce "Plus, Create Skill" redundantly. WCAG 4.1.2 (Name, Role, Value). Mirrored PR #58 (SkillCard action icons) and PR #55 (QuickActions). — PR #68
 - [ ] _further investigation pending_
 
 ### MCP Servers — `src/sections/McpSection.tsx`
