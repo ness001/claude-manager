@@ -143,6 +143,46 @@ describe("session-loader: loadAllSessions", () => {
     expect(sql).not.toContain("insert or replace");
   });
 
+  // RCA Bug 1: started_at must be in the upsert column list AND in the
+  // bound parameters (regression guard for docs/research/2026-05-09-dashboard-bugs-rca.md §2.1).
+  it("RCA Bug 1: upsert writes started_at from DiscoveredSession.startedAtMs", async () => {
+    const withTs = { ...baseDiscovered, startedAtMs: 1_777_902_531_652 };
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === "discover_sessions") return [withTs];
+      if (cmd === "read_pid_files") return [];
+      throw new Error(`unexpected invoke ${cmd}`);
+    });
+    dbSelectMock.mockResolvedValue([]);
+    dbExecuteMock.mockResolvedValue(undefined);
+
+    await loadAllSessions();
+
+    expect(dbExecuteMock).toHaveBeenCalledTimes(1);
+    const sql = (dbExecuteMock.mock.calls[0][0] as string).toLowerCase();
+    const params = dbExecuteMock.mock.calls[0][1] as unknown[];
+
+    expect(sql).toContain("started_at");
+    // The bound startedAtMs value must appear in the params array.
+    expect(params).toContain(1_777_902_531_652);
+  });
+
+  // RCA Bug 1 corollary: if startedAtMs is missing, COALESCE preserves any
+  // existing started_at value rather than nulling it.
+  it("RCA Bug 1: started_at COALESCE preserves prior value when current scan has no timestamp", async () => {
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === "discover_sessions") return [baseDiscovered]; // no startedAtMs
+      if (cmd === "read_pid_files") return [];
+      throw new Error(`unexpected invoke ${cmd}`);
+    });
+    dbSelectMock.mockResolvedValue([]);
+    dbExecuteMock.mockResolvedValue(undefined);
+
+    await loadAllSessions();
+
+    const sql = (dbExecuteMock.mock.calls[0][0] as string).toLowerCase();
+    expect(sql).toContain("coalesce(excluded.started_at, sessions.started_at)");
+  });
+
   // case 3b: the merged SessionMeta surfaces user-managed columns from SQLite.
   it("case 3b: merged SessionMeta surfaces displayName/tags/isPinned/etc from SQLite", async () => {
     invokeMock.mockImplementation(async (cmd: string) => {

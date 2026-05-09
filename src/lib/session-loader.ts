@@ -52,6 +52,10 @@ export interface DiscoveredSession {
   mtimeMs: number;
   /** Slugified-CWD directory under `~/.claude/projects/`. */
   projectDir: string;
+  /** Earliest `timestamp` field seen in JSONL metadata window (epoch ms),
+   *  or null when no parseable timestamp exists. Source of truth for
+   *  `sessions.started_at`. */
+  startedAtMs?: number | null;
 }
 
 /** SQLite row shape for the `sessions` table (snake_case). */
@@ -179,8 +183,8 @@ async function upsertSession(d: DiscoveredSession, syncedAt: number): Promise<vo
   await dbExecute(
     `INSERT INTO sessions (
        session_id, cwd, first_prompt, message_count, model, version,
-       permission_mode, git_branch, kind, entrypoint, last_synced_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       permission_mode, git_branch, kind, entrypoint, started_at, last_synced_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(session_id) DO UPDATE SET
        cwd = excluded.cwd,
        first_prompt = excluded.first_prompt,
@@ -191,6 +195,7 @@ async function upsertSession(d: DiscoveredSession, syncedAt: number): Promise<vo
        git_branch = excluded.git_branch,
        kind = excluded.kind,
        entrypoint = excluded.entrypoint,
+       started_at = COALESCE(excluded.started_at, sessions.started_at),
        last_synced_at = excluded.last_synced_at`,
     [
       d.sessionId,
@@ -203,6 +208,7 @@ async function upsertSession(d: DiscoveredSession, syncedAt: number): Promise<vo
       d.gitBranch ?? null,
       d.kind ?? null,
       d.entrypoint ?? null,
+      d.startedAtMs ?? null,
       syncedAt,
     ],
   );

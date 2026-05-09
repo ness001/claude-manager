@@ -57,7 +57,7 @@ const SCHEMA: string[] = [
  * The schema version this build of the app expects. Bump this whenever a
  * new migration is added to `MIGRATIONS`.
  */
-const EXPECTED_VERSION = 1;
+const EXPECTED_VERSION = 2;
 
 /**
  * Sequential schema migrations keyed by the version they upgrade *to*.
@@ -67,8 +67,18 @@ const EXPECTED_VERSION = 1;
  * `runMigrations`. v1 is the initial schema and has no migration entry.
  */
 const MIGRATIONS: Record<number, (db: Database) => Promise<void>> = {
-  // Future migrations go here, e.g.:
-  // 2: async (db) => { await db.execute("ALTER TABLE sessions ADD COLUMN foo TEXT"); },
+  // v1 -> v2: backfill `started_at`. Pre-v2 builds never extracted JSONL
+  // `timestamp` fields, so existing rows have started_at = NULL. The Rust
+  // parser now extracts the earliest timestamp, but the cache-freshness
+  // short-circuit in session-loader.ts skips re-upsert when last_synced_at
+  // >= mtime_ms. Nulling last_synced_at forces a one-time re-upsert on the
+  // next discover_sessions, which populates started_at from the JSONL.
+  // (RCA Bug 1, doc: docs/research/2026-05-09-dashboard-bugs-rca.md)
+  2: async (db) => {
+    await db.execute(
+      "UPDATE sessions SET last_synced_at = NULL WHERE started_at IS NULL",
+    );
+  },
 };
 
 async function init(): Promise<Database> {

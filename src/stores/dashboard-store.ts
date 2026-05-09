@@ -13,6 +13,7 @@
 import { create } from "zustand";
 
 import { dbSelect } from "../lib/db";
+import { loadAllSessions } from "../lib/session-loader";
 import { readStatsCache, type DailyActivityEntry } from "../lib/stats-reader";
 
 /** Dashboard "Recent sessions" list row — see spec §4.1 Row 3. */
@@ -106,6 +107,18 @@ export const useDashboardStore = create<DashboardState>((set) => ({
 
   loadDashboard: async () => {
     set({ isLoading: true, loadError: null });
+
+    // Discover-and-upsert before any SQLite read. The Dashboard depends on
+    // `sessions.started_at` (RCA Bug 1, doc: docs/research/2026-05-09-dashboard-bugs-rca.md):
+    // without an upstream discover the table can be entirely NULL/stale even
+    // though new JSONLs exist on disk. We swallow errors here — the SQLite
+    // reads below still proceed against whatever rows exist, and surface
+    // their own loadError if needed.
+    try {
+      await loadAllSessions();
+    } catch {
+      // Discover failure is non-fatal — fall through to read stale rows.
+    }
 
     // Stats cache never throws — it returns EMPTY_STATS on any error.
     const stats = await readStatsCache();
