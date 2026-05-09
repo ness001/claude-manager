@@ -88,9 +88,9 @@ export function SystemHealth({
       data-testid="system-health"
       className="flex flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
-      <div className="text-xs uppercase tracking-wide text-text-muted">
+      <h3 className="text-xs uppercase tracking-wide text-text-muted">
         System Health
-      </div>
+      </h3>
       <ul className="flex flex-col gap-1.5 text-xs">
         <Indicator label="MCP" status={mcpStatus} value={`${mcpCount} servers`} />
         <Indicator label="Plugins" status={pluginStatus} value={`${pluginCount} installed`} />
