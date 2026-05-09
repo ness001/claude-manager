@@ -282,6 +282,7 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 
 - [x] List shows 0 skills/0 agents/0 hooks for every plugin (list view doesn't fetch details — see `src/lib/plugin-loader.ts:135-139`) — PR #19
 - [x] Reinstall button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`) — disabled with explanatory tooltip until IPC is wired (no `claude plugin install` IPC exists yet) — PR #23
+- [x] `Open in VS Code` builds the URI as `vscode://file/${installPath}` without converting backslashes (`src/components/plugins/PluginDetailView.tsx:30-36`). On Windows, `installed_plugins.json` stores paths like `C:\Users\...\plugins\...`, producing a broken URI that VS Code's handler silently rejects. Replace `\` with `/` before composing the URI (mirrors PR #35's "build the actual path the OS expects" pattern). — PR #42
 - [ ] Remove button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`)
 - [ ] "Install Plugin" header button has no onClick handler (`src/components/plugins/PluginListView.tsx:59-65`)
 
