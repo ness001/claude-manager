@@ -73,6 +73,7 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
         "w-full text-left flex flex-col gap-1 px-3 py-2 rounded-md",
         "border border-transparent",
         "hover:bg-bg-tertiary",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
         selected
           ? "bg-sidebar-active border-accent/40"
           : "bg-card-bg",

@@ -79,6 +79,16 @@ describe("SessionCard", () => {
     expect(text.textContent!.length).toBeLessThan(long.length);
   });
 
+  // WCAG 2.4.7 (Focus Visible): the card is the primary keyboard target in
+  // the session list. Without focus-visible:ring, tabbing through the list
+  // gives no indication of the current row. Mirrors PRs #17/#45/#48/#49.
+  it("renders a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<SessionCard session={makeSession()} selected={false} />);
+    const card = screen.getByTestId("session-card");
+    expect(card.className).toContain("focus-visible:ring-2");
+    expect(card.className).toContain("focus-visible:ring-accent");
+  });
+
   const stateCases: Array<{ state: SessionState; bg: string; pulse: boolean }> = [
     { state: "alive", bg: "bg-status-green", pulse: true },
     { state: "ended", bg: "bg-text-muted", pulse: false },
