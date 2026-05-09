@@ -12,7 +12,12 @@ import {
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/plugin-fs", () => ({ exists: vi.fn() }));
-vi.mock("@tauri-apps/plugin-shell", () => ({ open: vi.fn() }));
+const openShellMock = vi.fn(async (_p: string) => undefined);
+vi.mock("@tauri-apps/plugin-shell", () => ({ open: (p: string) => openShellMock(p) }));
+vi.mock("@tauri-apps/api/path", () => ({
+  homeDir: vi.fn(async () => "/h"),
+  join: vi.fn(async (...parts: string[]) => parts.join("/")),
+}));
 
 import { SkillsListView } from "../../../src/components/skills/SkillsListView";
 import { useSkillStore } from "../../../src/stores/skill-store";
@@ -103,6 +108,23 @@ describe("SkillsListView", () => {
     expect(aside.textContent).toMatch(/Plugin-bundled skills/i);
     fireEvent.click(screen.getByTestId("plugins-panel-link"));
     expect(useNavigationStore.getState().activeSection).toBe("plugins");
+  });
+
+  it("clicking Create Skill resolves $HOME before passing to openShell (no literal ~)", async () => {
+    // Regression: openShell does not expand `~`, so passing the literal
+    // `~/.claude/skills/` silently fails on most platforms. The handler must
+    // resolve homeDir() + join(...) and pass the absolute path.
+    openShellMock.mockClear();
+    render(<SkillsListView />);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("create-skill-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(openShellMock).toHaveBeenCalledTimes(1);
+    const arg = openShellMock.mock.calls[0]?.[0] as string;
+    expect(arg.startsWith("~")).toBe(false);
+    expect(arg).toBe("/h/.claude/skills");
   });
 
   it("dark + light theme parity: same root utilities", () => {

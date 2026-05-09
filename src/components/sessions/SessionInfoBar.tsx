@@ -147,7 +147,13 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
       data-testid="session-info-bar"
       className="flex flex-col gap-2 border-b border-border bg-bg-secondary px-4 py-3"
     >
-      {/* Row 1: name + badges */}
+      {/* Row 1: name + badges
+        *
+        * The name input is session-scoped only — `setSessionDisplayName`
+        * mutates the in-memory Zustand store but SQLite persistence is
+        * deferred (see `src/lib/session-loader.ts:28-31`). Until the
+        * persistence wiring lands, surface that fact via title + a marker
+        * span so users (and SR users) know edits won't survive reload. */}
       <div className="flex items-center gap-3 min-w-0">
         <input
           data-testid="session-name-input"
@@ -162,7 +168,8 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
             }
           }}
           className="flex-1 min-w-0 truncate bg-transparent text-base font-semibold text-text-primary outline-none focus:ring-1 focus:ring-accent rounded px-1"
-          aria-label="Session name"
+          aria-label="Session name (session-scoped — not yet saved across reloads)"
+          title="Renames are session-scoped — not yet saved across reloads"
         />
 
         {!cwdExists && (
