@@ -25,6 +25,15 @@
   --color-status-red: #dc2626;
   --color-status-blue: #2563eb;
   --color-status-amber: #d97706;
+  /* Semantic aliases — McpServerCard / McpServerForm reference these names
+   * directly (status-success / status-error / status-warning). Without the
+   * aliases, Tailwind v4 silently drops the classes and the MCP card's
+   * status dots, pills, error borders, and form error text render colorless.
+   * Same hex values as their semantic-color counterparts so they swap with
+   * the theme via the `.dark` overrides below. */
+  --color-status-success: #16a34a;
+  --color-status-error: #dc2626;
+  --color-status-warning: #eab308;
   --color-sidebar-bg: #f3f4f6;
   --color-sidebar-active: #ede9fe;
   --color-card-bg: #ffffff;
@@ -48,6 +57,9 @@
   --color-status-red: #f38ba8;
   --color-status-blue: #89b4fa;
   --color-status-amber: #fab387;
+  --color-status-success: #a6e3a1;
+  --color-status-error: #f38ba8;
+  --color-status-warning: #f9e2af;
   --color-sidebar-bg: #15152a;
   --color-sidebar-active: #2a1f4a;
   --color-card-bg: #1e1e2e;
