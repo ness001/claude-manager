@@ -36,7 +36,7 @@ export function PluginsSection() {
           }}
           className="flex items-center gap-1 px-6 pt-4 text-sm text-text-secondary hover:text-text-primary"
         >
-          <ArrowLeft size={14} />
+          <ArrowLeft size={14} aria-hidden="true" />
           Back to plugins
         </button>
         <PluginDetailView plugin={selectedPlugin} />

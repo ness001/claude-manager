@@ -120,6 +120,25 @@ describe("PluginsSection", () => {
     expect(screen.getByTestId("plugin-list-view")).toBeInTheDocument();
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): the decorative ArrowLeft lucide icon
+  // next to the visible "Back to plugins" label must be aria-hidden so screen
+  // readers don't announce "ArrowLeft, Back to plugins". Mirrors PR #58
+  // (SkillCard) and PR #66 (PluginDetailView header buttons).
+  it("back button icon is aria-hidden", async () => {
+    usePluginStore.setState({
+      plugins: [makePlugin()],
+      selectedPlugin: makeDetail(),
+    });
+    await act(async () => {
+      render(<PluginsSection />);
+      await Promise.resolve();
+    });
+    const btn = screen.getByTestId("plugin-back-btn");
+    const svg = btn.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(svg!.getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("loading state renders skeletons; empty state renders spec §17.6 copy", async () => {
     usePluginStore.setState({ isLoading: true, plugins: [] });
     const { unmount } = render(<PluginsSection />);
