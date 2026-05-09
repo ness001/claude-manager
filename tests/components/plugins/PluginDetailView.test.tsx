@@ -120,5 +120,17 @@ describe("PluginDetailView", () => {
     expect(openShellMock).toHaveBeenCalledWith(
       "vscode://file/C:/Users/me/.claude/plugins/cache/foo/bar/1.0.0",
     );
+  // WCAG 4.1.2 (Name, Role, Value): decorative lucide icons next to button
+  // text labels must be aria-hidden so SR users don't hear the SVG name
+  // ("FolderOpen", "ExternalLink") redundantly with the button label.
+  // Mirrors PR #58 (SkillCard) and PR #55 (QuickActions).
+  it("header button icons are aria-hidden", () => {
+    render(<PluginDetailView plugin={makeDetail()} />);
+    for (const id of ["open-folder-btn", "open-vscode-btn"]) {
+      const btn = screen.getByTestId(id);
+      const svg = btn.querySelector("svg");
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    }
   });
 });
