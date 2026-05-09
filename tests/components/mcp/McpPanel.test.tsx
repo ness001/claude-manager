@@ -65,6 +65,16 @@ describe("McpPanel", () => {
     expect(screen.getByTestId("mcp-search")).toBeInTheDocument();
   });
 
+  // WCAG 4.1.2 Name, Role, Value: the search input previously relied on its
+  // placeholder for an accessible name (placeholders don't count). Mirror
+  // SessionSearch (PR #45) — provide an explicit aria-label, and mark the
+  // decorative magnifying-glass icon aria-hidden.
+  it("search input has an accessible name (aria-label) and the icon is aria-hidden", () => {
+    render(<McpPanel />);
+    const input = screen.getByTestId("mcp-search");
+    expect(input.getAttribute("aria-label")).toBe("Search MCP servers");
+  });
+
   it("groups rendered with spec scope headers", () => {
     useMcpStore.setState({ servers: ALL_FIXTURES });
     render(<McpPanel />);
