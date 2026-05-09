@@ -97,6 +97,18 @@ describe("PluginListView", () => {
     expect(screen.getByTestId("no-matches")).toBeInTheDocument();
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): a placeholder is not an accessible name
+  // (it disappears once the user types). Mirrors PRs #45 (SessionSearch),
+  // #50 (McpPanel), #51 (SkillsListView).
+  it("search input has an accessible name; magnifying-glass icon is aria-hidden", () => {
+    render(<PluginListView />);
+    const input = screen.getByTestId("plugin-search");
+    expect(input.getAttribute("aria-label")).toBe("Search plugins");
+    const icon = input.parentElement!.querySelector("svg");
+    expect(icon).not.toBeNull();
+    expect(icon!.getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("Check for Updates click calls the IPC and updates state", async () => {
     const local = makePlugin({
       name: "alpha",

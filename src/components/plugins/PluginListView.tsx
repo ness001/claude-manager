@@ -85,6 +85,7 @@ export function PluginListView() {
         <div className="relative">
           <Search
             size={14}
+            aria-hidden="true"
             className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-text-muted"
           />
           <input
@@ -93,6 +94,7 @@ export function PluginListView() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search plugins by name, description, or marketplace…"
+            aria-label="Search plugins"
             className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
           />
         </div>
