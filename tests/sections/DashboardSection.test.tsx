@@ -32,6 +32,7 @@ beforeEach(() => {
     modelUsage: [],
     recentSessions: [],
     isLoading: false,
+    loadError: null,
   });
   dbSelectMock.mockReset();
   readStatsCacheMock.mockReset();
@@ -122,5 +123,29 @@ describe("DashboardSection", () => {
       .getAllByTestId("stat-card")
       .map((el) => el.getAttribute("data-accent"));
     expect(accents).toEqual(["green", "blue", "yellow", "mauve"]);
+  });
+
+  it("hides the load-error banner on a healthy load", async () => {
+    render(<DashboardSection />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.queryByTestId("dashboard-load-error")).toBeNull();
+  });
+
+  it("renders a soft load-error banner when the store reports loadError", async () => {
+    dbSelectMock.mockReset();
+    dbSelectMock.mockRejectedValue(new Error("disk on fire"));
+    render(<DashboardSection />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const banner = screen.getByTestId("dashboard-load-error");
+    expect(banner).toBeInTheDocument();
+    expect(banner).toHaveAttribute("role", "alert");
+    expect(banner.textContent).toContain("disk on fire");
   });
 });

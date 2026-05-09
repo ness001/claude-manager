@@ -139,19 +139,6 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
     }
   }
 
-  function handleAction(id: ActionId) {
-    if (id === "stop") {
-      // Spec §5.3.1: confirm before SIGTERM. Wiring is later-phase; the
-      // confirmation step itself is required now and is what the test asserts.
-      const ok = window.confirm(
-        "Stop this session? This sends SIGTERM to the running process.",
-      );
-      if (!ok) return;
-    }
-    // Real action dispatch lives in a later phase; this component only owns
-    // the UI surface.
-  }
-
   const pill = STATE_PILL[session.state];
   const actions = ACTIONS[session.state];
 
@@ -160,7 +147,13 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
       data-testid="session-info-bar"
       className="flex flex-col gap-2 border-b border-border bg-bg-secondary px-4 py-3"
     >
-      {/* Row 1: name + badges */}
+      {/* Row 1: name + badges
+        *
+        * The name input is session-scoped only — `setSessionDisplayName`
+        * mutates the in-memory Zustand store but SQLite persistence is
+        * deferred (see `src/lib/session-loader.ts:28-31`). Until the
+        * persistence wiring lands, surface that fact via title + a marker
+        * span so users (and SR users) know edits won't survive reload. */}
       <div className="flex items-center gap-3 min-w-0">
         <input
           data-testid="session-name-input"
@@ -175,7 +168,8 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
             }
           }}
           className="flex-1 min-w-0 truncate bg-transparent text-base font-semibold text-text-primary outline-none focus:ring-1 focus:ring-accent rounded px-1"
-          aria-label="Session name"
+          aria-label="Session name (session-scoped — not yet saved across reloads)"
+          title="Renames are session-scoped — not yet saved across reloads"
         />
 
         {!cwdExists && (
@@ -224,30 +218,37 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
         </span>
       </div>
 
-      {/* Row 2: actions */}
+      {/* Row 2: actions
+        *
+        * Action wiring (terminal launch, VS Code spawn, SIGTERM, archive,
+        * delete, …) is later-phase. Until those handlers exist, every button
+        * is rendered `disabled` with a "Coming soon" tooltip so users can
+        * tell at a glance that they aren't interactive — same convention as
+        * Dashboard QuickActions / Plugins Install / MCP View Tools.
+        *
+        * The dead-CWD case (§17.5) keeps its own tooltip so the more
+        * specific reason wins. */}
       <div className="flex flex-wrap gap-2">
         {actions.map((a) => {
-          const disabled = CWD_DEPENDENT.has(a.id) && !cwdExists;
-          const cls =
+          const cwdDead = CWD_DEPENDENT.has(a.id) && !cwdExists;
+          const baseCls =
             a.variant === "primary"
-              ? "bg-accent text-white hover:bg-accent-hover"
+              ? "bg-accent text-white"
               : a.variant === "danger"
-                ? "bg-bg-tertiary text-status-red hover:bg-status-red/10"
-                : "bg-bg-tertiary text-text-secondary hover:bg-bg-primary";
+                ? "bg-bg-tertiary text-status-red"
+                : "bg-bg-tertiary text-text-secondary";
           return (
             <button
               key={a.id}
               type="button"
               data-testid={`action-${a.id}`}
-              disabled={disabled}
-              title={
-                disabled ? "Directory not found" : undefined
-              }
-              onClick={() => handleAction(a.id)}
+              disabled
+              aria-disabled="true"
+              title={cwdDead ? "Directory not found" : "Coming soon"}
               className={[
-                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
-                cls,
-                disabled ? "opacity-50 cursor-not-allowed" : "",
+                "rounded-md px-3 py-1 text-xs font-medium",
+                baseCls,
+                "opacity-50 cursor-not-allowed",
               ].join(" ")}
             >
               {a.label}

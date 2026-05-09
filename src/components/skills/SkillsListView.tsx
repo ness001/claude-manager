@@ -6,11 +6,14 @@
 import { useMemo } from "react";
 import { Plus, Search } from "lucide-react";
 import { open as openShell } from "@tauri-apps/plugin-shell";
+import { homeDir, join } from "@tauri-apps/api/path";
 
 import { filterSkills, useSkillStore } from "../../stores/skill-store";
 import { useNavigationStore } from "../../stores/navigation-store";
 import { SkillCard } from "./SkillCard";
 
+// Display-only path for header/empty-state copy. Filesystem operations must
+// resolve $HOME first — `openShell` doesn't expand `~`.
 const SKILLS_PATH = "~/.claude/skills/";
 
 export function SkillsListView() {
@@ -28,9 +31,12 @@ export function SkillsListView() {
   const onCreateSkill = async () => {
     // Per spec §7.1: "[+ Create Skill] button (opens file browser to create
     // directory)". Best-effort open of the skills root; user creates the
-    // subdirectory + SKILL.md themselves.
+    // subdirectory + SKILL.md themselves. `openShell` does NOT expand `~`,
+    // so resolve $HOME first.
     try {
-      await openShell(SKILLS_PATH);
+      const home = await homeDir();
+      const abs = await join(home, ".claude", "skills");
+      await openShell(abs);
     } catch (err) {
       console.error("Failed to open skills directory:", err);
     }

@@ -108,13 +108,32 @@ describe("SessionInfoBar", () => {
     expect(screen.getByTestId("action-resume-terminal")).toBeInTheDocument();
   });
 
-  it("Stop on ALIVE asks for confirmation before invoking SIGTERM", () => {
+  it("all action buttons are disabled with a 'Coming soon' tooltip until handlers are wired", () => {
+    // Action wiring (terminal launch, SIGTERM, archive, …) is later-phase.
+    // The defect: every button looks interactive but does nothing on click.
+    // Fix: render `disabled` + `title="Coming soon"` so users can tell.
+    for (const state of ALL_STATES) {
+      cleanup();
+      render(<SessionInfoBar session={makeSession({ state })} />);
+      const buttons = document.querySelectorAll('[data-testid^="action-"]');
+      expect(buttons.length).toBeGreaterThan(0);
+      for (const btn of Array.from(buttons)) {
+        expect(btn).toBeDisabled();
+        expect(btn.getAttribute("title")).toBe("Coming soon");
+      }
+    }
+  });
+
+  it("clicking a disabled action button does nothing — no confirm prompt, no error", () => {
+    // Regression guard: previously Stop spawned a window.confirm even though
+    // the SIGTERM wiring did not exist. Now the button is disabled, so no
+    // dialog should appear.
     const confirmSpy = vi
       .spyOn(window, "confirm")
       .mockImplementation(() => true);
     render(<SessionInfoBar session={makeSession({ state: "alive" })} />);
     fireEvent.click(screen.getByTestId("action-stop"));
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(confirmSpy).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
   });
 
@@ -154,6 +173,16 @@ describe("SessionInfoBar", () => {
       .getState()
       .sessions.find((s) => s.sessionId === "edit-me");
     expect(updated?.displayName).toBe("Brand New Name");
+  });
+
+  it("name field surfaces 'session-scoped — not persisted' affordance via title + aria-label", () => {
+    // Until SQLite persistence is wired (session-loader.ts:28-31), renames
+    // only live in the in-memory Zustand store. The input must label this
+    // so users — including SR users — know edits won't survive reload.
+    render(<SessionInfoBar session={makeSession()} />);
+    const input = screen.getByTestId("session-name-input");
+    expect(input.getAttribute("title")).toMatch(/not yet saved across reloads/i);
+    expect(input.getAttribute("aria-label")).toMatch(/session-scoped/i);
   });
 
   it("renders state pill, model badge, message count, entrypoint badge", () => {
