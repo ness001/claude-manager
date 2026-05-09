@@ -259,10 +259,19 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
     [totalTurns, turnAnchors, virtualizer],
   );
 
-  // 6) Keyboard navigation (Ctrl+ArrowUp/Down).
+  // 6) Keyboard navigation (Ctrl+ArrowUp/Down). Skip when focus is in a text
+  // input (e.g. the turn-input number field) so arrow-key cursor movement
+  // and value adjustment aren't hijacked. Mirrors App.tsx's Ctrl+1..6 guard.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) {
+          return;
+        }
+      }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         jumpToTurn(currentTurn + 1);

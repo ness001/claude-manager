@@ -178,6 +178,26 @@ describe("ConversationViewer", () => {
     await waitFor(() => expect(input.value).toBe("2"));
   });
 
+  it("Ctrl+ArrowDown is ignored while focus is in a text input (no hijack)", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-input"));
+    const input = screen.getByTestId("turn-input") as HTMLInputElement;
+    expect(input.value).toBe("1");
+    input.focus();
+    act(() => {
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          ctrlKey: true,
+          bubbles: true,
+        }),
+      );
+    });
+    // Turn must NOT have advanced — the handler bailed because focus was in INPUT.
+    expect(input.value).toBe("1");
+  });
+
   it("renders an error state when the IPC rejects", async () => {
     invokeMock.mockRejectedValue(new Error("ENOENT"));
     render(<ConversationViewer path="/fake.jsonl" />);
