@@ -59,9 +59,9 @@ export function ModelDonut({ data }: ModelDonutProps) {
       data-empty={isEmpty ? "true" : "false"}
       className="flex h-full min-h-[240px] flex-col gap-3 rounded-md border border-border bg-card-bg p-4"
     >
-      <div className="text-xs uppercase tracking-wide text-text-muted">
+      <h3 className="text-xs uppercase tracking-wide text-text-muted">
         Model Usage
-      </div>
+      </h3>
 
       <div className="flex flex-1 items-center gap-4">
         {isEmpty ? (
