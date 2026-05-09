@@ -23,6 +23,15 @@ const STATUS_COLOR: Record<PluginState, string> = {
   "update-available": "bg-status-amber",
 };
 
+/** SR label for the status dot — color alone is insufficient (WCAG 1.4.1). */
+const STATUS_LABEL: Record<PluginState, string> = {
+  active: "Active",
+  disabled: "Disabled",
+  broken: "Broken",
+  orphaned: "Orphaned",
+  "update-available": "Update available",
+};
+
 /** Truncate a single-line description to keep card height fixed. */
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
@@ -70,7 +79,8 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
       >
         <div className="flex w-full items-center gap-2">
           <span
-            aria-hidden="true"
+            role="img"
+            aria-label={STATUS_LABEL[plugin.state]}
             data-testid="status-dot"
             className={`inline-block h-2 w-2 rounded-full shrink-0 ${dotClass}`}
           />

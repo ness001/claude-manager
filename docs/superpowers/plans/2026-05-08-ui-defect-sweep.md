@@ -289,6 +289,7 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 - [x] Reinstall button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`) — disabled with explanatory tooltip until IPC is wired (no `claude plugin install` IPC exists yet) — PR #23
 - [ ] Remove button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`)
 - [ ] "Install Plugin" header button has no onClick handler (`src/components/plugins/PluginListView.tsx:59-65`)
+- [x] `PluginCard` status dot is `aria-hidden` (`src/components/plugins/PluginCard.tsx:72-76`) — color is the only state indicator for active / disabled / broken / orphaned, so screen-reader users get nothing. WCAG 1.4.1 (Use of Color) + 4.1.2 (Name, Role, Value). Mirrored PR #41's SessionCard pattern: `role="img"` + per-state `aria-label` (Active / Disabled / Broken / Orphaned / Update available). — PR #54
 
 ### Skills — `src/sections/SkillsSection.tsx`
 
