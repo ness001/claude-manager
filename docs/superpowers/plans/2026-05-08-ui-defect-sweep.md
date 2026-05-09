@@ -263,7 +263,7 @@ _Investigation pending. Likely focus: rail button accessible names, active-state
 _Investigation pending. Likely focus: stat tiles showing 0 when stats-cache exists, recent-sessions list, quick-action buttons._
 
 - [x] QuickActions: all 4 buttons (New Session / Resume Latest / Open CWD / Rebuild Stats) are dead — no `onClick` handlers (`src/components/dashboard/QuickActions.tsx:36-51`). Minimal fix: render `disabled` + `aria-disabled` + `title="Coming soon"` until handler wiring lands in a later phase — PR #22
-- [ ] Dashboard store silently swallows SQLite load errors and renders empty stats (`src/stores/dashboard-store.ts:104-169`) — user sees "0 sessions" with no indication the load failed. Add an `error` flag + soft inline error so users know data may be stale.
+- [x] Dashboard store silently swallows SQLite load errors and renders empty stats (`src/stores/dashboard-store.ts:104-169`) — added `loadError: string | null` to the store; DashboardSection renders a soft yellow banner (role="alert") when set, so users know stats may be stale instead of seeing silent zeros — PR #25
 
 ### Sessions — `src/sections/SessionsSection.tsx`
 
@@ -273,7 +273,7 @@ _Investigation pending. Likely focus: session list render, JSONL preview, PID fi
 - [ ] "+ New Session" button is dead — no `onClick` handler (`src/components/sessions/SessionListPanel.tsx:189-196`). Same situation as Dashboard QuickActions: the button looks interactive but does nothing because backend wiring is later-phase. Minimal fix: disable + tooltip until wired.
 - [ ] `SessionInfoBar.handleAction` is a no-op for every action except the `stop` confirmation prompt (`src/components/sessions/SessionInfoBar.tsx:142-153`). After the user confirms "Stop", nothing happens — no SIGTERM, no toast, no error. Code comment acknowledges this as deferred. Minimal fix: surface a "not yet implemented" UI cue (or disable the action buttons whose handler is a no-op).
 - [ ] `setSessionDisplayName` updates only the in-memory Zustand store (`src/stores/session-store.ts:57-62`); SQLite persistence is explicitly deferred per `src/lib/session-loader.ts:28-31`. The user renames a session, sees it persist visually, and loses the rename on next reload. Either persist via a Tauri command or label the rename UI as session-scoped.
-- [ ] Dead-CWD warning AlertTriangle icon has no `aria-label` (`src/components/sessions/SessionInfoBar.tsx:181-188`). Parent span carries `title="Directory not found"` but screen readers won't always surface that. Add `aria-label="Directory not found"` on the icon (or `aria-hidden` + a screen-reader-only span).
+- [x] Dead-CWD warning AlertTriangle icon has no `aria-label` (`src/components/sessions/SessionInfoBar.tsx:181-188`). Parent span carries `title="Directory not found"` but screen readers won't always surface that. Add `aria-label="Directory not found"` on the icon (or `aria-hidden` + a screen-reader-only span). — PR #24
 
 ### Plugins — `src/sections/PluginsSection.tsx`
 
@@ -282,7 +282,7 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 - [x] List shows 0 skills/0 agents/0 hooks for every plugin (list view doesn't fetch details — see `src/lib/plugin-loader.ts:135-139`) — PR #19
 - [x] Reinstall button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`) — disabled with explanatory tooltip until IPC is wired (no `claude plugin install` IPC exists yet) — PR #23
 - [ ] Remove button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`)
-- [x] "Install Plugin" header button has no onClick handler (`src/components/plugins/PluginListView.tsx:59-65`) — disabled with explanatory tooltip until install IPC lands — PR #27
+- [ ] "Install Plugin" header button has no onClick handler (`src/components/plugins/PluginListView.tsx:59-65`)
 
 ### Skills — `src/sections/SkillsSection.tsx`
 
@@ -296,8 +296,8 @@ _Pre-seeded — partially investigated last session._
 - [x] Connect button calls non-existent IPC `connect_mcp_server` — removed button + dead store method per spec §8.3 (status is opt-in via Refresh) — PR #14
 - [x] Restart button calls non-existent IPC `restart_mcp_server` — removed button + dead store method (no `claude mcp restart` CLI subcommand) — PR #14
 - [ ] All servers show DISCONNECTED forever — verify whether `claude mcp list` parser regex `/^([\w.-]+)\s*:\s*(.*)$/` matches actual CLI output; if not, fix parser
-- [ ] `View Tools` button has no onViewTools callback wired (`src/components/mcp/McpServerCard.tsx:88-94`)
-- [ ] `View Logs` button has no onViewLogs callback wired (`src/components/mcp/McpServerCard.tsx:101`)
+- [x] `View Tools` button has no onViewTools callback wired (`src/components/mcp/McpServerCard.tsx:88-94`) — button now renders `disabled` + `aria-disabled` + `title="Coming soon"` whenever the callback is absent (current parent behavior); stays interactive when a callback is wired so future panel work activates it without further changes — PR #30
+- [x] `View Logs` button has no onViewLogs callback wired (`src/components/mcp/McpServerCard.tsx:101`) — same fix as View Tools (PR #30): button renders `disabled` + `aria-disabled` + `title="Coming soon"` whenever the callback is absent across all 4 status branches; stays interactive when wired. — PR #32
 - [ ] _further investigation pending_
 
 ### Settings — `src/sections/SettingsSection.tsx`
