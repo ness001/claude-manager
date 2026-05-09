@@ -151,6 +151,10 @@ describe("ConversationViewer", () => {
     const banner = screen.getByTestId("corruption-warning");
     // Two corrupted lines in the fixture (mid-JSON cut + plain text line).
     expect(banner.textContent).toMatch(/2 lines/);
+    // a11y: banner must be exposed as an alert so screen readers announce it
+    // (yellow color alone fails WCAG 1.4.1 / 4.1.2). The ⚠ glyph is
+    // decorative — its meaning is in the text, so it's wrapped in aria-hidden.
+    expect(banner.getAttribute("role")).toBe("alert");
   });
 
   it("shows turn navigation when the session has turns", async () => {

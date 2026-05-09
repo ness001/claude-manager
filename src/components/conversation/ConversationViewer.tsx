@@ -314,9 +314,11 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
       {corruptedCount > 0 && (
         <div
           data-testid="corruption-warning"
+          role="alert"
           className="border-b border-status-yellow/40 bg-status-yellow/10 px-3 py-1.5 text-xs text-status-yellow"
         >
-          ⚠ {corruptedCount} {corruptedCount === 1 ? "line" : "lines"} could not be parsed
+          <span aria-hidden="true">⚠ </span>
+          {corruptedCount} {corruptedCount === 1 ? "line" : "lines"} could not be parsed
         </div>
       )}
 
