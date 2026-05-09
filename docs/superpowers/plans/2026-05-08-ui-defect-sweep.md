@@ -290,6 +290,7 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 - [x] Reinstall button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`) — disabled with explanatory tooltip until IPC is wired (no `claude plugin install` IPC exists yet) — PR #23
 - [ ] Remove button has no onClick handler (`src/components/plugins/PluginCard.tsx:115-128`)
 - [ ] "Install Plugin" header button has no onClick handler (`src/components/plugins/PluginListView.tsx:59-65`)
+- [x] `PluginCard` body button (`src/components/plugins/PluginCard.tsx:63-69`) had no `focus-visible:ring` — the body is the keyboard target for selecting a plugin, but tabbing through gave no visible focus indicator. WCAG 2.4.7 Focus Visible. Added the established class trio mirroring PRs #17/#45/#48/#49/#56. — PR #57
 
 ### Skills — `src/sections/SkillsSection.tsx`
 

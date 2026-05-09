@@ -134,4 +134,15 @@ describe("PluginCard", () => {
     expect(screen.getByTestId("version-pill")).toBeInTheDocument();
     expect(screen.getByTestId("update-pill")).toBeInTheDocument();
   });
+
+  // WCAG 2.4.7 (Focus Visible): the card body button is the keyboard target
+  // for selecting a plugin. Without focus-visible:ring, tabbing through the
+  // plugin list gives no indication of the current row. Mirrors the family
+  // of focus-ring fixes in PRs #17/#45/#48/#49/#56.
+  it("card body button has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<PluginCard plugin={makePlugin()} selected={false} />);
+    const body = screen.getByTestId("plugin-card-body");
+    expect(body.className).toContain("focus-visible:ring-2");
+    expect(body.className).toContain("focus-visible:ring-accent");
+  });
 });
