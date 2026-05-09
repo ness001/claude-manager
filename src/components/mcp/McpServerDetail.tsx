@@ -97,6 +97,7 @@ function KeyValueList({
           <MaskedValue
             value={entries[k]}
             masked={masked}
+            name={k}
             testid={`${testidPrefix}-value-${k}`}
           />
         </li>
@@ -108,23 +109,27 @@ function KeyValueList({
 function MaskedValue({
   value,
   masked,
+  name,
   testid,
 }: {
   value: string;
   masked: boolean;
+  name?: string;
   testid: string;
 }) {
   const [revealed, setRevealed] = useState(false);
   if (!masked) {
     return <code data-testid={testid}>{value}</code>;
   }
+  const action = revealed ? "Hide" : "Reveal";
+  const ariaLabel = name ? `${action} ${name}` : `${action} value`;
   return (
     <span className="flex items-center gap-1">
       <code data-testid={testid}>{revealed ? value : "•".repeat(8)}</code>
       <button
         type="button"
         data-testid={`${testid}-toggle`}
-        aria-label={revealed ? "Hide value" : "Reveal value"}
+        aria-label={ariaLabel}
         onClick={() => setRevealed((r) => !r)}
         className="text-text-muted hover:text-text-primary"
       >

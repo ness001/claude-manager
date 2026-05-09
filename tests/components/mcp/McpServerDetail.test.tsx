@@ -55,4 +55,16 @@ describe("McpServerDetail", () => {
     fireEvent.click(screen.getByTestId("env-value-TOKEN-toggle"));
     expect(valueEl.textContent).toBe("•".repeat(8));
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): when env vars list multiple secrets,
+  // a generic "Reveal value" / "Hide value" label gives SR users no way
+  // to tell the toggles apart. Now the toggle is named after its env-var
+  // key — "Reveal TOKEN", "Hide TOKEN" — flipping with state.
+  it("env reveal toggle aria-label includes the env-var name + flips on toggle", () => {
+    render(<McpServerDetail server={FIX_CONNECTED} />);
+    const toggle = screen.getByTestId("env-value-TOKEN-toggle");
+    expect(toggle.getAttribute("aria-label")).toBe("Reveal TOKEN");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-label")).toBe("Hide TOKEN");
+  });
 });
