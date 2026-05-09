@@ -152,4 +152,18 @@ describe("McpPanel", () => {
       document.documentElement.classList.remove("dark");
     }
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): decorative lucide icons next to button
+  // text labels must be aria-hidden so SR users don't hear "Plus, Add Server"
+  // or "RefreshCw, Refresh Status". Mirrors PR #58 (SkillCard) and PR #55
+  // (QuickActions). Header buttons + the empty-state Add Server button.
+  it("header + empty-state button icons are aria-hidden", () => {
+    render(<McpPanel />);
+    for (const id of ["add-server-btn", "refresh-status-btn", "empty-add-btn"]) {
+      const btn = screen.getByTestId(id);
+      const svg = btn.querySelector("svg");
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
 });
