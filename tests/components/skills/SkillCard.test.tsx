@@ -61,4 +61,20 @@ describe("SkillCard", () => {
     fireEvent.click(screen.getByTestId("open-folder-btn"));
     expect(openMock).toHaveBeenCalledWith(SKILL.dirPath);
   });
+
+  it("'Open in VS Code' converts Windows backslashes to forward slashes (URI scheme)", () => {
+    // On Windows, skillMdPath comes from the FS as a backslash-separated path
+    // (e.g. "C:\\Users\\me\\.claude\\skills\\alpha\\SKILL.md"). The
+    // vscode://file/ URI scheme requires forward slashes, otherwise the
+    // open silently no-ops.
+    const winSkill: CustomSkill = {
+      ...SKILL,
+      skillMdPath: "C:\\Users\\me\\.claude\\skills\\alpha\\SKILL.md",
+    };
+    render(<SkillCard skill={winSkill} />);
+    fireEvent.click(screen.getByTestId("open-vscode-btn"));
+    expect(openMock).toHaveBeenCalledWith(
+      "vscode://file/C:/Users/me/.claude/skills/alpha/SKILL.md",
+    );
+  });
 });

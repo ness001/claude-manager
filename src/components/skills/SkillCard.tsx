@@ -21,7 +21,11 @@ export function SkillCard({ skill }: SkillCardProps) {
   };
   const openInVsCode = async () => {
     try {
-      await openShell(`vscode://file/${skill.skillMdPath}`);
+      // The vscode://file/ URI scheme is RFC 3986; Windows paths like
+      // "C:\Users\..." must use forward slashes, otherwise VS Code's URI
+      // handler rejects them and the open silently no-ops.
+      const uriPath = skill.skillMdPath.replace(/\\/g, "/");
+      await openShell(`vscode://file/${uriPath}`);
     } catch (err) {
       console.error("Failed to open SKILL.md in VS Code:", err);
     }
