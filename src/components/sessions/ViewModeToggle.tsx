@@ -35,6 +35,7 @@ export function ViewModeToggle() {
             onClick={() => setViewMode(mode)}
             className={[
               "flex-1 text-xs px-2 py-1 rounded transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
               active
                 ? "bg-card-bg text-text-primary shadow-sm"
                 : "text-text-secondary hover:text-text-primary",

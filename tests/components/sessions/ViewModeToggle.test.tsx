@@ -53,4 +53,17 @@ describe("ViewModeToggle", () => {
     expect(screen.getByTestId("view-mode-timeline").getAttribute("aria-selected")).toBe("true");
     expect(screen.getByTestId("view-mode-my").getAttribute("aria-selected")).toBe("false");
   });
+
+  // WCAG 2.4.7 Focus Visible: keyboard users tabbing through the three view-mode
+  // buttons had no visible focus indicator — the only style the buttons carried
+  // was a hover/active/inactive color swap. Without focus-visible:ring, the
+  // currently-focused tab is invisible to keyboard nav.
+  it("each tab button carries a focus-visible ring class", () => {
+    render(<ViewModeToggle />);
+    for (const mode of ["my", "project", "timeline"] as const) {
+      const btn = screen.getByTestId(`view-mode-${mode}`);
+      expect(btn.className).toContain("focus-visible:ring-2");
+      expect(btn.className).toContain("focus-visible:ring-accent");
+    }
+  });
 });
