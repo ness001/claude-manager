@@ -60,4 +60,13 @@ describe("ModelDonut", () => {
     const style = donut.getAttribute("style") ?? "";
     expect(style).toContain("conic-gradient");
   });
+
+  it("section label uses an <h3> heading (WCAG 1.3.1 / 2.4.6)", () => {
+    // Defect: visual section label rendered as a <div>, so screen-reader
+    // users couldn't navigate to it via the headings list. Mirrors PR #61
+    // (SystemHealth) and PR #52 (SessionListPanel group headers).
+    render(<ModelDonut data={[]} />);
+    const heading = screen.getByRole("heading", { name: "Model Usage", level: 3 });
+    expect(heading.tagName).toBe("H3");
+  });
 });
