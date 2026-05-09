@@ -231,7 +231,7 @@ export function SessionListPanel() {
               };
               if (row.kind === "header") {
                 return (
-                  <div
+                  <h3
                     key={row.key}
                     data-testid="group-header"
                     style={baseStyle}
@@ -239,7 +239,7 @@ export function SessionListPanel() {
                   >
                     {row.label}{" "}
                     <span className="text-text-muted/70">({row.count})</span>
-                  </div>
+                  </h3>
                 );
               }
               return (
@@ -257,13 +257,13 @@ export function SessionListPanel() {
         <div className="flex-1 overflow-auto flex flex-col gap-1">
           {groups.map((g) => (
             <div key={g.key} className="flex flex-col gap-1">
-              <div
+              <h3
                 data-testid="group-header"
                 className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted"
               >
                 {g.label}{" "}
                 <span className="text-text-muted/70">({g.sessions.length})</span>
-              </div>
+              </h3>
               {g.sessions.map((s) => (
                 <SessionCard
                   key={s.sessionId}

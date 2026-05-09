@@ -70,6 +70,26 @@ describe("SessionListPanel", () => {
     expect(headers.some((t) => t.startsWith("All Sessions"))).toBe(true);
   });
 
+  // WCAG 1.3.1 Info & Relationships / 2.4.6 Headings & Labels: group labels
+  // ("Pinned", "All Sessions", "Today", "/repos/api", …) are content
+  // structure, not just visual decoration. Rendering them as plain <div>s
+  // means screen-reader users navigating by heading get nothing — the
+  // grouped list reads as a flat undifferentiated stream. Render the
+  // group-header element as an <h3> so SR heading-navigation surfaces them.
+  it("group-header renders as an <h3> for screen-reader heading navigation", () => {
+    useSessionStore.setState({
+      sessions: [
+        makeSession({ sessionId: "p1", isPinned: true, displayName: "PinOne" }),
+        makeSession({ sessionId: "n1", isPinned: false, displayName: "NormOne" }),
+      ],
+      viewMode: "my",
+    });
+    render(<SessionListPanel />);
+    for (const h of screen.getAllByTestId("group-header")) {
+      expect(h.tagName).toBe("H3");
+    }
+  });
+
   it("Project view: groups by cwd path", () => {
     useSessionStore.setState({
       sessions: [
