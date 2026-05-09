@@ -296,6 +296,7 @@ _Pre-seeded from prior debugging — these are known but the loop must still re-
 - [x] Skill card has no Remove action (`src/components/skills/SkillCard.tsx`) — not a defect: spec §7.1 lists only "Open in VS Code" and "Open in File Browser"; SkillCard matches spec exactly. Custom-skill removal is intentionally a manual filesystem action.
 - [x] `+ Create Skill` button passes literal `~/.claude/skills/` to `openShell`, which does not expand `~` — silent no-op on most platforms (`src/components/skills/SkillsListView.tsx:14,33`). Fixed by resolving `homeDir() + join(...)` before the shell open. — PR #35
 - [x] `Open in VS Code` on a `SkillCard` builds the URI as `vscode://file/${skill.skillMdPath}` without converting backslashes (`src/components/skills/SkillCard.tsx:22-28`). On Windows, `skillMdPath` is backslash-separated, so the URI is malformed and VS Code's URI handler silently rejects it. Same fix as PR #42 for the Plugins side: `\\` → `/` before composing the URI. — PR #43
+- [x] `SkillCard` action buttons each contain a leading lucide icon (`Code2`, `FolderOpen` — `src/components/skills/SkillCard.tsx:66, 77`) next to fully-readable label text, but the icons lacked `aria-hidden`. Screen readers may announce the SVG's computed name redundantly with the button text. WCAG 4.1.2 (Name, Role, Value). Mirrors PRs #53 / #55 — added `aria-hidden="true"` to both icon JSX nodes. (The leading FileText title icon at line 41 was already correct.) — PR #58
 - [ ] _further investigation pending_
 
 ### MCP Servers — `src/sections/McpSection.tsx`

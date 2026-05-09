@@ -63,7 +63,7 @@ export function SkillCard({ skill }: SkillCardProps) {
           }}
           className="flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary"
         >
-          <Code2 size={12} />
+          <Code2 size={12} aria-hidden="true" />
           Open in VS Code
         </button>
         <button
@@ -74,7 +74,7 @@ export function SkillCard({ skill }: SkillCardProps) {
           }}
           className="flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary"
         >
-          <FolderOpen size={12} />
+          <FolderOpen size={12} aria-hidden="true" />
           Open in File Browser
         </button>
       </div>

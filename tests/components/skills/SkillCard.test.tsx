@@ -77,4 +77,18 @@ describe("SkillCard", () => {
       "vscode://file/C:/Users/me/.claude/skills/alpha/SKILL.md",
     );
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): each button label is fully readable on
+  // its own ("Open in VS Code", "Open in File Browser") so the leading
+  // lucide icon is decorative — without aria-hidden, screen readers may
+  // announce the SVG's computed name redundantly. Mirrors PRs #53 / #55.
+  it("decorative icons inside action buttons are aria-hidden", () => {
+    render(<SkillCard skill={SKILL} />);
+    for (const id of ["open-vscode-btn", "open-folder-btn"]) {
+      const btn = screen.getByTestId(id);
+      const svg = btn.querySelector("svg");
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
 });
