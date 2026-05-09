@@ -140,4 +140,15 @@ describe("SkillsListView", () => {
       document.documentElement.classList.remove("dark");
     }
   });
+
+  // WCAG 4.1.2 Name, Role, Value: the skill-search input previously relied on
+  // its placeholder for an accessible name (placeholders don't count). Mirror
+  // SessionSearch (PR #45) and McpPanel (PR #50) — explicit aria-label on the
+  // input.
+  it("search input has an accessible name (aria-label)", () => {
+    render(<SkillsListView />);
+    expect(screen.getByTestId("skill-search").getAttribute("aria-label")).toBe(
+      "Search skills",
+    );
+  });
 });
