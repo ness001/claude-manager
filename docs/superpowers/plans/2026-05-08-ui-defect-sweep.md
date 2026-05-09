@@ -304,6 +304,7 @@ _Pre-seeded — partially investigated last session._
 - [ ] All servers show DISCONNECTED forever — verify whether `claude mcp list` parser regex `/^([\w.-]+)\s*:\s*(.*)$/` matches actual CLI output; if not, fix parser
 - [x] `View Tools` button has no onViewTools callback wired (`src/components/mcp/McpServerCard.tsx:88-94`) — button now renders `disabled` + `aria-disabled` + `title="Coming soon"` whenever the callback is absent (current parent behavior); stays interactive when a callback is wired so future panel work activates it without further changes — PR #30
 - [ ] `View Logs` button has no onViewLogs callback wired (`src/components/mcp/McpServerCard.tsx:101`)
+- [x] `Retry` button (status=error) and `Cancel` button (status=starting) on `McpServerCard` (`src/components/mcp/McpServerCard.tsx:101-103, 115-117`) had the same dead-button defect class as View Tools (#30) and View Logs (#32): they call `onRetry?.(server)` / `onCancel?.(server)` but McpPanel never passes those handlers, so clicking is a silent no-op. Mirrored the View Tools fix — `disabled={!onRetry}` + `title="Coming soon"` when the handler isn't wired; stay interactive when a handler is provided so future panel work activates them. — PR #46
 - [ ] _further investigation pending_
 
 ### Settings — `src/sections/SettingsSection.tsx`

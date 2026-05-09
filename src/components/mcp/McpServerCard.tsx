@@ -98,7 +98,12 @@ export function McpServerCard({
         )}
         {server.status === "error" && (
           <>
-            <ActionButton testid="action-retry" onClick={() => onRetry?.(server)}>
+            <ActionButton
+              testid="action-retry"
+              onClick={() => onRetry?.(server)}
+              disabled={!onRetry}
+              title={onRetry ? undefined : "Coming soon"}
+            >
               Retry
             </ActionButton>
             <ActionButton
@@ -112,7 +117,12 @@ export function McpServerCard({
         )}
         {server.status === "starting" && (
           <>
-            <ActionButton testid="action-cancel" onClick={() => onCancel?.(server)}>
+            <ActionButton
+              testid="action-cancel"
+              onClick={() => onCancel?.(server)}
+              disabled={!onCancel}
+              title={onCancel ? undefined : "Coming soon"}
+            >
               Cancel
             </ActionButton>
             <ActionButton testid="action-view-logs" onClick={() => onViewLogs?.(server)}>

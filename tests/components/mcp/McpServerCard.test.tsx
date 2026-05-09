@@ -122,6 +122,24 @@ describe("McpServerCard", () => {
     }
   });
 
+  it("Retry/Cancel buttons are disabled when their handlers aren't wired", () => {
+    // Same defect class as View Tools (#30) and View Logs (#32): the buttons
+    // render but neither McpPanel nor any caller passes onRetry/onCancel,
+    // so clicking is a silent no-op. Disabled-with-tooltip until wired.
+    const { unmount: unmountRetry } = render(
+      <McpServerCard server={FIX_ERROR} onEdit={noop} onRemove={noop} />,
+    );
+    const retry = screen.getByTestId("action-retry") as HTMLButtonElement;
+    expect(retry.disabled).toBe(true);
+    expect(retry.title).toBe("Coming soon");
+    unmountRetry();
+
+    render(<McpServerCard server={FIX_STARTING} onEdit={noop} onRemove={noop} />);
+    const cancel = screen.getByTestId("action-cancel") as HTMLButtonElement;
+    expect(cancel.disabled).toBe(true);
+    expect(cancel.title).toBe("Coming soon");
+  });
+
   it("shadowed server is dimmed and shows Overridden by [scope] badge", () => {
     render(
       <McpServerCard server={FIX_SHADOWED_USER} onEdit={noop} onRemove={noop} />,
