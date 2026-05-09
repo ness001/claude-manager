@@ -42,4 +42,24 @@ describe("QuickActions", () => {
     const btn = screen.getByTestId("action-new-session");
     expect(btn.className).toContain("bg-accent");
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): each button already carries its label as
+  // text content, so the leading lucide icon is decorative — without
+  // aria-hidden, screen readers may announce the SVG's computed name (e.g.
+  // "Plus") redundantly with the button text.
+  it("decorative icons are hidden from assistive tech (aria-hidden)", () => {
+    render(<QuickActions />);
+    const ids = [
+      "action-new-session",
+      "action-resume-latest",
+      "action-open-cwd",
+      "action-rebuild-stats",
+    ];
+    for (const id of ids) {
+      const btn = screen.getByTestId(id);
+      const svg = btn.querySelector("svg");
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
 });

@@ -17,10 +17,10 @@ interface ActionDef {
 }
 
 const ACTIONS: ActionDef[] = [
-  { id: "new-session", label: "New Session", icon: <Plus size={14} />, variant: "accent" },
-  { id: "resume-latest", label: "Resume Latest", icon: <Play size={14} />, variant: "secondary" },
-  { id: "open-cwd", label: "Open CWD", icon: <FolderOpen size={14} />, variant: "secondary" },
-  { id: "rebuild-stats", label: "Rebuild Stats", icon: <RefreshCw size={14} />, variant: "secondary" },
+  { id: "new-session", label: "New Session", icon: <Plus size={14} aria-hidden="true" />, variant: "accent" },
+  { id: "resume-latest", label: "Resume Latest", icon: <Play size={14} aria-hidden="true" />, variant: "secondary" },
+  { id: "open-cwd", label: "Open CWD", icon: <FolderOpen size={14} aria-hidden="true" />, variant: "secondary" },
+  { id: "rebuild-stats", label: "Rebuild Stats", icon: <RefreshCw size={14} aria-hidden="true" />, variant: "secondary" },
 ];
 
 export function QuickActions() {
