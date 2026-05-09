@@ -194,7 +194,7 @@ export function SessionListPanel() {
         title="Coming soon — launch a new Claude session from here once the IPC is wired"
         className="flex items-center justify-center gap-1 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white opacity-50 cursor-not-allowed"
       >
-        <Plus size={14} />
+        <Plus size={14} aria-hidden="true" />
         New Session
       </button>
 

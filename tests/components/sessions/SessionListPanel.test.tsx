@@ -166,6 +166,18 @@ describe("SessionListPanel", () => {
     expect(btn).toHaveAttribute("title");
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): the decorative Plus lucide icon next to
+  // the visible "New Session" label must be aria-hidden so screen readers
+  // don't announce "Plus, New Session". Mirrors PR #58 (SkillCard) and PR
+  // #68 (SkillsListView Create Skill).
+  it("New Session button icon is aria-hidden", () => {
+    render(<SessionListPanel />);
+    const btn = screen.getByTestId("new-session-btn");
+    const svg = btn.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(svg!.getAttribute("aria-hidden")).toBe("true");
+  });
+
   // Perf gate per spec §17.8 — render 100 sessions in well under 100ms.
   it("renders 100 sessions within the spec perf budget (<100ms)", () => {
     const many: SessionMeta[] = Array.from({ length: 100 }, (_, i) =>
