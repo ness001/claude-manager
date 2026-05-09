@@ -213,6 +213,22 @@ describe("McpServerForm", () => {
       "Command",
     );
   });
+
+  it("Save and Cancel buttons have a focus-visible ring", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    for (const id of ["form-save", "form-cancel"]) {
+      const cls = screen.getByTestId(id).className;
+      expect(cls).toContain("focus-visible:ring-2");
+      expect(cls).toContain("focus-visible:ring-accent");
+    }
+  });
 });
 
 async function actClick(testid: string) {
