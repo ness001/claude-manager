@@ -41,6 +41,7 @@ export function ToolCallBlock({
       >
         <ChevronRight
           size={14}
+          aria-hidden="true"
           className={`transition-transform ${open ? "rotate-90" : ""}`}
         />
         <span className="font-mono font-semibold">{toolName || "tool"}</span>
