@@ -269,7 +269,7 @@ export function McpServerForm({
             type="button"
             data-testid="form-cancel"
             onClick={onClose}
-            className="rounded border border-border px-3 py-1 text-sm text-text-secondary hover:bg-bg-tertiary"
+            className="rounded border border-border px-3 py-1 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Cancel
           </button>
@@ -280,7 +280,7 @@ export function McpServerForm({
             onClick={() => {
               void handleSubmit();
             }}
-            className="rounded bg-accent px-3 py-1 text-sm text-white hover:bg-accent/90 disabled:opacity-50"
+            className="rounded bg-accent px-3 py-1 text-sm text-white hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
           >
             Save
           </button>
