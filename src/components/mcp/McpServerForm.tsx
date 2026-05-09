@@ -9,7 +9,7 @@
 // Save calls saveMcpServer via the parent's onSave; Cancel closes without
 // touching disk.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { saveMcpServer } from "../../lib/mcp-loader";
 import type {
@@ -56,6 +56,16 @@ export function McpServerForm({
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Esc closes the modal — standard a11y pattern for `role="dialog"`. Backdrop
+  // click already dismisses; keyboard users got nothing until now.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   const nameError = useMemo(() => {
     const trimmed = name.trim();
