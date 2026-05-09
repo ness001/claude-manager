@@ -6,7 +6,7 @@
 // set varies per state. Shadowed servers (`isOverridden`) are dimmed
 // with an "Overridden by [scope]" badge.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 import type { McpServer, McpServerState } from "../../lib/mcp-types";
@@ -36,6 +36,21 @@ export function McpServerCard({
 }: McpServerCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirming, setConfirming] = useState(false);
+
+  // Escape closes the Remove-confirm dialog without removing — same UX as
+  // McpServerForm (PR #36). Without this, keyboard users have no fast escape
+  // hatch from a destructive prompt.
+  useEffect(() => {
+    if (!confirming) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setConfirming(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [confirming]);
 
   const dimmed = server.isOverridden;
 
