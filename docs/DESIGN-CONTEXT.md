@@ -454,3 +454,40 @@ Key decisions made during the brainstorming conversation:
 8. **Session resume:** `claude --resume {sessionId}` works for ended sessions. `claude --continue` resumes most recent. `--fork-session` creates a branch.
 9. **Action labels:** "Open in File Browser" (not "Open in IDE"), "Open in VS Code" (not "View in Browser")
 10. **Alive sessions:** Show "View Live" and "Resume in Terminal" — NOT "Resume" button
+
+---
+
+## 18. stats-cache.json is not ours — staleness is our responsibility (added 2026-05-09)
+
+`~/.claude/stats-cache.json` is **owned and written exclusively by the Claude Code CLI**, not by claude-manager.
+
+- **Writer:** Claude Code CLI (`@anthropic-ai/claude-code`), on session-end and `/usage` command. Schema includes `version`, `lastComputedDate`, `dailyActivity[]`, `dailyModelTokens[]`, `modelUsage`, `hourCounts`.
+- **Our role:** read-only consumer via `src/lib/stats-reader.ts`. Treat the file as untrusted input — handle missing, malformed, partial.
+- **Do NOT** add a writer in claude-manager. Two writers on one file (no lock) = corruption. Schema drift on every CLI release. See [docs/research/2026-05-09-stats-cache-investigation.md §5](./research/2026-05-09-stats-cache-investigation.md) for the full rejected-alternative analysis.
+
+### CLI bug to be aware of (pre-v2.1.105)
+
+`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` in any project's settings used to permanently disable usage-metrics (and therefore stats-cache writes) **machine-wide**. Fixed in CLI v2.1.105. If a user reports stale charts, check their CLI version and this flag.
+
+### Our responsibility: surface staleness
+
+Because the cache can stop updating for reasons outside our control (flag set, CLI bug, CLI not running), the dashboard MUST detect and surface staleness:
+- Compare `lastComputedDate` and file mtime against today
+- If >1 day stale, render a non-dismissable banner explaining what's wrong and pointing to `claude /usage`
+- The "Rebuild Stats" Quick Action's correct semantics are: invoke `claude /usage` via Tauri shell, not compute stats ourselves
+
+## 19. `started_at` upsert column was omitted in T2.5 (added 2026-05-09)
+
+Phase 2 task T2.5 (`docs/superpowers/plans/2026-05-03-phase2-sessions-dashboard.md:387-388`) lists the columns the session upsert must write — `started_at` is **not** among them. As a result, every row in `sessions` has `started_at = NULL`, breaking Dashboard's "Active Since" stat and the `ORDER BY started_at DESC` recent-sessions list.
+
+The PID file `startedAt` value IS already loaded into a `pidsBySessionId` Map in `loadAllSessions()`; the data exists in memory, only the SQL omits it. Fix: extend the upsert column list AND pass the PID `startedAt` into `upsertSession()`.
+
+This is the canonical example for the **orphan-implicit-deferral** anti-pattern — see CLAUDE.md "Executing a plan task" rule R2 (orphan-placeholder rule).
+
+## 20. Process rules added 2026-05-09 (R1/R2/R3)
+
+After the dashboard-bugs RCA ([docs/research/2026-05-09-dashboard-bugs-rca.md](./research/2026-05-09-dashboard-bugs-rca.md)), three rules added to CLAUDE.md "Executing a plan task":
+
+- **R1.** No "or empty states if no data" escape clauses in Verification. All real-data items must be assertion-style with concrete observables.
+- **R2.** Orphan placeholder rule. Every disabled/stub UI element must declare its wire-up task ID in code (`// TODO(T<phase>.<num>): wire up X`). Plan task with that ID must exist.
+- **R3.** Each phase plan ends with a Smoke DoD task that runs the full e2e suite (tauri-driver + WebdriverIO, see `tests/e2e/`) and embeds widget-level real-data values in the PR description.

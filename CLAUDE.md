@@ -81,6 +81,11 @@ These rules let `scripts/ralph-task.sh <task-id>` work uniformly across all phas
 5. **Verification checkbox treatment:** every checkbox in a task's `Verification` section is a hard gate. Print `PASS: <item>` or `FAIL: <item> — <reason>` for each. If a section is marked `N/A` in the plan, print `SKIP (N/A): <section>` and move on. Never re-classify a non-N/A item as N/A.
 6. **Type-level test assertions use vitest's `expectTypeOf`** — never write runtime assertions for type-only checks.
 7. **Forbidden shortcuts:** `--no-verify`, `it.skip`, `expect.assertions(0)`, mocking the thing under test, or editing the plan to lower verification standards.
+8. **R1 — No escape clauses in Verification.** Phrases like "or empty states if no data", "or N/A if not yet implemented", "if available" are forbidden in real-data verification items. Every real-data item must be assertion-style with concrete observables (e.g., "X-axis latest tick is within 7 days of today" — not "shows recent data or empty state"). Origin: RCA Bug 2 — chart was 32 days stale and Verification checkboxes still passed because each had an "or empty state" backdoor.
+9. **R2 — Orphan-placeholder rule.** Every disabled/stub UI element must declare its wire-up task ID inline (`// TODO(T<phase>.<num>): wire up X`) and that task ID must exist in the corresponding plan. If you ship a placeholder without the TODO+task, you've created an undiscoverable orphan. Origin: RCA Bug 3 — all four Quick Actions buttons were hardcoded `disabled` with comments saying "deferred to later phases" but no task in any plan was tracking them.
+10. **R3 — Phase-end Smoke DoD.** Each phase plan ends with a Smoke task that runs `npm run test:e2e` (tauri-driver + WebdriverIO against a release build) and embeds widget-level real-data values in the PR description. Unit tests + tsc don't catch wiring bugs that only manifest in the running app. Origin: RCA covers all 4 dashboard bugs that passed unit tests but were instantly visible on first launch.
+
+See `docs/DESIGN-CONTEXT.md` §20 for the rationale behind R1/R2/R3 and `docs/research/2026-05-09-dashboard-bugs-rca.md` for the originating incident.
 
 ### Conventions worth knowing
 
