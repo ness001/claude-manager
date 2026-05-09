@@ -299,6 +299,7 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
     return (
       <div
         data-testid="conversation-viewer-error"
+        role="alert"
         className={`flex flex-1 items-center justify-center text-sm text-status-red ${className ?? ""}`}
       >
         Failed to load conversation: {error}

@@ -210,6 +210,20 @@ describe("ConversationViewer", () => {
     );
   });
 
+  it("error banner has role='alert' so SR users hear it (WCAG 4.1.3)", async () => {
+    // Defect: when the JSONL load fails, the message renders without
+    // role="alert", so screen-reader users get no announcement. Mirrors
+    // PR #44 (corruption-warning banner).
+    invokeMock.mockRejectedValue(new Error("ENOENT"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() =>
+      expect(screen.getByTestId("conversation-viewer-error")).toHaveAttribute(
+        "role",
+        "alert",
+      ),
+    );
+  });
+
   // Spec §17.8 perf budget: parse the first 50 entries quickly so the first
   // paint can land < 500ms. We measure the time from `render()` to the point
   // where `conversation-viewer` is in the DOM (which only happens after the
