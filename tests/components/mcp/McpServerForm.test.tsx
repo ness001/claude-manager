@@ -218,6 +218,14 @@ describe("McpServerForm", () => {
 
   it("Escape key closes the form without saving (a11y: dialog pattern)", () => {
     const onClose = vi.fn();
+
+  // WCAG 4.1.2 (Name, Role, Value): the per-row remove button in the
+  // KeyValueEditor (used for env vars + http headers) was a bare "×" glyph
+  // with no accessible name — screen readers announced "button" with no
+  // hint of what would be removed. Now carries aria-label="Remove <KEY>"
+  // (or "Remove row" when the key is still empty), and a stable testid so
+  // tests can target it.
+  it("KeyValueEditor remove button has an aria-label naming the key being removed", () => {
     render(
       <McpServerForm
         existingNames={EMPTY_NAMES}
@@ -260,6 +268,17 @@ describe("McpServerForm", () => {
     await actClick("form-save");
     const err = screen.getByTestId("form-error");
     expect(err.getAttribute("role")).toBe("alert");
+    fireEvent.click(screen.getByTestId("form-env-add"));
+    // Empty key → generic label.
+    expect(
+      screen.getByTestId("form-env-remove-0").getAttribute("aria-label"),
+    ).toBe("Remove row");
+    fireEvent.change(screen.getByTestId("form-env-key-0"), {
+      target: { value: "TOKEN" },
+    });
+    expect(
+      screen.getByTestId("form-env-remove-0").getAttribute("aria-label"),
+    ).toBe("Remove TOKEN");
   });
 });
 
