@@ -222,6 +222,19 @@ describe("McpServerForm", () => {
       <McpServerForm
         existingNames={EMPTY_NAMES}
         cwd=""
+
+  // WCAG 4.1.3 (Status Messages): when saveMcpServer rejects (e.g. CLI
+  // failure), the resulting submit-error <p> must carry role="alert" so
+  // screen readers announce it without focus moving. Mirrors PR #44
+  // (ConversationViewer corruption banner) and PR #62 (ConversationViewer
+  // load-error banner).
+  it("submit-error <p> has role='alert' so SR users hear save failures", async () => {
+    saveMock.mockReset();
+    saveMock.mockRejectedValue(new Error("CLI exited 1"));
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd="C:/proj"
         onClose={() => {}}
         onSaved={() => {}}
       />,
@@ -238,6 +251,15 @@ describe("McpServerForm", () => {
     fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(saveMock).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByTestId("form-name"), {
+      target: { value: "ok" },
+    });
+    fireEvent.change(screen.getByTestId("form-command"), {
+      target: { value: "npx" },
+    });
+    await actClick("form-save");
+    const err = screen.getByTestId("form-error");
+    expect(err.getAttribute("role")).toBe("alert");
   });
 });
 

@@ -269,7 +269,11 @@ export function McpServerForm({
         </Field>
 
         {submitError && (
-          <p data-testid="form-error" className="text-xs text-status-error">
+          <p
+            data-testid="form-error"
+            role="alert"
+            className="text-xs text-status-error"
+          >
             {submitError}
           </p>
         )}
