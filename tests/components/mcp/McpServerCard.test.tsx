@@ -174,6 +174,26 @@ describe("McpServerCard", () => {
     expect(onRemove).toHaveBeenCalledWith(FIX_CONNECTED);
   });
 
+  // Mirrors McpServerForm Escape behavior (PR #36): keyboard users need a
+  // fast escape hatch from the destructive Remove confirmation prompt.
+  it("Remove-confirm dialog: Escape closes without calling onRemove", () => {
+    const onRemove = vi.fn();
+    const noop = () => {};
+    render(
+      <McpServerCard
+        server={FIX_CONNECTED}
+        onEdit={noop}
+        onRemove={onRemove}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("action-remove"));
+    expect(screen.getByTestId("remove-confirm-dialog")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByTestId("remove-confirm-dialog")).toBeNull();
+    expect(onRemove).not.toHaveBeenCalled();
+  });
+
   it("View Tools button is disabled when no onViewTools callback is wired", () => {
     const noop = () => {};
     render(
