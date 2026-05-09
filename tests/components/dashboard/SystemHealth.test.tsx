@@ -78,4 +78,24 @@ describe("SystemHealth", () => {
       expect(screen.getByTestId("health-api").getAttribute("data-status")).toBe("fail");
     });
   });
+
+  it("status dots expose status to screen readers (WCAG 4.1.2 / 1.4.1)", () => {
+    // Defect: dots had `aria-hidden` so the only signal of ok/warn/fail was
+    // color, leaving SR users with no status info. Fix gives each dot
+    // role="img" + an aria-label matching STATUS_LABEL[status].
+    render(
+      <SystemHealth skipApiCheck mcpCount={0} pluginCount={3} cliVersion="unknown" />,
+    );
+    const dots = screen.getAllByTestId("health-dot");
+    // MCP (warn), Plugins (ok), API (ok via skipApiCheck), CLI (warn).
+    expect(dots[0]).toHaveAttribute("role", "img");
+    expect(dots[0]).toHaveAttribute("aria-label", "Warning");
+    expect(dots[1]).toHaveAttribute("aria-label", "OK");
+    expect(dots[2]).toHaveAttribute("aria-label", "OK");
+    expect(dots[3]).toHaveAttribute("aria-label", "Warning");
+    // No `aria-hidden` survives — that was the regression.
+    for (const dot of dots) {
+      expect(dot.getAttribute("aria-hidden")).toBeNull();
+    }
+  });
 });
