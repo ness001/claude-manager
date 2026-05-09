@@ -95,4 +95,15 @@ describe("PluginDetailView", () => {
       "vscode://file//cache/official/alpha/1.0.0",
     );
   });
+
+  // WCAG 2.4.7 Focus Visible: tab buttons must show a keyboard-focus ring.
+  // Mirrors PR #49 (ActivityChart Period/Series tabs) and PR #48 (ViewModeToggle).
+  it("tab buttons carry the focus-visible ring classes", () => {
+    render(<PluginDetailView plugin={makeDetail()} />);
+    for (const id of ["tab-skills", "tab-agents", "tab-hooks"]) {
+      const btn = screen.getByTestId(id);
+      expect(btn.className).toContain("focus-visible:ring-2");
+      expect(btn.className).toContain("focus-visible:ring-accent");
+    }
+  });
 });
