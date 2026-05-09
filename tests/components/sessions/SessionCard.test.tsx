@@ -134,4 +134,23 @@ describe("SessionCard", () => {
     expect(card.getAttribute("data-selected")).toBe("true");
     expect(card.className).toContain("bg-sidebar-active");
   });
+
+  it("status dot exposes session state to screen readers (WCAG 4.1.2 / 1.4.1)", () => {
+    const states: Array<{ state: SessionState; label: string }> = [
+      { state: "alive", label: "Alive" },
+      { state: "ended", label: "Ended" },
+      { state: "orphaned", label: "Orphaned" },
+      { state: "archived", label: "Archived" },
+    ];
+    for (const { state, label } of states) {
+      const { unmount } = render(
+        <SessionCard session={makeSession({ state })} selected={false} />,
+      );
+      const dot = screen.getByTestId("status-dot");
+      expect(dot.getAttribute("role")).toBe("img");
+      expect(dot.getAttribute("aria-label")).toBe(label);
+      expect(dot.getAttribute("aria-hidden")).toBeNull();
+      unmount();
+    }
+  });
 });
