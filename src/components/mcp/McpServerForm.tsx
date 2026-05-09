@@ -215,6 +215,8 @@ export function McpServerForm({
                     {a}
                     <button
                       type="button"
+                      data-testid={`form-arg-remove-${i}`}
+                      aria-label={`Remove ${a}`}
                       onClick={() => setArgs((xs) => xs.filter((_, j) => j !== i))}
                       className="text-text-muted hover:text-status-error"
                     >

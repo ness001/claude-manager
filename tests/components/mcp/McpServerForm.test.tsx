@@ -232,6 +232,13 @@ describe("McpServerForm", () => {
   // count. Mirrors the search-input fix in PRs #45 / #50 / #51 / #60: add
   // an explicit aria-label so screen readers announce a real name.
   it("form-arg-input has an accessible name (aria-label)", () => {
+
+  // WCAG 4.1.2 (Name, Role, Value): each arg-tag's remove button was a
+  // bare "×" glyph with no accessible name, mirroring the KeyValueEditor
+  // remove-button defect. SR users heard "button" with no hint of which
+  // arg they were about to delete. Now carries aria-label="Remove <ARG>"
+  // and a stable testid (form-arg-remove-<i>).
+  it("arg-tag remove button has an aria-label naming the arg being removed", () => {
     render(
       <McpServerForm
         existingNames={EMPTY_NAMES}
@@ -287,6 +294,13 @@ describe("McpServerForm", () => {
     ).toBe("Remove TOKEN");
     const input = screen.getByTestId("form-arg-input");
     expect(input.getAttribute("aria-label")).toBe("Add command argument");
+    fireEvent.change(screen.getByTestId("form-arg-input"), {
+      target: { value: "--port" },
+    });
+    fireEvent.keyDown(screen.getByTestId("form-arg-input"), { key: "Enter" });
+    expect(
+      screen.getByTestId("form-arg-remove-0").getAttribute("aria-label"),
+    ).toBe("Remove --port");
   });
 });
 
