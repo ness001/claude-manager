@@ -188,6 +188,7 @@ export function McpServerForm({
               <input
                 data-testid="form-command"
                 type="text"
+                aria-label="Command"
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
                 className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-sm text-text-primary"
