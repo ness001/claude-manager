@@ -28,6 +28,14 @@ const STATUS_COLOR: Record<SessionState, string> = {
   archived: "bg-border-strong",
 };
 
+/** Screen-reader label per state — color alone fails WCAG 1.4.1 (Use of Color). */
+const STATUS_LABEL: Record<SessionState, string> = {
+  alive: "Alive",
+  ended: "Ended",
+  orphaned: "Orphaned",
+  archived: "Archived",
+};
+
 /** Truncate a single-line preview to keep the card height fixed. */
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s;
@@ -72,7 +80,8 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
     >
       <div className="flex items-center gap-2 min-w-0">
         <span
-          aria-hidden="true"
+          role="img"
+          aria-label={STATUS_LABEL[session.state]}
           data-testid="status-dot"
           className={`inline-block h-2 w-2 rounded-full shrink-0 ${dotClass} ${pulse}`}
         />
