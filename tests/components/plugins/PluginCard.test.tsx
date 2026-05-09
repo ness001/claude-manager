@@ -75,6 +75,26 @@ describe("PluginCard", () => {
     expect(dot.className).toContain(bg);
   });
 
+  // WCAG 1.4.1 (Use of Color) + 4.1.2 (Name, Role, Value): the colored dot
+  // is the only state indicator for active/disabled/broken/orphaned. Mirror
+  // SessionCard (PR #41): role="img" + per-state aria-label.
+  const ariaCases: Array<{ state: PluginState; label: string }> = [
+    { state: "active", label: "Active" },
+    { state: "disabled", label: "Disabled" },
+    { state: "broken", label: "Broken" },
+    { state: "orphaned", label: "Orphaned" },
+    { state: "update-available", label: "Update available" },
+  ];
+  it.each(ariaCases)(
+    "status dot exposes state to assistive tech — $state",
+    ({ state, label }) => {
+      render(<PluginCard plugin={makePlugin({ state })} selected={false} />);
+      const dot = screen.getByTestId("status-dot");
+      expect(dot.getAttribute("role")).toBe("img");
+      expect(dot.getAttribute("aria-label")).toBe(label);
+    },
+  );
+
   it("broken plugin renders red border + Reinstall/Remove buttons", () => {
     render(
       <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
