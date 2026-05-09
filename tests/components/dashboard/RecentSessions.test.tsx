@@ -80,6 +80,8 @@ describe("RecentSessions", () => {
     render(<RecentSessions data={[]} />);
     const heading = screen.getByRole("heading", { name: "Recent Sessions", level: 3 });
     expect(heading.tagName).toBe("H3");
+  });
+
   it("rows are non-interactive: no onClick + no hover-bg cue (spec §4.1 — only 'View All Sessions' is the documented affordance)", () => {
     // Defect: previously the row had `hover:bg-bg-tertiary` implying it was
     // clickable, but no click handler was wired. Either remove the misleading

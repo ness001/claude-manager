@@ -150,6 +150,8 @@ describe("SkillsListView", () => {
     expect(screen.getByTestId("skill-search").getAttribute("aria-label")).toBe(
       "Search skills",
     );
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): decorative lucide icon next to button
   // text label "Create Skill" must be aria-hidden so SR users don't hear
   // "Plus, Create Skill". Mirrors PR #58 (SkillCard) and PR #55 (QuickActions).

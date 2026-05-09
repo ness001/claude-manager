@@ -105,6 +105,8 @@ describe("PluginDetailView", () => {
       expect(btn.className).toContain("focus-visible:ring-2");
       expect(btn.className).toContain("focus-visible:ring-accent");
     }
+  });
+
   it("Open in VS Code converts Windows backslashes to forward slashes (URI scheme)", () => {
     // installed_plugins.json on Windows stores backslash-separated paths
     // (see plugin-loader.ts → installPath). The vscode://file/ URI scheme
@@ -120,6 +122,8 @@ describe("PluginDetailView", () => {
     expect(openShellMock).toHaveBeenCalledWith(
       "vscode://file/C:/Users/me/.claude/plugins/cache/foo/bar/1.0.0",
     );
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): decorative lucide icons next to button
   // text labels must be aria-hidden so SR users don't hear the SVG name
   // ("FolderOpen", "ExternalLink") redundantly with the button label.
