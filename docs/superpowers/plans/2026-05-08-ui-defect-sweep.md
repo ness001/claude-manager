@@ -277,6 +277,7 @@ _Investigation pending. Likely focus: session list render, JSONL preview, PID fi
 - [x] Dead-CWD warning AlertTriangle icon has no `aria-label` (`src/components/sessions/SessionInfoBar.tsx:181-188`). Parent span carries `title="Directory not found"` but screen readers won't always surface that. Add `aria-label="Directory not found"` on the icon (or `aria-hidden` + a screen-reader-only span). — PR #24
 - [x] `ConversationViewer` Ctrl+ArrowUp/Down keynav (`src/components/conversation/ConversationViewer.tsx:262-276`) had no input-focus guard, so typing into the in-viewer "Turn N / M" number input (or any focused text input) while holding Ctrl + arrow hijacked into a turn jump. Mirrored App.tsx's `INPUT|TEXTAREA|isContentEditable` skip pattern. — PR #40
 - [x] `SessionCard` status dot is `aria-hidden` so screen-reader users have no signal of session state (alive/ended/orphaned/archived) — color is the only indicator (`src/components/sessions/SessionCard.tsx:74-78`). Mirrored PR #39's pattern: `role="img"` + per-state `aria-label` (Alive / Ended / Orphaned / Archived). WCAG 1.4.1 Use of Color + 4.1.2 Name, Role, Value. — PR #41
+- [x] `ConversationViewer` corruption-warning banner (`src/components/conversation/ConversationViewer.tsx:314-321`) used `text-status-yellow` color + `⚠` glyph as the only signal — no `role`, no live region, so screen readers silently dropped the warning. Added `role="alert"` and wrapped the decorative `⚠` in `aria-hidden`. WCAG 1.4.1 / 4.1.2. — PR #44
 
 ### Plugins — `src/sections/PluginsSection.tsx`
 
