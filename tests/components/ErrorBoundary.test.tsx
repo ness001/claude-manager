@@ -1,7 +1,7 @@
 // Tests for the top-level ErrorBoundary fallback UI.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { ErrorBoundary } from "../../src/components/ErrorBoundary";
 
@@ -37,7 +37,78 @@ describe("ErrorBoundary", () => {
       expect(fallback).toHaveTextContent("Something went wrong");
       expect(fallback).toHaveTextContent("oh no");
       expect(screen.getByTestId("error-boundary-reload")).toBeInTheDocument();
+      expect(screen.getByTestId("error-boundary-retry")).toBeInTheDocument();
     } finally {
+      errSpy.mockRestore();
+    }
+  });
+
+  it("'Try again' clears the error so the boundary re-renders children", () => {
+    // Defect: previously the only escape was Reload (full page reload),
+    // which was a sledgehammer for transient render errors and meant
+    // sidebar navigation was effectively trapped behind the fallback
+    // (the boundary wraps the whole app). The retry button just resets
+    // the boundary's `error` state so React tries the subtree again.
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      // Strategy: render the boundary around a child controlled by a
+      // *re-renderable* prop. First render the throwing version → fallback.
+      // Click "Try again" → boundary state resets. Re-render the same tree
+      // with a non-throwing child → no fallback. This isolates the boundary
+      // mechanics from React's StrictMode double-invoke quirks.
+      function Child({ throwIt }: { throwIt: boolean }) {
+        if (throwIt) throw new Error("transient");
+        return <div data-testid="recovered">recovered</div>;
+      }
+      const { rerender } = render(
+        <ErrorBoundary>
+          <Child throwIt />
+        </ErrorBoundary>,
+      );
+      expect(screen.getByTestId("error-boundary-fallback")).toBeInTheDocument();
+
+      // Reset the boundary by clicking Try again, then re-render the
+      // tree with a non-throwing child to simulate the underlying
+      // condition having cleared (e.g. a stale prop / network blip).
+      // Both wrapped in a single act() so React flushes the state update
+      // before we re-render with the new child.
+      act(() => {
+        fireEvent.click(screen.getByTestId("error-boundary-retry"));
+        rerender(
+          <ErrorBoundary>
+            <Child throwIt={false} />
+          </ErrorBoundary>,
+        );
+      });
+      expect(screen.queryByTestId("error-boundary-fallback")).toBeNull();
+      expect(screen.getByTestId("recovered")).toHaveTextContent("recovered");
+    } finally {
+      errSpy.mockRestore();
+    }
+  });
+
+  it("'Reload' button calls window.location.reload (escape hatch for non-recoverable errors)", () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // jsdom: window.location.reload is non-configurable; spy via a wrapper.
+    const reloadSpy = vi.fn();
+    const origLocation = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...origLocation, reload: reloadSpy },
+    });
+    try {
+      render(
+        <ErrorBoundary>
+          <Boom />
+        </ErrorBoundary>,
+      );
+      fireEvent.click(screen.getByTestId("error-boundary-reload"));
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      Object.defineProperty(window, "location", {
+        configurable: true,
+        value: origLocation,
+      });
       errSpy.mockRestore();
     }
   });

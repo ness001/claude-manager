@@ -6,7 +6,7 @@ import {
   Plug,
   Settings as SettingsIcon,
 } from "lucide-react";
-import type { ComponentType } from "react";
+import { useRef, type ComponentType, type KeyboardEvent } from "react";
 import {
   useNavigationStore,
   type Section,
@@ -32,17 +32,47 @@ const ITEMS: RailItemConfig[] = [
 /**
  * Fixed-width (48px) vertical icon rail. Reads the active section from
  * the navigation store and dispatches navigateTo on click.
+ *
+ * Keyboard model: ArrowDown/ArrowUp move focus to the next/previous rail
+ * item (wrapping); Home/End jump to first/last. Activation still happens
+ * via Enter/Space (native button behavior) — focus and selection are
+ * decoupled, matching the WAI-ARIA APG keyboard guidance for vertical
+ * navigation rails. Without this, keyboard users were trapped Tab-stepping
+ * through all 6 items with no way to jump.
  */
 export function SidebarRail() {
   const activeSection = useNavigationStore((s) => s.activeSection);
   const navigateTo = useNavigationStore((s) => s.navigateTo);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  function onKeyDown(e: KeyboardEvent<HTMLElement>, idx: number) {
+    let next = idx;
+    switch (e.key) {
+      case "ArrowDown":
+        next = (idx + 1) % ITEMS.length;
+        break;
+      case "ArrowUp":
+        next = (idx - 1 + ITEMS.length) % ITEMS.length;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = ITEMS.length - 1;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    itemRefs.current[next]?.focus();
+  }
 
   return (
     <nav
       aria-label="Primary"
       className="flex h-full w-12 flex-col bg-sidebar-bg"
     >
-      {ITEMS.map(({ section, label, Icon, shortcut }) => (
+      {ITEMS.map(({ section, label, Icon, shortcut }, idx) => (
         <SidebarRailItem
           key={section}
           label={label}
@@ -50,6 +80,10 @@ export function SidebarRail() {
           shortcut={shortcut}
           active={activeSection === section}
           onClick={() => navigateTo(section)}
+          onKeyDown={(e) => onKeyDown(e, idx)}
+          buttonRef={(el) => {
+            itemRefs.current[idx] = el;
+          }}
         />
       ))}
     </nav>
