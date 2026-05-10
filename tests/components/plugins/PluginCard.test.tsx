@@ -176,4 +176,23 @@ describe("PluginCard", () => {
     expect(body.className).toContain("focus-visible:ring-2");
     expect(body.className).toContain("focus-visible:ring-accent");
   });
+
+  // WCAG 4.1.2 Name, Role, Value — the enable/disable switch had role="switch"
+  // and aria-checked but no accessible name. Screen readers announced "switch,
+  // on" with no indication of WHAT the switch controls. Per ARIA APG (Switch
+  // pattern), every switch must have an accessible name. Use the plugin name
+  // and an action verb that flips with state so the announcement is unambiguous.
+  it("enable toggle has an accessible name that includes the plugin name (WCAG 4.1.2)", () => {
+    const active = makePlugin({ name: "my-plugin", state: "active" });
+    render(<PluginCard plugin={active} selected={false} />);
+    const toggle = screen.getByTestId("enable-toggle");
+    expect(toggle.getAttribute("aria-label")).toBe("Disable my-plugin");
+  });
+
+  it("enable toggle aria-label flips when the plugin is currently disabled (WCAG 4.1.2)", () => {
+    const disabled = makePlugin({ name: "other-plugin", state: "disabled" });
+    render(<PluginCard plugin={disabled} selected={false} />);
+    const toggle = screen.getByTestId("enable-toggle");
+    expect(toggle.getAttribute("aria-label")).toBe("Enable other-plugin");
+  });
 });
