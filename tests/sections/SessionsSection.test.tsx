@@ -172,4 +172,21 @@ describe("SessionsSection", () => {
     expect(screen.queryByTestId("session-detail-empty")).not.toBeInTheDocument();
     expect(screen.getByTestId("session-info-bar")).toBeInTheDocument();
   });
+
+  // WCAG 1.3.1 (Info and Relationships): the section landmark previously
+  // had no accessible name — SR users navigating by landmark heard
+  // "section" with no identifier (the inner SessionListPanel <aside> has
+  // its own "Session list" label, but that's the sidebar, not the section
+  // wrapper). Mirrors the DashboardSection fix.
+  it("section has an accessible name (WCAG 1.3.1)", async () => {
+    loadAllSessionsMock.mockResolvedValueOnce([]);
+    render(<SessionsSection />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(
+      screen.getByTestId("sessions-section").getAttribute("aria-label"),
+    ).toBe("Sessions");
+  });
 });
