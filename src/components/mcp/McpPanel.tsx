@@ -65,7 +65,7 @@ export function McpPanel() {
               type="button"
               data-testid="add-server-btn"
               onClick={onAdd}
-              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <Plus size={14} aria-hidden="true" />
               Add Server
@@ -76,7 +76,7 @@ export function McpPanel() {
               onClick={() => {
                 void refreshStatus();
               }}
-              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <RefreshCw size={14} aria-hidden="true" />
               Refresh Status
@@ -123,7 +123,7 @@ export function McpPanel() {
             type="button"
             data-testid="empty-add-btn"
             onClick={onAdd}
-            className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+            className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <Plus size={14} aria-hidden="true" />
             Add Server
