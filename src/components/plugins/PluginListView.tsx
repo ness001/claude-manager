@@ -61,6 +61,13 @@ export function PluginListView() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-text-primary">Plugins</h1>
           <div className="flex gap-2">
+            {/* TODO(ui-defect-sweep#L295): wire Install Plugin to a `claude
+              * plugins install <name>` IPC. Tracked in
+              * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md ("Install
+              * Plugin header button has no onClick handler"). Per CLAUDE.md
+              * R2 (Orphan-placeholder rule), every disabled stub must
+              * declare its wire-up tracker inline so the placeholder isn't
+              * an undiscoverable orphan. */}
             <button
               type="button"
               data-testid="install-plugin-btn"
