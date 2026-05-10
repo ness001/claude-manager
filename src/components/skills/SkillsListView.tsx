@@ -110,6 +110,8 @@ export function SkillsListView() {
       ) : filtered.length === 0 ? (
         <div
           data-testid="no-matches"
+          role="status"
+          aria-live="polite"
           className="flex flex-1 items-center justify-center text-center text-sm text-text-muted"
         >
           No results for "{searchQuery}"
