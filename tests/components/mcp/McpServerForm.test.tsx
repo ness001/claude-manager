@@ -376,6 +376,45 @@ describe("McpServerForm", () => {
     expect(cls).toContain("focus-visible:ring-offset-bg-primary");
   });
 
+  // WCAG 2.4.7 (Focus Visible): the inline arg-tag remove button, the env /
+  // headers row remove buttons, and the env / headers "+ Add" buttons are
+  // wired interactive controls (each mutates form state) but had no focus
+  // ring at all — relying on the browser default which Tauri's WebView
+  // renders inconsistently across platforms. The remove buttons are
+  // particularly important to flag because they are destructive (drop a
+  // row from the form). Mirrors PRs #117 / #118 / #119 / #125 / #126 / #128
+  // / #129 / #132 / #133 / #134.
+  it("inline form row buttons (arg-remove, env add/remove) expose a focus ring (WCAG 2.4.7)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    // Arg tag remove (after typing one tag).
+    fireEvent.change(screen.getByTestId("form-arg-input"), {
+      target: { value: "--port" },
+    });
+    fireEvent.keyDown(screen.getByTestId("form-arg-input"), { key: "Enter" });
+    // Env add then env remove.
+    fireEvent.click(screen.getByTestId("form-env-add"));
+
+    for (const id of [
+      "form-arg-remove-0",
+      "form-env-add",
+      "form-env-remove-0",
+    ]) {
+      const cls = screen.getByTestId(id).className;
+      expect(cls, `missing focus ring on ${id}`).toContain(
+        "focus-visible:outline-none",
+      );
+      expect(cls).toContain("focus-visible:ring-2");
+      expect(cls).toContain("focus-visible:ring-accent");
+    }
+  });
+
   it("Escape key closes the form without saving (a11y: dialog pattern)", () => {
     const onClose = vi.fn();
     render(
