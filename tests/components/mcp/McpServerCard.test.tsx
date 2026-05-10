@@ -274,4 +274,44 @@ describe("McpServerCard", () => {
     expect(btn.className).toContain("focus-visible:ring-2");
     expect(btn.className).toContain("focus-visible:ring-accent");
   });
+
+  // WCAG 2.4.7 (Focus Visible): the chevron expand-toggle had no focus ring
+  // at all — keyboard users tabbing into a card couldn't see they had landed
+  // on the disclosure control before pressing Enter. Mirrors #125 / #126 / #128.
+  it("expand-toggle exposes a visible focus ring (WCAG 2.4.7)", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    const btn = screen.getByTestId("expand-toggle");
+    expect(btn.className).toContain("focus-visible:outline-none");
+    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-visible:ring-accent");
+  });
+
+  // WAI-ARIA Disclosure pattern (WCAG 4.1.2): the toggle had aria-label but
+  // no aria-expanded, so screen readers announced "Expand, button" / "Collapse,
+  // button" without conveying current state — and AT users couldn't perceive
+  // that the click had toggled anything because there was no state to read.
+  it("expand-toggle exposes aria-expanded that flips on click (WCAG 4.1.2)", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    const btn = screen.getByTestId("expand-toggle");
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(btn);
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  // WCAG 4.1.2 — the chevron SVG is decorative; the button's aria-label is
+  // the accessible name. Without aria-hidden, some screen readers announce
+  // the SVG's computed name redundantly. Mirrors PRs #53 / #55 / #119.
+  it("expand-toggle chevron icon is aria-hidden", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    const btn = screen.getByTestId("expand-toggle");
+    const svg = btn.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(svg!.getAttribute("aria-hidden")).toBe("true");
+  });
 });
