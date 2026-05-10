@@ -197,4 +197,109 @@ describe("ActivityChart", () => {
       );
     });
   });
+
+  // WAI-ARIA Authoring Practices "Tabs" pattern (automatic activation):
+  // both tablists in this chart need roving tabindex + arrow/Home/End nav
+  // so keyboard users aren't stranded on a single tab. Mirrors PR #94's
+  // ViewModeToggle fix.
+  describe("WAI-ARIA tabs keyboard navigation", () => {
+    const data = makeData(7);
+
+    it("Period tablist: only the selected tab has tabIndex=0 (roving)", () => {
+      render(<ActivityChart data={data} />);
+      // Default period is "7d".
+      expect(screen.getByTestId("period-7d").getAttribute("tabindex")).toBe("0");
+      for (const p of ["30d", "90d", "all"]) {
+        expect(screen.getByTestId(`period-${p}`).getAttribute("tabindex")).toBe(
+          "-1",
+        );
+      }
+    });
+
+    it("Period tablist: ArrowRight moves selection forward and wraps", () => {
+      render(<ActivityChart data={data} />);
+      const tab7d = screen.getByTestId("period-7d");
+      tab7d.focus();
+      fireEvent.keyDown(tab7d, { key: "ArrowRight" });
+      expect(screen.getByTestId("period-30d").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+      // Wrap from "all" → "7d".
+      const tabAll = screen.getByTestId("period-all");
+      tabAll.focus();
+      fireEvent.keyDown(tabAll, { key: "ArrowRight" });
+      expect(screen.getByTestId("period-7d").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+    });
+
+    it("Period tablist: ArrowLeft wraps from first tab to last", () => {
+      render(<ActivityChart data={data} />);
+      const tab7d = screen.getByTestId("period-7d");
+      tab7d.focus();
+      fireEvent.keyDown(tab7d, { key: "ArrowLeft" });
+      expect(screen.getByTestId("period-all").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+    });
+
+    it("Period tablist: Home selects first, End selects last", () => {
+      render(<ActivityChart data={data} />);
+      const tab7d = screen.getByTestId("period-7d");
+      tab7d.focus();
+      fireEvent.keyDown(tab7d, { key: "End" });
+      expect(screen.getByTestId("period-all").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+      const tabAll = screen.getByTestId("period-all");
+      tabAll.focus();
+      fireEvent.keyDown(tabAll, { key: "Home" });
+      expect(screen.getByTestId("period-7d").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+    });
+
+    it("Series tablist: only the selected tab has tabIndex=0 (roving)", () => {
+      render(<ActivityChart data={data} />);
+      // Default series is "messages".
+      expect(screen.getByTestId("series-messages").getAttribute("tabindex")).toBe(
+        "0",
+      );
+      expect(screen.getByTestId("series-toolCalls").getAttribute("tabindex")).toBe(
+        "-1",
+      );
+    });
+
+    it("Series tablist: ArrowRight toggles to toolCalls and wraps back", () => {
+      render(<ActivityChart data={data} />);
+      const m = screen.getByTestId("series-messages");
+      m.focus();
+      fireEvent.keyDown(m, { key: "ArrowRight" });
+      expect(
+        screen.getByTestId("series-toolCalls").getAttribute("aria-selected"),
+      ).toBe("true");
+      const tc = screen.getByTestId("series-toolCalls");
+      tc.focus();
+      fireEvent.keyDown(tc, { key: "ArrowRight" });
+      expect(
+        screen.getByTestId("series-messages").getAttribute("aria-selected"),
+      ).toBe("true");
+    });
+
+    it("Series tablist: Home/End select first/last", () => {
+      render(<ActivityChart data={data} />);
+      const m = screen.getByTestId("series-messages");
+      m.focus();
+      fireEvent.keyDown(m, { key: "End" });
+      expect(
+        screen.getByTestId("series-toolCalls").getAttribute("aria-selected"),
+      ).toBe("true");
+      const tc = screen.getByTestId("series-toolCalls");
+      tc.focus();
+      fireEvent.keyDown(tc, { key: "Home" });
+      expect(
+        screen.getByTestId("series-messages").getAttribute("aria-selected"),
+      ).toBe("true");
+    });
+  });
 });
