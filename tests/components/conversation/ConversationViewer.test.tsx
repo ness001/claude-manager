@@ -335,4 +335,31 @@ describe("ConversationViewer", () => {
     expect(input.className).not.toMatch(/(^|\s)outline-none(\s|$)/);
     expect(input.className).not.toMatch(/(^|\s)focus:ring-1(\s|$)/);
   });
+
+  // Cross-session leak: when the parent re-uses this component instance
+  // and changes the `path` prop (the typical session-switch flow in
+  // SessionDetailPanel), the JSONL parse effect resets entries / loading
+  // / error — but `currentTurn` carried over. If the user was on Turn 47
+  // of session A and clicked session B, the turn-input still showed 47
+  // until they blurred it (and silently auto-jumped on B if B had ≥47
+  // turns). Verify the input snaps back to "1" on path change.
+  it("currentTurn resets to 1 when the session path changes (no cross-session leak)", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    const { rerender } = render(<ConversationViewer path="/sessionA.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-input"));
+    const input = screen.getByTestId("turn-input") as HTMLInputElement;
+
+    // Move to a non-default turn on session A and commit on blur.
+    fireEvent.change(input, { target: { value: "2" } });
+    fireEvent.blur(input);
+    expect(input.value).toBe("2");
+
+    // Switch to session B (new path → same component instance).
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    rerender(<ConversationViewer path="/sessionB.jsonl" />);
+    await waitFor(() => {
+      const after = screen.getByTestId("turn-input") as HTMLInputElement;
+      expect(after.value).toBe("1");
+    });
+  });
 });
