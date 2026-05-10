@@ -66,4 +66,54 @@ describe("ViewModeToggle", () => {
       expect(btn.className).toContain("focus-visible:ring-accent");
     }
   });
+
+  // WAI-ARIA Tabs pattern: when the role="tab" semantics are announced to AT,
+  // the keyboard model must follow — only the active tab is in the focus
+  // order (tabIndex=0); the others are tabIndex=-1 (roving tabindex). This
+  // means Tab moves focus into the tablist once, then arrows move within.
+  it("only the active tab has tabIndex=0; others are -1 (roving tabindex)", () => {
+    useSessionStore.setState({ viewMode: "project" });
+    render(<ViewModeToggle />);
+    expect(screen.getByTestId("view-mode-my").tabIndex).toBe(-1);
+    expect(screen.getByTestId("view-mode-project").tabIndex).toBe(0);
+    expect(screen.getByTestId("view-mode-timeline").tabIndex).toBe(-1);
+  });
+
+  it("ArrowRight selects the next tab (wraps from last → first)", () => {
+    useSessionStore.setState({ viewMode: "my" });
+    render(<ViewModeToggle />);
+    const myBtn = screen.getByTestId("view-mode-my");
+    myBtn.focus();
+    fireEvent.keyDown(myBtn, { key: "ArrowRight" });
+    expect(useSessionStore.getState().viewMode).toBe("project");
+    fireEvent.keyDown(screen.getByTestId("view-mode-project"), { key: "ArrowRight" });
+    expect(useSessionStore.getState().viewMode).toBe("timeline");
+    // wrap
+    fireEvent.keyDown(screen.getByTestId("view-mode-timeline"), { key: "ArrowRight" });
+    expect(useSessionStore.getState().viewMode).toBe("my");
+  });
+
+  it("ArrowLeft selects the previous tab (wraps from first → last)", () => {
+    useSessionStore.setState({ viewMode: "my" });
+    render(<ViewModeToggle />);
+    fireEvent.keyDown(screen.getByTestId("view-mode-my"), { key: "ArrowLeft" });
+    expect(useSessionStore.getState().viewMode).toBe("timeline");
+  });
+
+  it("Home/End jump to the first/last tab", () => {
+    useSessionStore.setState({ viewMode: "project" });
+    render(<ViewModeToggle />);
+    fireEvent.keyDown(screen.getByTestId("view-mode-project"), { key: "End" });
+    expect(useSessionStore.getState().viewMode).toBe("timeline");
+    fireEvent.keyDown(screen.getByTestId("view-mode-timeline"), { key: "Home" });
+    expect(useSessionStore.getState().viewMode).toBe("my");
+  });
+
+  it("non-arrow keys are not preventDefault'd (e.g. Tab still moves focus out)", () => {
+    render(<ViewModeToggle />);
+    const btn = screen.getByTestId("view-mode-my");
+    const ev = fireEvent.keyDown(btn, { key: "Tab" });
+    // fireEvent.keyDown returns false if defaultPrevented; we want it true (not prevented).
+    expect(ev).toBe(true);
+  });
 });
