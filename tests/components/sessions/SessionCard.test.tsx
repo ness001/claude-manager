@@ -216,4 +216,22 @@ describe("SessionCard", () => {
       unmount();
     }
   });
+
+  // UX bug: the displayed name span has `truncate` but no `title`, so long
+  // session names get clipped with no recovery — the user has no way to read
+  // the hidden tail. Mirror the visible string into `title`. Mirrors PR #167
+  // (SkillCard skill-path), PR #170 (RecentSessions), PR #171 (SystemHealth).
+  it("display name span mirrors its visible text into the `title` attribute (UX truncation recovery)", () => {
+    const longName =
+      "Refactor authentication middleware to support multiple OIDC providers and migrate session storage to Redis";
+    render(
+      <SessionCard
+        session={makeSession({ displayName: longName })}
+        selected={false}
+      />,
+    );
+    const span = screen.getByText(longName);
+    expect(span.className).toContain("truncate");
+    expect(span.getAttribute("title")).toBe(longName);
+  });
 });
