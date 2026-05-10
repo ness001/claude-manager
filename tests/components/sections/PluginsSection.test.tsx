@@ -139,6 +139,26 @@ describe("PluginsSection", () => {
     expect(svg!.getAttribute("aria-hidden")).toBe("true");
   });
 
+  // WCAG 2.4.7 (Focus Visible): the Back-to-plugins button is a wired,
+  // keyboard-operable control that clears the plugin selection — but it had
+  // no focus ring at all, relying on the browser default which Tauri's
+  // WebView renders inconsistently across platforms. Mirrors the trio used
+  // in PRs #117 / #118 / #119 / #125 / #126 / #128 / #129 / #132.
+  it("back button exposes a visible focus ring (WCAG 2.4.7)", async () => {
+    usePluginStore.setState({
+      plugins: [makePlugin()],
+      selectedPlugin: makeDetail(),
+    });
+    await act(async () => {
+      render(<PluginsSection />);
+      await Promise.resolve();
+    });
+    const btn = screen.getByTestId("plugin-back-btn");
+    expect(btn.className).toContain("focus-visible:outline-none");
+    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-visible:ring-accent");
+  });
+
   it("loading state renders skeletons; empty state renders spec §17.6 copy", async () => {
     usePluginStore.setState({ isLoading: true, plugins: [] });
     const { unmount } = render(<PluginsSection />);
