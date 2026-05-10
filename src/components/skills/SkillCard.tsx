@@ -2,6 +2,7 @@
 // 📝 icon, name, description, file path (skillMdPath), actions
 // (Open in VS Code, Open in File Browser).
 
+import { useState } from "react";
 import { FileText, FolderOpen, Code2 } from "lucide-react";
 import { open as openShell } from "@tauri-apps/plugin-shell";
 
@@ -12,14 +13,23 @@ interface SkillCardProps {
 }
 
 export function SkillCard({ skill }: SkillCardProps) {
+  // Surface failures inline. `openShell` rejects when the target doesn't
+  // exist (deleted directory), the OS has no handler for the URI scheme
+  // (VS Code not installed → vscode:// has no registered handler), or the
+  // Tauri shell allowlist forbids the path. Without this, the user clicks
+  // the button and gets nothing — same silent-failure class as PR #91.
+  const [openError, setOpenError] = useState<string | null>(null);
+
   const openInFileBrowser = async () => {
+    setOpenError(null);
     try {
       await openShell(skill.dirPath);
     } catch (err) {
-      console.error("Failed to open skill directory:", err);
+      setOpenError(err instanceof Error ? err.message : String(err));
     }
   };
   const openInVsCode = async () => {
+    setOpenError(null);
     try {
       // The vscode://file/ URI scheme is RFC 3986; Windows paths like
       // "C:\Users\..." must use forward slashes, otherwise VS Code's URI
@@ -27,7 +37,7 @@ export function SkillCard({ skill }: SkillCardProps) {
       const uriPath = skill.skillMdPath.replace(/\\/g, "/");
       await openShell(`vscode://file/${uriPath}`);
     } catch (err) {
-      console.error("Failed to open SKILL.md in VS Code:", err);
+      setOpenError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -78,6 +88,15 @@ export function SkillCard({ skill }: SkillCardProps) {
           Open in File Browser
         </button>
       </div>
+      {openError !== null && (
+        <p
+          data-testid="skill-open-error"
+          role="alert"
+          className="text-[11px] text-status-red"
+        >
+          Couldn't open: {openError}
+        </p>
+      )}
     </div>
   );
 }
