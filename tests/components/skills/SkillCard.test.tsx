@@ -50,6 +50,18 @@ describe("SkillCard", () => {
     );
   });
 
+  // UX gap: skill paths are routinely long (e.g.
+  // C:\Users\…\.claude\skills\my-skill\skill.md) and the `truncate`
+  // CSS clips them with an ellipsis. Without `title`, sighted users
+  // have NO way to recover the hidden tail of the path — they'd have to
+  // open the file just to read where it lives. Mirror the visible
+  // string into title so hover surfaces the full path.
+  it("skill-path mirrors its visible text into the `title` attribute (UX truncation recovery)", () => {
+    render(<SkillCard skill={SKILL} />);
+    const codeEl = screen.getByTestId("skill-path");
+    expect(codeEl.getAttribute("title")).toBe(SKILL.skillMdPath);
+  });
+
   it("'Open in VS Code' invokes shell open with vscode:// URI", () => {
     render(<SkillCard skill={SKILL} />);
     fireEvent.click(screen.getByTestId("open-vscode-btn"));
