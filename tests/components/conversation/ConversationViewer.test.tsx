@@ -379,4 +379,19 @@ describe("ConversationViewer", () => {
       expect(after.value).toBe("1");
     });
   });
+
+  // WCAG 2.1.1 Keyboard — the conversation pane is the largest scrollable
+  // region in the app. Without tabIndex={0} keyboard users cannot focus it
+  // to arrow/Page-Down through prior turns; they're stuck in the turn input
+  // below. Mirrors the focus-ring family (PRs #17/#45/#48/...) for visible
+  // focus on the new tab stop.
+  it("conversation scroller is keyboard-focusable with a visible focus ring (WCAG 2.1.1 / 2.4.7)", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    const scroller = await screen.findByTestId("conversation-scroller");
+    expect(scroller.getAttribute("tabindex")).toBe("0");
+    expect(scroller.getAttribute("aria-label")).toBe("Conversation");
+    expect(scroller.className).toContain("focus-visible:ring-2");
+    expect(scroller.className).toContain("focus-visible:ring-accent");
+  });
 });

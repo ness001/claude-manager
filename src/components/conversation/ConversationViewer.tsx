@@ -349,7 +349,14 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
       <div
         ref={scrollRef}
         data-testid="conversation-scroller"
-        className="flex-1 overflow-auto px-3 py-2"
+        // WCAG 2.1.1 Keyboard: scrollable regions must be keyboard-focusable
+        // so users without a mouse/trackpad can arrow-scroll. Without
+        // tabIndex={0} the conversation pane is reachable only by mouse —
+        // keyboard users land in the turn input below and have no way to
+        // scroll prior turns into view.
+        tabIndex={0}
+        aria-label="Conversation"
+        className="flex-1 overflow-auto px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <div
           style={{
