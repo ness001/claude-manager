@@ -34,25 +34,28 @@ export function TitleBar() {
       </div>
       <div className="flex h-full">
         <button
+          type="button"
           aria-label="Minimize"
           onClick={() => win.minimize()}
           className="flex h-full w-11 items-center justify-center hover:bg-white/10"
         >
-          <Minus size={14} />
+          <Minus size={14} aria-hidden="true" />
         </button>
         <button
+          type="button"
           aria-label={isMaximized ? "Restore" : "Maximize"}
           onClick={() => win.toggleMaximize()}
           className="flex h-full w-11 items-center justify-center hover:bg-white/10"
         >
-          {isMaximized ? <Copy size={12} /> : <Square size={12} />}
+          {isMaximized ? <Copy size={12} aria-hidden="true" /> : <Square size={12} aria-hidden="true" />}
         </button>
         <button
+          type="button"
           aria-label="Close"
           onClick={() => win.close()}
           className="flex h-full w-11 items-center justify-center hover:bg-red-600 hover:text-white"
         >
-          <X size={14} />
+          <X size={14} aria-hidden="true" />
         </button>
       </div>
     </div>
