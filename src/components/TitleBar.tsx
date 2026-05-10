@@ -37,7 +37,7 @@ export function TitleBar() {
           type="button"
           aria-label="Minimize"
           onClick={() => win.minimize()}
-          className="flex h-full w-11 items-center justify-center hover:bg-white/10"
+          className="flex h-full w-11 items-center justify-center hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
         >
           <Minus size={14} aria-hidden="true" />
         </button>
@@ -45,7 +45,7 @@ export function TitleBar() {
           type="button"
           aria-label={isMaximized ? "Restore" : "Maximize"}
           onClick={() => win.toggleMaximize()}
-          className="flex h-full w-11 items-center justify-center hover:bg-white/10"
+          className="flex h-full w-11 items-center justify-center hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
         >
           {isMaximized ? <Copy size={12} aria-hidden="true" /> : <Square size={12} aria-hidden="true" />}
         </button>
@@ -53,7 +53,7 @@ export function TitleBar() {
           type="button"
           aria-label="Close"
           onClick={() => win.close()}
-          className="flex h-full w-11 items-center justify-center hover:bg-red-600 hover:text-white"
+          className="flex h-full w-11 items-center justify-center hover:bg-red-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
         >
           <X size={14} aria-hidden="true" />
         </button>
