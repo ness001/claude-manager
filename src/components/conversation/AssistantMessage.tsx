@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
+import { open as openShell } from "@tauri-apps/plugin-shell";
 
 interface AssistantMessageProps {
   text: string;
@@ -47,6 +48,28 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeKatex, rehypeHighlight]}
+          components={{
+            // Hand off external links to the OS via the Tauri shell plugin.
+            // Without this, clicking a link inside the assistant's markdown
+            // would navigate the entire Tauri WebView away to that URL —
+            // killing the conversation view with no back button. Also adds
+            // a visible affordance (underline + accent color) so links are
+            // distinguishable by more than color alone (WCAG 1.4.1).
+            a: ({ href, children, ...rest }) => (
+              <a
+                {...rest}
+                href={href}
+                data-testid="assistant-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (href) void openShell(href).catch(() => {});
+                }}
+                className="text-accent underline underline-offset-2 hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
+              >
+                {children}
+              </a>
+            ),
+          }}
         >
           {text}
         </ReactMarkdown>
