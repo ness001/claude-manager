@@ -22,6 +22,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { exists } from "@tauri-apps/plugin-fs";
+import { open as openShell } from "@tauri-apps/plugin-shell";
 
 import type { SessionMeta, SessionState } from "../../lib/session-types";
 import { useSessionStore } from "../../stores/session-store";
@@ -139,6 +140,35 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
     }
   }
 
+  // Open-error surface for the two CWD actions (mirrors SkillCard PR pattern).
+  // openShell rejects when the path is missing, the URI handler is unregistered
+  // (no VS Code), or the shell allowlist denies — without an inline alert the
+  // failure is silent.
+  const [openError, setOpenError] = useState<string | null>(null);
+
+  const openCwd = async () => {
+    if (!session.cwd) return;
+    setOpenError(null);
+    try {
+      await openShell(session.cwd);
+    } catch (e) {
+      setOpenError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const openInVsCode = async () => {
+    if (!session.cwd) return;
+    setOpenError(null);
+    // Same Windows-path → forward-slash conversion as SkillCard — the
+    // vscode://file/ URI scheme is RFC 3986; backslash paths silently no-op.
+    const uriPath = session.cwd.replace(/\\/g, "/");
+    try {
+      await openShell(`vscode://file/${uriPath}`);
+    } catch (e) {
+      setOpenError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   const pill = STATE_PILL[session.state];
   const actions = ACTIONS[session.state];
 
@@ -226,17 +256,27 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
 
       {/* Row 2: actions
         *
-        * Action wiring (terminal launch, VS Code spawn, SIGTERM, archive,
-        * delete, …) is later-phase. Until those handlers exist, every button
-        * is rendered `disabled` with a "Coming soon" tooltip so users can
-        * tell at a glance that they aren't interactive — same convention as
-        * Dashboard QuickActions / Plugins Install / MCP View Tools.
+        * Most actions (terminal launch, SIGTERM, archive, delete, …) are
+        * later-phase wiring and stay `disabled` with "Coming soon". The two
+        * CWD actions (`open-cwd`, `open-vscode`) ARE wired now via the same
+        * @tauri-apps/plugin-shell open() pattern that SkillCard uses — they
+        * have no IPC dependency, the capability is already allowlisted, and
+        * leaving them disabled when every other piece is ready was a real
+        * functional gap.
         *
-        * The dead-CWD case (§17.5) keeps its own tooltip so the more
-        * specific reason wins. */}
+        * The dead-CWD case (§17.5) keeps its own tooltip + disabled state so
+        * the more specific reason wins. */}
       <div className="flex flex-wrap gap-2">
         {actions.map((a) => {
           const cwdDead = CWD_DEPENDENT.has(a.id) && !cwdExists;
+          const wired =
+            (a.id === "open-cwd" || a.id === "open-vscode") && !cwdDead;
+          const onClick =
+            a.id === "open-cwd"
+              ? openCwd
+              : a.id === "open-vscode"
+                ? openInVsCode
+                : undefined;
           const baseCls =
             a.variant === "primary"
               ? "bg-accent text-white"
@@ -248,13 +288,22 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
               key={a.id}
               type="button"
               data-testid={`action-${a.id}`}
-              disabled
-              aria-disabled="true"
-              title={cwdDead ? "Directory not found" : "Coming soon"}
+              disabled={!wired}
+              aria-disabled={!wired || undefined}
+              onClick={wired ? onClick : undefined}
+              title={
+                cwdDead
+                  ? "Directory not found"
+                  : wired
+                    ? undefined
+                    : "Coming soon"
+              }
               className={[
                 "rounded-md px-3 py-1 text-xs font-medium",
                 baseCls,
-                "opacity-50 cursor-not-allowed",
+                wired
+                  ? "hover:bg-bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  : "opacity-50 cursor-not-allowed",
               ].join(" ")}
             >
               {a.label}
@@ -262,6 +311,15 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
           );
         })}
       </div>
+      {openError && (
+        <div
+          data-testid="session-open-error"
+          role="alert"
+          className="text-xs text-status-red"
+        >
+          {openError}
+        </div>
+      )}
     </div>
   );
 }
