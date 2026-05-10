@@ -168,6 +168,23 @@ describe("ConversationViewer", () => {
     expect(input.value).toBe("1");
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): the previous aria-label "Jump to
+  // turn" gave SR users the field's purpose but NOT the legal range.
+  // The visible "/ N" sibling is not programmatically associated with
+  // the input, so AT users had to discover the upper bound by trying
+  // values and hitting validation. Embedding the range in the
+  // accessible name makes the spin-button announcement actionable.
+  it("turn-input has an accessible name embedding the upper bound (WCAG 4.1.2)", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-input"));
+    const input = screen.getByTestId("turn-input") as HTMLInputElement;
+    const totalText = screen.getByTestId("turn-nav").textContent ?? "";
+    const total = Number(totalText.match(/\/ (\d+)/)?.[1] ?? "0");
+    expect(total).toBeGreaterThan(0);
+    expect(input.getAttribute("aria-label")).toBe(`Jump to turn (1 to ${total})`);
+  });
+
   it("turn-input does not jump on every keystroke; commits on blur (clamped)", async () => {
     invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
     render(<ConversationViewer path="/fake.jsonl" />);
@@ -361,5 +378,20 @@ describe("ConversationViewer", () => {
       const after = screen.getByTestId("turn-input") as HTMLInputElement;
       expect(after.value).toBe("1");
     });
+  });
+
+  // WCAG 2.1.1 Keyboard — the conversation pane is the largest scrollable
+  // region in the app. Without tabIndex={0} keyboard users cannot focus it
+  // to arrow/Page-Down through prior turns; they're stuck in the turn input
+  // below. Mirrors the focus-ring family (PRs #17/#45/#48/...) for visible
+  // focus on the new tab stop.
+  it("conversation scroller is keyboard-focusable with a visible focus ring (WCAG 2.1.1 / 2.4.7)", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    const scroller = await screen.findByTestId("conversation-scroller");
+    expect(scroller.getAttribute("tabindex")).toBe("0");
+    expect(scroller.getAttribute("aria-label")).toBe("Conversation");
+    expect(scroller.className).toContain("focus-visible:ring-2");
+    expect(scroller.className).toContain("focus-visible:ring-accent");
   });
 });
