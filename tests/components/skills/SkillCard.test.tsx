@@ -130,4 +130,20 @@ describe("SkillCard", () => {
     });
     expect(screen.queryByTestId("skill-open-error")).toBeNull();
   });
+
+  // WCAG 2.4.7 (Focus Visible): both action buttons rely on the default
+  // browser focus ring, which Tauri's webview renders inconsistently across
+  // platforms — keyboard users can lose track of focus. Other action buttons
+  // in the app standardize on the focus-visible:ring-accent trio (#117 / #118
+  // / #119); these two should match.
+  it.each([
+    ["open-vscode-btn"],
+    ["open-folder-btn"],
+  ])("%s exposes a visible focus ring (WCAG 2.4.7)", (testId) => {
+    render(<SkillCard skill={SKILL} />);
+    const btn = screen.getByTestId(testId);
+    expect(btn.className).toContain("focus-visible:outline-none");
+    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-visible:ring-accent");
+  });
 });
