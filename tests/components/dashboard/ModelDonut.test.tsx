@@ -89,4 +89,43 @@ describe("ModelDonut", () => {
       expect(item.textContent).not.toContain("1000.0k");
     }
   });
+
+  // WCAG 1.1.1 (Non-text Content): the donut is a CSS conic-gradient div
+  // — pure visual data with no programmatic equivalent. Screen-reader users
+  // need an aria-label summarizing what the chart shows. The legend is
+  // text-readable but isn't programmatically linked to the chart, so AT
+  // landing on the donut alone (e.g. via headings nav into the section)
+  // would otherwise hear nothing.
+  it("donut chart exposes role='img' and an aria-label summarizing the data", () => {
+    render(
+      <ModelDonut
+        data={[
+          { model: "claude-opus-4.6", tokens: 12000 },
+          { model: "claude-sonnet-4.6", tokens: 500 },
+          { model: "claude-haiku-4.5", tokens: 250 },
+        ]}
+      />,
+    );
+    const donut = screen.getByTestId("donut-chart");
+    expect(donut).toHaveAttribute("role", "img");
+    const label = donut.getAttribute("aria-label") ?? "";
+    // Mentions the model count + plural noun + total tokens (formatted).
+    expect(label).toMatch(/3 models/);
+    expect(label).toMatch(/12\.8k/);
+    expect(label).toMatch(/total/i);
+  });
+
+  it("donut chart aria-label uses singular noun when only one model is present", () => {
+    render(<ModelDonut data={[{ model: "claude-opus-4.6", tokens: 1000 }]} />);
+    const donut = screen.getByTestId("donut-chart");
+    expect(donut.getAttribute("aria-label")).toMatch(/1 model[^s]/);
+  });
+
+  it("empty state exposes role='img' with an aria-label so AT users know it's intentionally empty", () => {
+    render(<ModelDonut data={[]} />);
+    // The visual "No data" circle stands in for the donut. AT users would
+    // otherwise hear only the section heading and skip past silently.
+    const empty = screen.getByRole("img", { name: "No model usage data" });
+    expect(empty).toBeInTheDocument();
+  });
 });
