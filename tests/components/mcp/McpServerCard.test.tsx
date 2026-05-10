@@ -374,4 +374,19 @@ describe("McpServerCard", () => {
     // from the detail subtree).
     expect(panel!.children.length).toBeGreaterThan(0);
   });
+
+  // Destructive-confirm UX: when the user clicks Remove, focus must move
+  // to the safest default action (Cancel) — same pattern as native browser
+  // confirm() dialogs and the WAI-ARIA Authoring Practices guidance for
+  // alert dialogs. Without auto-focus, keyboard users hit Remove and focus
+  // stays on the (still-visible) Remove ActionButton — they can't reach
+  // Cancel without tabbing across the whole card.
+  it("auto-focuses the Cancel button when the remove confirm appears", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    fireEvent.click(screen.getByTestId("action-remove"));
+    const cancel = screen.getByTestId("remove-cancel");
+    expect(document.activeElement).toBe(cancel);
+  });
 });
