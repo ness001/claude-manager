@@ -237,6 +237,15 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
     [turnAnchors],
   );
   const [currentTurn, setCurrentTurn] = useState(1);
+  // When the user switches sessions the parent re-uses this component
+  // instance and just changes the `path` prop. The JSONL load/parse
+  // effect (above) already resets `entries` / `loading` / `error`, but
+  // `currentTurn` carries over — leaking the previous session's turn
+  // position into the new one. Reset to 1 on path change so the turn
+  // input + turn-jump scroller start fresh.
+  useEffect(() => {
+    setCurrentTurn(1);
+  }, [path]);
 
   // 5) Virtual scroller.
   const scrollRef = useRef<HTMLDivElement | null>(null);
