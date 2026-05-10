@@ -1,7 +1,7 @@
 // Tests for SkillCard — renders fields + invokes shell open for actions.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, act } from "@testing-library/react";
 
 const openMock = vi.fn();
 vi.mock("@tauri-apps/plugin-shell", () => ({
@@ -90,5 +90,44 @@ describe("SkillCard", () => {
       expect(svg).not.toBeNull();
       expect(svg!.getAttribute("aria-hidden")).toBe("true");
     }
+  });
+
+  // Defect: openShell rejection (deleted dir, missing handler for vscode://,
+  // shell allowlist denial) was swallowed into console.error — the user
+  // clicked the button and got zero feedback. Mirrors PR #91 (PluginListView
+  // Check-for-Updates silent-failure).
+  it("'Open in VS Code' rejection surfaces an inline alert", async () => {
+    openMock.mockRejectedValueOnce(new Error("no handler"));
+    render(<SkillCard skill={SKILL} />);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("open-vscode-btn"));
+    });
+    const alert = screen.getByTestId("skill-open-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toContain("no handler");
+  });
+
+  it("'Open in File Browser' rejection surfaces an inline alert", async () => {
+    openMock.mockRejectedValueOnce(new Error("ENOENT"));
+    render(<SkillCard skill={SKILL} />);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("open-folder-btn"));
+    });
+    expect(screen.getByTestId("skill-open-error").textContent).toContain(
+      "ENOENT",
+    );
+  });
+
+  it("a successful retry clears the prior error", async () => {
+    openMock.mockRejectedValueOnce(new Error("first")).mockResolvedValueOnce(undefined);
+    render(<SkillCard skill={SKILL} />);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("open-folder-btn"));
+    });
+    expect(screen.getByTestId("skill-open-error")).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("open-folder-btn"));
+    });
+    expect(screen.queryByTestId("skill-open-error")).toBeNull();
   });
 });
