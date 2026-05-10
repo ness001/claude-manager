@@ -176,7 +176,13 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
           <span
             data-testid="dead-cwd-warning"
             title="Directory not found"
-            className="flex items-center gap-1 text-status-yellow"
+            // The status-yellow token (#eab308 light) on bg-bg-secondary (#f8f9fa)
+            // is ~1.7:1 — fails WCAG 1.4.11 (3:1 for non-text UI components).
+            // text-yellow-700 (#a16207) gives ~4.5:1 against the same surface.
+            // In dark mode bg-bg-secondary is #1a1a2e and #f9e2af (the dark
+            // status-yellow token) is ~10:1 — but 1.4.11 only requires we hit
+            // 3:1, and dark:text-status-yellow keeps theme parity.
+            className="flex items-center gap-1 text-yellow-700 dark:text-status-yellow"
           >
             <AlertTriangle size={14} role="img" aria-label="Directory not found" />
           </span>
