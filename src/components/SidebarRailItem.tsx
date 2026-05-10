@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ComponentType, KeyboardEvent, Ref } from "react";
 
 export interface SidebarRailItemProps {
   /** Display label (used for aria-label and tooltip). */
@@ -11,6 +11,11 @@ export interface SidebarRailItemProps {
   onClick: () => void;
   /** Optional keyboard shortcut shown in the tooltip (e.g. "Ctrl+1"). */
   shortcut?: string;
+  /** Forwarded keydown handler — SidebarRail uses this to wire arrow-key roving. */
+  onKeyDown?: (e: KeyboardEvent<HTMLButtonElement>) => void;
+  /** Forwarded button ref — SidebarRail uses this to programmatically focus
+   *  the next item on Arrow/Home/End. */
+  buttonRef?: Ref<HTMLButtonElement>;
 }
 
 /**
@@ -24,6 +29,8 @@ export function SidebarRailItem({
   active,
   onClick,
   shortcut,
+  onKeyDown,
+  buttonRef,
 }: SidebarRailItemProps) {
   const base =
     "relative flex h-12 w-12 items-center justify-center border-l-[3px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset";
@@ -35,12 +42,14 @@ export function SidebarRailItem({
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       aria-label={label}
       aria-current={active ? "page" : undefined}
       title={title}
       data-active={active ? "true" : "false"}
       onClick={onClick}
+      onKeyDown={onKeyDown}
       className={`${base} ${active ? activeClasses : inactiveClasses}`}
     >
       <Icon size={20} />
