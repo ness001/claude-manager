@@ -76,6 +76,7 @@ export function StatCard({ value, label, accent, sublabel }: StatCardProps) {
         <div
           data-testid="stat-sublabel"
           className="text-xs text-text-secondary truncate"
+          title={sublabel}
         >
           {sublabel}
         </div>
