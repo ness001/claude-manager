@@ -172,4 +172,27 @@ describe("SystemHealth", () => {
       expect(indicators[1].textContent).toContain(expected);
     },
   );
+
+  // Defect: the value cell has `truncate`, so long CLI version strings
+  // (release builds embed "+commit-abcdef0") and future long MCP/plugin
+  // labels get clipped with no recovery — the row is non-interactive, so
+  // a sighted user has no way to read the hidden tail. Mirror the visible
+  // string into `title`. Mirrors PR #170 (RecentSessions) and PR #167
+  // (SkillCard skill-path).
+  it("indicator value mirrors its visible text into the `title` attribute (UX truncation recovery)", () => {
+    render(
+      <SystemHealth
+        skipApiCheck
+        cliVersion="1.2.3+build.20260511.commit-abcdef0123456789"
+      />,
+    );
+    // Find the CLI row by its label.
+    const indicators = screen.getAllByTestId(/^health-indicator|^health-api/);
+    const cliRow = indicators[indicators.length - 1];
+    const valueSpan = cliRow.querySelector("span.truncate") as HTMLElement | null;
+    expect(valueSpan).not.toBeNull();
+    expect(valueSpan!.getAttribute("title")).toBe(
+      "1.2.3+build.20260511.commit-abcdef0123456789",
+    );
+  });
 });

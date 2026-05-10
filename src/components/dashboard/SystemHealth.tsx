@@ -151,7 +151,13 @@ function Indicator({ label, status, value, testId }: IndicatorProps) {
         className={`inline-block h-2 w-2 rounded-full shrink-0 ${STATUS_COLOR[status]}`}
       />
       <span className="text-text-secondary w-16 shrink-0">{label}</span>
-      <span className="text-text-muted truncate">{value}</span>
+      {/* `truncate` clips long values (CLI version strings include build
+          metadata + commit SHA; future MCP/plugin labels can be long).
+          Indicators are non-interactive, so without `title` a sighted user
+          has no way to recover the hidden tail. Mirror the visible string
+          into title — same fix as RecentSessions name (PR #170) and
+          SkillCard skill-path (PR #167). */}
+      <span className="text-text-muted truncate" title={value}>{value}</span>
     </li>
   );
 }
