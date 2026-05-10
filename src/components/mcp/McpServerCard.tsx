@@ -39,6 +39,9 @@ export function McpServerCard({
   // WAI-ARIA: a button with `aria-expanded` should also have `aria-controls`
   // pointing to the disclosed region so SR users know what region toggles.
   const detailId = useId();
+  // Stable id for the destructive-confirm message so the alertdialog can
+  // expose it via aria-describedby (APG alertdialog pattern).
+  const confirmMsgId = useId();
   // Cancel-button ref so we can auto-focus the safest default action when
   // the destructive confirm prompt appears. Without this, keyboard users
   // hit Remove and focus stays on the (still-visible) Remove ActionButton —
@@ -200,11 +203,12 @@ export function McpServerCard({
       {confirming && (
         <div
           data-testid="remove-confirm-dialog"
-          role="dialog"
+          role="alertdialog"
           aria-label="Confirm remove"
+          aria-describedby={confirmMsgId}
           className="flex items-center justify-between rounded border border-status-error bg-bg-tertiary p-2 text-xs"
         >
-          <span>Remove server "{server.name}"?</span>
+          <span id={confirmMsgId}>Remove server "{server.name}"?</span>
           <div className="flex gap-2">
             <button
               type="button"
