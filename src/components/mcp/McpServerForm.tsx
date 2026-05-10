@@ -9,7 +9,7 @@
 // Save calls saveMcpServer via the parent's onSave; Cancel closes without
 // touching disk.
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { saveMcpServer } from "../../lib/mcp-loader";
 import type {
@@ -67,6 +67,15 @@ export function McpServerForm({
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
+
+  // WAI-ARIA APG modal-dialog pattern: when a modal opens, focus must move
+  // into it (otherwise focus stays on the trigger button outside the
+  // dialog, and keyboard/SR users have to manually click into it before
+  // typing). Name is the first required field — a sensible default.
+  const nameRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, []);
 
   const nameError = useMemo(() => {
     const trimmed = name.trim();
@@ -154,6 +163,7 @@ export function McpServerForm({
           <input
             data-testid="form-name"
             type="text"
+            ref={nameRef}
             aria-label="Server name"
             value={name}
             onChange={(e) => setName(e.target.value)}
