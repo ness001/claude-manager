@@ -187,6 +187,19 @@ describe("SessionListPanel", () => {
     expect(btn).toHaveAttribute("title");
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): the disabled "New Session" button
+  // shows a "Coming soon …" tooltip on hover for sighted users, but the
+  // accessible name was just "New Session" — a screen-reader user
+  // navigating by buttons hears "New Session, button, dimmed" with no
+  // hint that the dimmed state is intentional and reasonably concludes
+  // the app is broken. Mirror the visual tooltip into aria-label so SR
+  // and sighted users get the same affordance.
+  it("New Session button announces (coming soon) status to assistive tech", () => {
+    render(<SessionListPanel />);
+    const btn = screen.getByTestId("new-session-btn");
+    expect(btn.getAttribute("aria-label")).toBe("New Session (coming soon)");
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): the decorative Plus lucide icon next to
   // the visible "New Session" label must be aria-hidden so screen readers
   // don't announce "Plus, New Session". Mirrors PR #58 (SkillCard) and PR
