@@ -2,7 +2,7 @@
 // version + status + Open in File Browser / Open in VS Code actions.
 // Body: Skills / Agents / Hooks tabs.
 
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { ExternalLink, FolderOpen } from "lucide-react";
 import { open as openShell } from "@tauri-apps/plugin-shell";
 
@@ -13,12 +13,59 @@ import { PluginHooksTab } from "./PluginHooksTab";
 
 type Tab = "skills" | "agents" | "hooks";
 
+const TABS: Tab[] = ["skills", "agents", "hooks"];
+
 interface PluginDetailViewProps {
   plugin: PluginDetail;
 }
 
+/**
+ * Roving-tabindex keyboard handler for an ARIA tablist (matching the
+ * WAI-ARIA APG tabs pattern, automatic-activation flavor). Mirrors the
+ * implementation in `ActivityChart` (PR #97) and `ViewModeToggle` (PR #94).
+ */
+function useTablistKeyboard<T>(
+  values: ReadonlyArray<T>,
+  onSelect: (v: T) => void,
+) {
+  const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const focusAndSelect = (idx: number) => {
+    const wrapped = (idx + values.length) % values.length;
+    const target = refs.current[wrapped];
+    if (target) {
+      target.focus();
+      onSelect(values[wrapped]);
+    }
+  };
+  const onKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    i: number,
+  ) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      focusAndSelect(i - 1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      focusAndSelect(i + 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusAndSelect(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusAndSelect(values.length - 1);
+    }
+  };
+  return { refs, onKeyDown };
+}
+
 export function PluginDetailView({ plugin }: PluginDetailViewProps) {
   const [tab, setTab] = useState<Tab>("skills");
+  const tabKb = useTablistKeyboard(TABS, setTab);
+  // Stable per-instance ids so each tab button can be linked by aria-controls
+  // to its tabpanel and each panel can be linked back via aria-labelledby.
+  const idBase = useId();
+  const tabId = (t: Tab) => `${idBase}-tab-${t}`;
+  const panelId = (t: Tab) => `${idBase}-panel-${t}`;
 
   const openInFileBrowser = async () => {
     try {
@@ -87,12 +134,19 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
         className="flex gap-2 border-b border-border"
         role="tablist"
       >
-        {(["skills", "agents", "hooks"] as Tab[]).map((t) => (
+        {TABS.map((t, i) => (
           <button
             key={t}
             type="button"
             role="tab"
+            id={tabId(t)}
             aria-selected={tab === t}
+            aria-controls={panelId(t)}
+            tabIndex={tab === t ? 0 : -1}
+            ref={(el) => {
+              tabKb.refs.current[i] = el;
+            }}
+            onKeyDown={(e) => tabKb.onKeyDown(e, i)}
             data-testid={`tab-${t}`}
             onClick={() => setTab(t)}
             className={[
@@ -114,7 +168,13 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
         ))}
       </nav>
 
-      <div className="flex-1 overflow-auto">
+      <div
+        role="tabpanel"
+        id={panelId(tab)}
+        aria-labelledby={tabId(tab)}
+        data-testid={`tabpanel-${tab}`}
+        className="flex-1 overflow-auto"
+      >
         {tab === "skills" && <PluginSkillsTab skills={plugin.skills} />}
         {tab === "agents" && <PluginAgentsTab agents={plugin.agents} />}
         {tab === "hooks" && <PluginHooksTab hooks={plugin.hooks} />}
