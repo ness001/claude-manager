@@ -235,4 +235,17 @@ describe("McpSection", () => {
       document.documentElement.classList.remove("dark");
     }
   });
+
+  // WCAG 1.3.1 (Info and Relationships): the section landmark previously
+  // had no accessible name — SR users navigating by landmark heard
+  // "section" with no identifier. Mirrors the DashboardSection fix.
+  it("section has an accessible name (WCAG 1.3.1)", async () => {
+    await act(async () => {
+      render(<McpSection />);
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId("mcp-section").getAttribute("aria-label")).toBe(
+      "MCP Servers",
+    );
+  });
 });

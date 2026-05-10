@@ -83,7 +83,11 @@ export function McpSection() {
   };
 
   return (
-    <section data-testid="mcp-section" className="flex h-full">
+    <section
+      data-testid="mcp-section"
+      aria-label="MCP Servers"
+      className="flex h-full"
+    >
       <McpPanel />
       {editingServer && (
         <McpServerForm
