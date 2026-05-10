@@ -218,4 +218,19 @@ describe("SessionInfoBar", () => {
       );
     }
   });
+
+  // Mirrors the pluralization fixes in PR #87 (SessionCard) and PR #93
+  // (RecentSessions). The bare "{n} msgs" string read as "1 msgs" for
+  // single-message sessions, which both reads as broken English and risks
+  // looking like a stale-data bug to users.
+  it.each([
+    [0, "0 msgs"],
+    [1, "1 msg"],
+    [2, "2 msgs"],
+  ])("message count %d renders as %j", (n, expected) => {
+    render(<SessionInfoBar session={makeSession({ messageCount: n })} />);
+    expect(screen.getByTestId("message-count-badge")).toHaveTextContent(
+      expected,
+    );
+  });
 });
