@@ -168,6 +168,74 @@ describe("ConversationViewer", () => {
     expect(input.value).toBe("1");
   });
 
+  it("turn-input does not jump on every keystroke; commits on blur (clamped)", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-input"));
+    const input = screen.getByTestId("turn-input") as HTMLInputElement;
+    const totalText = screen.getByTestId("turn-nav").textContent ?? "";
+    const total = Number(totalText.match(/\/ (\d+)/)?.[1] ?? "0");
+    expect(total).toBeGreaterThan(0);
+
+    // Type a value that exceeds max — while editing, the displayed draft
+    // must reflect what the user typed (no mid-typing snap).
+    act(() => input.focus());
+    fireEvent.change(input, { target: { value: "999" } });
+    expect(input.value).toBe("999");
+
+    // Blur commits and clamps to totalTurns.
+    act(() => input.blur());
+    await waitFor(() => expect(input.value).toBe(String(total)));
+  });
+
+  it("turn-input clamps to 1 on blur when value is below min", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-input"));
+    const input = screen.getByTestId("turn-input") as HTMLInputElement;
+
+    act(() => input.focus());
+    fireEvent.change(input, { target: { value: "0" } });
+    expect(input.value).toBe("0");
+    act(() => input.blur());
+    await waitFor(() => expect(input.value).toBe("1"));
+  });
+
+  it("turn-input restores last committed value on blur when emptied", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-input"));
+    const input = screen.getByTestId("turn-input") as HTMLInputElement;
+    expect(input.value).toBe("1");
+
+    act(() => input.focus());
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
+    act(() => input.blur());
+    // Empty draft → restore previous committed value (still 1), do NOT jump.
+    await waitFor(() => expect(input.value).toBe("1"));
+  });
+
+  it("turn-input commits on Enter and Escape reverts the draft", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-input"));
+    const input = screen.getByTestId("turn-input") as HTMLInputElement;
+
+    // Enter commits.
+    act(() => input.focus());
+    fireEvent.change(input, { target: { value: "2" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(input.value).toBe("2"));
+
+    // Escape reverts an in-progress draft back to the committed value.
+    act(() => input.focus());
+    fireEvent.change(input, { target: { value: "9" } });
+    expect(input.value).toBe("9");
+    fireEvent.keyDown(input, { key: "Escape" });
+    await waitFor(() => expect(input.value).toBe("2"));
+  });
+
   it("Ctrl+ArrowDown advances the current turn (spec §5.7)", async () => {
     invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
     render(<ConversationViewer path="/fake.jsonl" />);
@@ -188,7 +256,9 @@ describe("ConversationViewer", () => {
     await waitFor(() => screen.getByTestId("turn-input"));
     const input = screen.getByTestId("turn-input") as HTMLInputElement;
     expect(input.value).toBe("1");
-    input.focus();
+    act(() => {
+      input.focus();
+    });
     act(() => {
       input.dispatchEvent(
         new KeyboardEvent("keydown", {
