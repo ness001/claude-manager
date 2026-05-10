@@ -502,4 +502,71 @@ describe("McpServerForm", () => {
     const titleEl = document.getElementById(backdrop.getAttribute("aria-labelledby")!);
     expect(titleEl!.textContent).toBe("Edit MCP Server");
   });
+
+  // WCAG 2.4.7 Focus Visible — keyboard users tabbing through the form
+  // need a visible focus indicator on every text input. Previously these
+  // inputs carried no focus styling at all and relied on the browser
+  // default outline (often suppressed by app-level CSS). Mirrors the
+  // focus-ring trio fix landed in PR #138/#139 for search inputs.
+  it("text inputs (stdio path) have a focus-visible ring (WCAG 2.4.7)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    // type defaults to stdio → form-name + form-command + form-arg-input visible
+    for (const id of ["form-name", "form-command", "form-arg-input"]) {
+      const el = screen.getByTestId(id);
+      expect(el.className).toContain("focus-visible:outline-none");
+      expect(el.className).toContain("focus-visible:ring-2");
+      expect(el.className).toContain("focus-visible:ring-accent");
+    }
+  });
+
+  it("URL input (http path) has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    const url = screen.getByTestId("form-url");
+    expect(url.className).toContain("focus-visible:outline-none");
+    expect(url.className).toContain("focus-visible:ring-2");
+    expect(url.className).toContain("focus-visible:ring-accent");
+  });
+
+  it("KeyValueEditor key/val inputs (env + headers) have a focus-visible ring (WCAG 2.4.7)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    // Add an env row (stdio default) so form-env-key-0/val-0 render.
+    fireEvent.click(screen.getByTestId("form-env-add"));
+    for (const id of ["form-env-key-0", "form-env-val-0"]) {
+      const el = screen.getByTestId(id);
+      expect(el.className).toContain("focus-visible:outline-none");
+      expect(el.className).toContain("focus-visible:ring-2");
+      expect(el.className).toContain("focus-visible:ring-accent");
+    }
+    // Switch to http, add a header row.
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    fireEvent.click(screen.getByTestId("form-header-add"));
+    for (const id of ["form-header-key-0", "form-header-val-0"]) {
+      const el = screen.getByTestId(id);
+      expect(el.className).toContain("focus-visible:outline-none");
+      expect(el.className).toContain("focus-visible:ring-2");
+      expect(el.className).toContain("focus-visible:ring-accent");
+    }
+  });
 });
