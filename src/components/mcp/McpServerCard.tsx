@@ -6,7 +6,7 @@
 // set varies per state. Shadowed servers (`isOverridden`) are dimmed
 // with an "Overridden by [scope]" badge.
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 import type { McpServer, McpServerState } from "../../lib/mcp-types";
@@ -39,6 +39,14 @@ export function McpServerCard({
   // WAI-ARIA: a button with `aria-expanded` should also have `aria-controls`
   // pointing to the disclosed region so SR users know what region toggles.
   const detailId = useId();
+  // Cancel-button ref so we can auto-focus the safest default action when
+  // the destructive confirm prompt appears. Without this, keyboard users
+  // hit Remove and focus stays on the (still-visible) Remove ActionButton —
+  // they can't easily reach Cancel without tabbing across the whole card.
+  const cancelRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (confirming) cancelRef.current?.focus();
+  }, [confirming]);
 
   // Escape closes the Remove-confirm dialog without removing — same UX as
   // McpServerForm (PR #36). Without this, keyboard users have no fast escape
@@ -212,6 +220,7 @@ export function McpServerCard({
             <button
               type="button"
               data-testid="remove-cancel"
+              ref={cancelRef}
               onClick={() => setConfirming(false)}
               className="rounded border border-border px-2 py-0.5 text-text-secondary hover:bg-bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
