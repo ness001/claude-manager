@@ -55,6 +55,30 @@ export function SessionSearch() {
         type="search"
         value={local}
         onChange={(e) => setLocal(e.target.value)}
+        onKeyDown={(e) => {
+          // Esc-to-clear: WebView2 does not consistently honor the
+          // `<input type=search>` browser-default Esc behavior, and even
+          // when it does, focus jumps off the input. Mirrors the McpPanel
+          // (PR #151) and PluginListView (PR #152) handlers.
+          //
+          // Two extra wrinkles vs the other two search boxes:
+          //   1. Local state is debounced 200ms before being committed
+          //      to the store. On Esc we clear `local` for instant visual
+          //      feedback AND flush `setSearchQuery("")` synchronously
+          //      so the session list filter doesn't lag 200ms behind a
+          //      visibly-cleared input.
+          //   2. `lastCommitted` / `pendingLocal` are kept in sync with
+          //      the synchronous flush so the debounced effect doesn't
+          //      then re-commit the same empty value (no-op, but keeps
+          //      the bookkeeping honest).
+          if (e.key === "Escape" && local !== "") {
+            e.preventDefault();
+            setLocal("");
+            pendingLocal.current = "";
+            lastCommitted.current = "";
+            setSearchQuery("");
+          }
+        }}
         placeholder="Search sessions"
         aria-label="Search sessions"
         className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
