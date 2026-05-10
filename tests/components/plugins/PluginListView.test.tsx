@@ -132,6 +132,64 @@ describe("PluginListView", () => {
     expect(usePluginStore.getState().plugins[0].state).toBe("update-available");
   });
 
+  // Regression: the handler used to lack a catch{}, so a rejected IPC
+  // (registry down, fetch error, etc.) silently swallowed the failure —
+  // the spinner stopped, but the user got no signal that the check
+  // failed and the plugin list silently went stale.
+  it("Check for Updates surfaces an error when the IPC rejects", async () => {
+    const local = makePlugin({
+      name: "alpha",
+      gitCommitSha: "a".repeat(40),
+      marketplace: "m1",
+    });
+    usePluginStore.setState({ plugins: [local] });
+    invokeMock.mockRejectedValue(new Error("registry unreachable"));
+
+    render(<PluginListView />);
+    expect(screen.queryByTestId("check-updates-error")).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("check-updates-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const err = screen.getByTestId("check-updates-error");
+    expect(err.getAttribute("role")).toBe("alert");
+    expect(err.textContent).toContain("registry unreachable");
+    // Spinner stopped + button is interactable again.
+    expect(
+      (screen.getByTestId("check-updates-btn") as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("Check for Updates clears a previous error on the next successful run", async () => {
+    const local = makePlugin({
+      name: "alpha",
+      gitCommitSha: "a".repeat(40),
+      marketplace: "m1",
+    });
+    usePluginStore.setState({ plugins: [local] });
+    invokeMock.mockRejectedValueOnce(new Error("nope"));
+
+    render(<PluginListView />);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("check-updates-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId("check-updates-error")).toBeInTheDocument();
+
+    invokeMock.mockResolvedValueOnce({ m1: "b".repeat(40) });
+    resetUpdateCache(); // force the second checkPluginUpdates to hit IPC again
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("check-updates-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.queryByTestId("check-updates-error")).toBeNull();
+  });
+
   it("perf: rendering 50 PluginCards completes in < 200ms", () => {
     const plugins: PluginMeta[] = Array.from({ length: 50 }, (_, i) =>
       makePlugin({
