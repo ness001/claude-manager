@@ -107,3 +107,21 @@ html {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
+
+/* Respect prefers-reduced-motion: reduce.
+ *
+ * Tailwind's `animate-pulse` (alive session status dots, MCP starting state,
+ * skeleton loading rows) and `animate-spin` (refresh icon during a check)
+ * are decorative — they signal liveness/activity but the underlying state
+ * is also conveyed by color and accessible name. For users who request
+ * reduced motion (vestibular sensitivity, focus difficulties), the looping
+ * animation is unwanted.
+ *
+ * WCAG 2.3.3 (Animation from Interactions) and 2.2.2 (Pause, Stop, Hide).
+ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
+}
