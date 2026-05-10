@@ -119,4 +119,21 @@ describe("SystemHealth", () => {
     const indicators = screen.getAllByTestId(/^health-indicator|^health-api/);
     expect(indicators[0].textContent).toContain(expected);
   });
+
+  // Plugins indicator pluralization. Previously hardcoded to "installed"
+  // with no count word, so "1 installed" lacked grammatical agreement and
+  // diverged from the MCP row's "1 server" / "N servers" shape. Same fix
+  // shape as the MCP row.
+  it.each([
+    { pluginCount: 0, expected: "0 plugins installed" },
+    { pluginCount: 1, expected: "1 plugin installed" },
+    { pluginCount: 2, expected: "2 plugins installed" },
+  ])(
+    "Plugins row pluralization — $pluginCount → $expected",
+    ({ pluginCount, expected }) => {
+      render(<SystemHealth skipApiCheck pluginCount={pluginCount} />);
+      const indicators = screen.getAllByTestId(/^health-indicator|^health-api/);
+      expect(indicators[1].textContent).toContain(expected);
+    },
+  );
 });
