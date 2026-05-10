@@ -255,4 +255,18 @@ describe("PluginListView", () => {
     expect(btn.className).toContain("focus-visible:ring-2");
     expect(btn.className).toContain("focus-visible:ring-accent");
   });
+
+  // WCAG 2.4.7 Focus Visible — the search input previously used
+  // `focus:outline-none focus:border-accent`, which (a) strips the browser
+  // default outline for *every* focus including mouse, and (b) replaces it
+  // with a 1-px border-color shift that's barely visible against
+  // bg-bg-tertiary. Mirrors the McpPanel search-input fix in PR #138.
+  it("search input has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<PluginListView />);
+    const input = screen.getByTestId("plugin-search");
+    expect(input.className).toContain("focus-visible:outline-none");
+    expect(input.className).toContain("focus-visible:ring-2");
+    expect(input.className).toContain("focus-visible:ring-accent");
+    expect(input.className).not.toMatch(/(^|\s)focus:outline-none(\s|$)/);
+  });
 });
