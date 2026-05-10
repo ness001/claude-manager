@@ -50,6 +50,17 @@ describe("RecentSessions", () => {
     expect(useNavigationStore.getState().activeSection).toBe("sessions");
   });
 
+  it("'View All Sessions' button has a focus-visible ring (WCAG 2.4.7)", () => {
+    // Defect: the only hover affordance was a color swap + underline, both
+    // of which are useless to keyboard users with no pointer hover state.
+    // Mirrors the established trio used in PRs #17/#45/#48/#49/#56/#57/#67/#80.
+    render(<RecentSessions data={makeRows(1)} />);
+    const cls = screen.getByTestId("view-all-sessions").className;
+    expect(cls).toContain("focus-visible:outline-none");
+    expect(cls).toContain("focus-visible:ring-2");
+    expect(cls).toContain("focus-visible:ring-accent");
+  });
+
   it("renders empty state when data is empty", () => {
     render(<RecentSessions data={[]} />);
     expect(screen.getByText("No recent sessions")).toBeInTheDocument();
