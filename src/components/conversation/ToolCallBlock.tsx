@@ -48,7 +48,12 @@ export function ToolCallBlock({
         />
         <span className="font-mono font-semibold">{toolName || "tool"}</span>
         {isError && (
-          <span className="ml-auto rounded bg-status-red/15 px-1.5 py-0.5 text-[10px] font-medium text-status-red">
+          <span
+            data-testid="tool-call-error-badge"
+            role="img"
+            aria-label="Tool call failed"
+            className="ml-auto rounded bg-status-red/15 px-1.5 py-0.5 text-[10px] font-medium text-status-red"
+          >
             Error
           </span>
         )}
