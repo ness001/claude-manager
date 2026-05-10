@@ -5,8 +5,15 @@
 // one renders without console errors and surfaces the spec-required visual
 // markers (testids + key text).
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+
+// Mock @tauri-apps/plugin-shell so AssistantMessage's link click handler
+// can call openShell() under jsdom without firing a real IPC.
+const openShellMock = vi.fn();
+vi.mock("@tauri-apps/plugin-shell", () => ({
+  open: (...args: unknown[]) => openShellMock(...args),
+}));
 
 import { UserMessage } from "../../../src/components/conversation/UserMessage";
 import { AssistantMessage } from "../../../src/components/conversation/AssistantMessage";
@@ -98,6 +105,34 @@ describe("AssistantMessage", () => {
   it("hides the model badge when missing", () => {
     render(<AssistantMessage text="x" />);
     expect(screen.queryByTestId("assistant-model-badge")).not.toBeInTheDocument();
+  });
+
+  // Functional bug: ReactMarkdown without a custom <a> renderer turns markdown
+  // links into a plain <a href>, which inside Tauri's WebView navigates the
+  // ENTIRE app to that URL — there's no back button so the user loses their
+  // session view. Hand the URL off to the OS via plugin-shell instead.
+  it("clicking a link in assistant markdown opens via plugin-shell, not WebView nav", () => {
+    openShellMock.mockReset().mockResolvedValue(undefined);
+    render(
+      <AssistantMessage
+        text="See [Anthropic](https://www.anthropic.com) for details."
+      />,
+    );
+    const link = screen.getByTestId("assistant-link");
+    expect(link.getAttribute("href")).toBe("https://www.anthropic.com");
+    const evt = fireEvent.click(link);
+    // Default must be prevented so the WebView does not actually navigate.
+    expect(evt).toBe(false);
+    expect(openShellMock).toHaveBeenCalledWith("https://www.anthropic.com");
+  });
+
+  // WCAG 1.4.1 (Use of Color): links must be distinguishable from prose by
+  // more than color. Underline + accent color is the standard affordance.
+  it("assistant-message links are visibly underlined and accent-colored (WCAG 1.4.1)", () => {
+    render(<AssistantMessage text="[a](https://example.com)" />);
+    const link = screen.getByTestId("assistant-link");
+    expect(link.className).toContain("underline");
+    expect(link.className).toContain("text-accent");
   });
 });
 
