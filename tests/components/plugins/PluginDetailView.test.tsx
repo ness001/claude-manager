@@ -137,4 +137,87 @@ describe("PluginDetailView", () => {
       expect(svg!.getAttribute("aria-hidden")).toBe("true");
     }
   });
+
+  // WAI-ARIA APG "Tabs" pattern (automatic activation): the tablist needs
+  // roving tabindex + arrow / Home / End key support, and the panel must
+  // declare role=tabpanel + aria-labelledby pointing at the active tab.
+  // Mirrors PR #94 (ViewModeToggle) and PR #97 (ActivityChart).
+  describe("WAI-ARIA tabs keyboard navigation", () => {
+    it("only the selected tab has tabIndex=0 (roving)", () => {
+      render(<PluginDetailView plugin={makeDetail()} />);
+      // Default tab is "skills".
+      expect(screen.getByTestId("tab-skills").getAttribute("tabindex")).toBe("0");
+      for (const t of ["agents", "hooks"]) {
+        expect(screen.getByTestId(`tab-${t}`).getAttribute("tabindex")).toBe("-1");
+      }
+    });
+
+    it("ArrowRight moves selection forward and wraps", () => {
+      render(<PluginDetailView plugin={makeDetail()} />);
+      const skills = screen.getByTestId("tab-skills");
+      skills.focus();
+      fireEvent.keyDown(skills, { key: "ArrowRight" });
+      expect(screen.getByTestId("tab-agents").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+      // Wrap from "hooks" → "skills".
+      const hooks = screen.getByTestId("tab-hooks");
+      hooks.focus();
+      fireEvent.keyDown(hooks, { key: "ArrowRight" });
+      expect(screen.getByTestId("tab-skills").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+    });
+
+    it("ArrowLeft wraps from first to last", () => {
+      render(<PluginDetailView plugin={makeDetail()} />);
+      const skills = screen.getByTestId("tab-skills");
+      skills.focus();
+      fireEvent.keyDown(skills, { key: "ArrowLeft" });
+      expect(screen.getByTestId("tab-hooks").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+    });
+
+    it("Home / End jump to first / last", () => {
+      render(<PluginDetailView plugin={makeDetail()} />);
+      const skills = screen.getByTestId("tab-skills");
+      skills.focus();
+      fireEvent.keyDown(skills, { key: "End" });
+      expect(screen.getByTestId("tab-hooks").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+      const hooks = screen.getByTestId("tab-hooks");
+      hooks.focus();
+      fireEvent.keyDown(hooks, { key: "Home" });
+      expect(screen.getByTestId("tab-skills").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+    });
+
+    it("active tab and panel are linked by aria-controls / aria-labelledby", () => {
+      render(<PluginDetailView plugin={makeDetail()} />);
+      const tab = screen.getByTestId("tab-skills");
+      const panel = screen.getByTestId("tabpanel-skills");
+      expect(panel.getAttribute("role")).toBe("tabpanel");
+
+      const tabId = tab.getAttribute("id");
+      const panelId = panel.getAttribute("id");
+      expect(tabId).toBeTruthy();
+      expect(panelId).toBeTruthy();
+      expect(tab.getAttribute("aria-controls")).toBe(panelId);
+      expect(panel.getAttribute("aria-labelledby")).toBe(tabId);
+
+      // After switching tabs, the panel re-points at the new active tab.
+      fireEvent.click(screen.getByTestId("tab-agents"));
+      const agentsTab = screen.getByTestId("tab-agents");
+      const agentsPanel = screen.getByTestId("tabpanel-agents");
+      expect(agentsPanel.getAttribute("aria-labelledby")).toBe(
+        agentsTab.getAttribute("id"),
+      );
+      expect(agentsTab.getAttribute("aria-controls")).toBe(
+        agentsPanel.getAttribute("id"),
+      );
+    });
+  });
 });
