@@ -208,7 +208,12 @@ export function SessionListPanel() {
       <SessionSearch />
 
       {filtered.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-xs text-text-muted px-2 text-center">
+        <div
+          data-testid="session-list-empty"
+          role="status"
+          aria-live="polite"
+          className="flex-1 flex items-center justify-center text-xs text-text-muted px-2 text-center"
+        >
           {sessions.length === 0
             ? "No sessions found"
             : `No matches for "${searchQuery}"`}
