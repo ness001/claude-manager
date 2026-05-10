@@ -148,4 +148,27 @@ describe("DashboardSection", () => {
     expect(banner).toHaveAttribute("role", "alert");
     expect(banner.textContent).toContain("disk on fire");
   });
+
+  // WCAG 1.3.1 (Info and Relationships) + 2.4.6 (Headings and Labels):
+  // the section landmark previously had no accessible name AND the heading
+  // hierarchy started at <h3> (the inner panel headings), skipping h1 and
+  // h2 entirely. SR users navigating by landmark heard "section" with no
+  // identifier; users navigating by heading found no top-level title.
+  // Fix: add a visually-hidden <h1 id="dashboard-heading"> and point the
+  // section's aria-labelledby at it. Visual layout is unchanged.
+  it("section has an accessible name backed by a visually-hidden h1 (WCAG 2.4.6 / 1.3.1)", async () => {
+    render(<DashboardSection />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const section = screen.getByTestId("dashboard-section");
+    expect(section.getAttribute("aria-labelledby")).toBe("dashboard-heading");
+    const heading = document.getElementById("dashboard-heading");
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H1");
+    expect(heading!.textContent).toBe("Dashboard");
+    // Visually hidden but exposed to AT — `sr-only` is the canonical class.
+    expect(heading!.className).toContain("sr-only");
+  });
 });

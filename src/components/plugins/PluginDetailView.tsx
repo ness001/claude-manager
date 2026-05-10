@@ -108,7 +108,7 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
               onClick={() => {
                 void openInFileBrowser();
               }}
-              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <FolderOpen size={14} aria-hidden="true" />
               Open in File Browser
@@ -119,7 +119,7 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
               onClick={() => {
                 void openInVsCode();
               }}
-              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <ExternalLink size={14} aria-hidden="true" />
               Open in VS Code

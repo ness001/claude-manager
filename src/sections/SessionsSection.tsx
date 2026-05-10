@@ -52,7 +52,11 @@ export function SessionsSection() {
   const showSkeleton = isLoading && !sessionsLoaded;
 
   return (
-    <section data-testid="sessions-section" className="flex h-full">
+    <section
+      data-testid="sessions-section"
+      aria-label="Sessions"
+      className="flex h-full"
+    >
       {showSkeleton ? <SessionListSkeleton /> : <SessionListPanel />}
       <SessionDetailPanel />
     </section>

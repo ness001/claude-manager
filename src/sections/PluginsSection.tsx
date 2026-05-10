@@ -34,7 +34,7 @@ export function PluginsSection() {
           onClick={() => {
             void selectPlugin(null);
           }}
-          className="flex items-center gap-1 px-6 pt-4 text-sm text-text-secondary hover:text-text-primary"
+          className="flex items-center gap-1 px-6 pt-4 text-sm text-text-secondary hover:text-text-primary rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <ArrowLeft size={14} aria-hidden="true" />
           Back to plugins

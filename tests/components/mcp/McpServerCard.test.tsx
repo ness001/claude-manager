@@ -314,4 +314,36 @@ describe("McpServerCard", () => {
     expect(svg).not.toBeNull();
     expect(svg!.getAttribute("aria-hidden")).toBe("true");
   });
+
+  // WCAG 2.4.7 Focus Visible — the destructive Remove button inside the
+  // confirmation dialog had no focus ring at all. A keyboard user could
+  // press Enter on a button they couldn't see, triggering an irreversible
+  // server removal. Use the offset trio because the button's `hover` state
+  // flips the bg to status-error red, against which a plain accent ring
+  // would clash; the offset breaks the ring off the bar edge.
+  it("remove-confirm exposes a focus ring with offset (WCAG 2.4.7)", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    fireEvent.click(screen.getByTestId("action-remove"));
+    const btn = screen.getByTestId("remove-confirm");
+    expect(btn.className).toContain("focus-visible:outline-none");
+    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-visible:ring-accent");
+    expect(btn.className).toContain("focus-visible:ring-offset-2");
+    expect(btn.className).toContain("focus-visible:ring-offset-bg-primary");
+  });
+
+  // WCAG 2.4.7 — the Cancel button sits on a neutral bg (no accent-on-accent
+  // collision), so the plain focus-visible trio is sufficient.
+  it("remove-cancel exposes a visible focus ring (WCAG 2.4.7)", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    fireEvent.click(screen.getByTestId("action-remove"));
+    const btn = screen.getByTestId("remove-cancel");
+    expect(btn.className).toContain("focus-visible:outline-none");
+    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-visible:ring-accent");
+  });
 });

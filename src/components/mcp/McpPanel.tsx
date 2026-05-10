@@ -96,7 +96,7 @@ export function McpPanel() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search servers by name, command, args, or URL…"
             aria-label="Search MCP servers"
-            className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none"
+            className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
         </div>
       </header>
