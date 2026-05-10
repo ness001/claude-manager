@@ -33,6 +33,20 @@ function formatTokens(n: number): string {
   return `${(n / 1_000_000).toFixed(1)}M`;
 }
 
+/**
+ * Format a slice's share of the donut as a percent string. Spec §4.1 Row 2
+ * requires the legend to show "model name, its share, and absolute token
+ * count" — the share was missing. Tiny non-zero slices (< 0.05%) round to
+ * "0.0%" with one decimal, which falsely reads as nothing. Surface them as
+ * "<0.1%" instead so the user sees the slice exists but is negligible.
+ */
+function formatShare(tokens: number, total: number): string {
+  if (total <= 0) return "0%";
+  const pct = (tokens / total) * 100;
+  if (pct > 0 && pct < 0.05) return "<0.1%";
+  return `${pct.toFixed(1)}%`;
+}
+
 export function ModelDonut({ data }: ModelDonutProps) {
   const total = useMemo(
     () => data.reduce((sum, d) => sum + d.tokens, 0),
@@ -116,6 +130,12 @@ export function ModelDonut({ data }: ModelDonutProps) {
                 />
                 <span className="truncate text-text-secondary flex-1">
                   {d.model}
+                </span>
+                <span
+                  data-testid="donut-legend-share"
+                  className="text-text-muted tabular-nums"
+                >
+                  {formatShare(d.tokens, total)}
                 </span>
                 <span className="text-text-muted tabular-nums">
                   {formatTokens(d.tokens)}
