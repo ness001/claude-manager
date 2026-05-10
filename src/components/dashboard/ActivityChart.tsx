@@ -8,7 +8,7 @@
 // The plan's case 1 calls out that `parseInt("7d")` works only by accident
 // and warns against it. "all" maps to Infinity so the slice keeps everything.
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import {
   Area,
@@ -80,6 +80,48 @@ const PERIOD_TO_DAYS: Record<ActivityPeriod, number> = {
 };
 
 const PERIOD_BUTTONS: ActivityPeriod[] = ["7d", "30d", "90d", "all"];
+const SERIES_BUTTONS: SeriesMode[] = ["messages", "toolCalls"];
+
+/**
+ * Roving-tabindex keyboard handler for an ARIA tablist (matching the
+ * WAI-ARIA APG tabs pattern, automatic-activation flavor). When focus is
+ * on a tab, ArrowLeft/Right move + activate the previous/next tab (with
+ * wrap), Home/End jump to the first/last tab. Mirrors the implementation
+ * in `ViewModeToggle` (PR #94).
+ */
+function useTablistKeyboard<T>(
+  values: ReadonlyArray<T>,
+  onSelect: (v: T) => void,
+) {
+  const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  const focusAndSelect = (idx: number) => {
+    const wrapped = (idx + values.length) % values.length;
+    const target = refs.current[wrapped];
+    if (target) {
+      target.focus();
+      onSelect(values[wrapped]);
+    }
+  };
+  const onKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    i: number,
+  ) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      focusAndSelect(i - 1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      focusAndSelect(i + 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusAndSelect(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusAndSelect(values.length - 1);
+    }
+  };
+  return { refs, onKeyDown };
+}
 
 /** Slice the trailing N days of the daily series. Inputs are pre-sorted by date. */
 function sliceTrailing(
@@ -92,9 +134,16 @@ function sliceTrailing(
   return data.slice(data.length - days);
 }
 
+const SERIES_LABELS: Record<SeriesMode, string> = {
+  messages: "Messages",
+  toolCalls: "Tool Calls",
+};
+
 export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) {
   const [period, setPeriod] = useState<ActivityPeriod>("7d");
   const [series, setSeries] = useState<SeriesMode>("messages");
+  const periodKb = useTablistKeyboard(PERIOD_BUTTONS, setPeriod);
+  const seriesKb = useTablistKeyboard(SERIES_BUTTONS, setSeries);
 
   // Memoize the sliced series — re-computed only when input or period flips.
   // Spec perf budget §T2.12: re-render on period toggle < 50ms.
@@ -151,12 +200,17 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
           aria-label="Period"
           className="inline-flex items-center gap-1"
         >
-          {PERIOD_BUTTONS.map((p) => (
+          {PERIOD_BUTTONS.map((p, i) => (
             <button
               key={p}
               type="button"
               role="tab"
               aria-selected={period === p}
+              tabIndex={period === p ? 0 : -1}
+              ref={(el) => {
+                periodKb.refs.current[i] = el;
+              }}
+              onKeyDown={(e) => periodKb.onKeyDown(e, i)}
               data-testid={`period-${p}`}
               onClick={() => setPeriod(p)}
               className={[
@@ -177,38 +231,30 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
           aria-label="Series"
           className="inline-flex items-center gap-1"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={series === "messages"}
-            data-testid="series-messages"
-            onClick={() => setSeries("messages")}
-            className={[
-              "rounded px-2 py-0.5 text-xs",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-              series === "messages"
-                ? "bg-bg-tertiary text-text-primary"
-                : "text-text-secondary hover:bg-bg-tertiary",
-            ].join(" ")}
-          >
-            Messages
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={series === "toolCalls"}
-            data-testid="series-toolCalls"
-            onClick={() => setSeries("toolCalls")}
-            className={[
-              "rounded px-2 py-0.5 text-xs",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-              series === "toolCalls"
-                ? "bg-bg-tertiary text-text-primary"
-                : "text-text-secondary hover:bg-bg-tertiary",
-            ].join(" ")}
-          >
-            Tool Calls
-          </button>
+          {SERIES_BUTTONS.map((s, i) => (
+            <button
+              key={s}
+              type="button"
+              role="tab"
+              aria-selected={series === s}
+              tabIndex={series === s ? 0 : -1}
+              ref={(el) => {
+                seriesKb.refs.current[i] = el;
+              }}
+              onKeyDown={(e) => seriesKb.onKeyDown(e, i)}
+              data-testid={`series-${s}`}
+              onClick={() => setSeries(s)}
+              className={[
+                "rounded px-2 py-0.5 text-xs",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                series === s
+                  ? "bg-bg-tertiary text-text-primary"
+                  : "text-text-secondary hover:bg-bg-tertiary",
+              ].join(" ")}
+            >
+              {SERIES_LABELS[s]}
+            </button>
+          ))}
         </div>
       </div>
 
