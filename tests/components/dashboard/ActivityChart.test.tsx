@@ -135,4 +135,66 @@ describe("ActivityChart", () => {
       expect(btn.className).toContain("focus-visible:ring-accent");
     }
   });
+
+  // RCA Bug 2: chart was 32 days stale and Verification checkboxes still
+  // passed because each had an "or empty state" backdoor. The fix is a
+  // visible warning surfacing the staleness so the user knows to act
+  // (typically: upgrade Claude Code CLI past v2.1.105 — see
+  // docs/research/2026-05-09-stats-cache-investigation.md §6).
+  describe("staleness banner (RCA Bug 2)", () => {
+    // Pin "today" to 2026-01-31 UTC midnight so makeData() (Jan dates)
+    // produces deterministic staleness regardless of when tests run.
+    const TODAY_2026_01_31 = Date.UTC(2026, 0, 31);
+
+    it("renders no banner when latest entry is within 3 days", () => {
+      // makeData(7) ends on 2026-01-07; pin "today" to 2026-01-09 (2-day gap).
+      render(
+        <ActivityChart data={makeData(7)} nowMs={Date.UTC(2026, 0, 9)} />,
+      );
+      expect(screen.queryByTestId("activity-stale-banner")).toBeNull();
+    });
+
+    it("renders no banner when latest entry is exactly at threshold (3 days)", () => {
+      // makeData(7) latest = 2026-01-07; today = 2026-01-10 → 3 days exactly,
+      // which is the threshold. Banner only fires when > 3.
+      render(
+        <ActivityChart data={makeData(7)} nowMs={Date.UTC(2026, 0, 10)} />,
+      );
+      expect(screen.queryByTestId("activity-stale-banner")).toBeNull();
+    });
+
+    it("renders banner with correct day count when stale by 4 days", () => {
+      // makeData(7) latest = 2026-01-07; today = 2026-01-11 → 4 days.
+      render(
+        <ActivityChart data={makeData(7)} nowMs={Date.UTC(2026, 0, 11)} />,
+      );
+      const banner = screen.getByTestId("activity-stale-banner");
+      expect(banner.getAttribute("data-staleness-days")).toBe("4");
+      expect(banner.getAttribute("role")).toBe("alert");
+    });
+
+    it("renders banner with 24-day count for the originating RCA scenario", () => {
+      // RCA recorded latest entry 2026-01-07 vs today 2026-01-31 → 24 days
+      // stale. (The originating production incident was 32 days; we use 24
+      // here to keep makeData() reusable.)
+      render(
+        <ActivityChart data={makeData(7)} nowMs={TODAY_2026_01_31} />,
+      );
+      const banner = screen.getByTestId("activity-stale-banner");
+      expect(banner.getAttribute("data-staleness-days")).toBe("24");
+      // Banner must surface the actionable hint (CLI upgrade) per
+      // stats-cache-investigation.md §6 — not just a generic "stale" string.
+      expect(banner.textContent).toContain("Claude Code CLI");
+      expect(banner.textContent).toContain("v2.1.105");
+    });
+
+    it("renders no banner when data is empty (handled by the empty state)", () => {
+      render(<ActivityChart data={[]} nowMs={TODAY_2026_01_31} />);
+      // Empty state is the "No activity yet" placeholder, not a banner.
+      expect(screen.queryByTestId("activity-stale-banner")).toBeNull();
+      expect(screen.getByTestId("activity-chart").getAttribute("data-empty")).toBe(
+        "true",
+      );
+    });
+  });
 });

@@ -301,6 +301,43 @@ describe("McpServerForm", () => {
     ).toBe("Remove TOKEN");
   });
 
+  it("KeyValueEditor key/value inputs have accessible names (aria-label)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    // env editor: row-indexed labels before any key is typed
+    fireEvent.click(screen.getByTestId("form-env-add"));
+    expect(
+      screen.getByTestId("form-env-key-0").getAttribute("aria-label"),
+    ).toBe("Environment variable 1 key");
+    expect(
+      screen.getByTestId("form-env-val-0").getAttribute("aria-label"),
+    ).toBe("Environment variable 1 value");
+
+    // once a key is typed, the value input is named after the key for SR context
+    fireEvent.change(screen.getByTestId("form-env-key-0"), {
+      target: { value: "TOKEN" },
+    });
+    expect(
+      screen.getByTestId("form-env-val-0").getAttribute("aria-label"),
+    ).toBe("Environment variable TOKEN value");
+
+    // headers editor uses the "HTTP header" label
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    fireEvent.click(screen.getByTestId("form-header-add"));
+    expect(
+      screen.getByTestId("form-header-key-0").getAttribute("aria-label"),
+    ).toBe("HTTP header 1 key");
+    expect(
+      screen.getByTestId("form-header-val-0").getAttribute("aria-label"),
+    ).toBe("HTTP header 1 value");
+  });
+
   it("Save and Cancel buttons have a focus-visible ring", () => {
     render(
       <McpServerForm

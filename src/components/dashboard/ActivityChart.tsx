@@ -9,6 +9,7 @@
 // and warns against it. "all" maps to Infinity so the slice keeps everything.
 
 import { useMemo, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -24,9 +25,51 @@ import type { ActivityPeriod } from "../../lib/session-types";
 
 interface ActivityChartProps {
   data: DailyActivityEntry[];
+  /** Optional override for "today" — for tests; defaults to Date.now(). */
+  nowMs?: number;
 }
 
 type SeriesMode = "messages" | "toolCalls";
+
+/**
+ * Threshold (days) above which the staleness banner appears. Set to 3 to
+ * match the SLA where stats-cache typically updates within 24h of a CLI
+ * run; 3 days gives a comfortable margin for weekend gaps before warning.
+ *
+ * Origin: RCA Bug 2 — chart was 32 days stale because `stats-cache.json` is
+ * owned by Claude Code CLI and the CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC
+ * pre-v2.1.105 bug disables stats writes machine-wide. claude-manager can't
+ * fix the writer (architectural boundary, see
+ * docs/research/2026-05-09-stats-cache-investigation.md decision §5), but it
+ * can warn the user that what they're looking at is stale.
+ */
+const STALENESS_BANNER_THRESHOLD_DAYS = 3;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * Days between today (UTC midnight) and the latest entry's date (parsed as
+ * UTC midnight). Returns null when the input is empty or no parseable date
+ * exists. Always returns a non-negative integer (future dates clamp to 0 —
+ * those are user-clock-skew, not staleness).
+ */
+function computeStalenessDays(
+  data: DailyActivityEntry[],
+  nowMs: number,
+): number | null {
+  if (data.length === 0) return null;
+  let latestMs = -Infinity;
+  for (const entry of data) {
+    // dailyActivity dates are "YYYY-MM-DD" (per stats-cache schema). Parse
+    // as UTC to avoid TZ jitter at day boundaries.
+    const ts = Date.parse(`${entry.date}T00:00:00Z`);
+    if (Number.isFinite(ts) && ts > latestMs) latestMs = ts;
+  }
+  if (!Number.isFinite(latestMs)) return null;
+  // Floor `nowMs` to UTC midnight for an apples-to-apples day diff.
+  const todayMidnight = Math.floor(nowMs / MS_PER_DAY) * MS_PER_DAY;
+  const diffDays = Math.floor((todayMidnight - latestMs) / MS_PER_DAY);
+  return diffDays < 0 ? 0 : diffDays;
+}
 
 /** Explicit period → window-in-days table. */
 const PERIOD_TO_DAYS: Record<ActivityPeriod, number> = {
@@ -49,13 +92,19 @@ function sliceTrailing(
   return data.slice(data.length - days);
 }
 
-export function ActivityChart({ data }: ActivityChartProps) {
+export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) {
   const [period, setPeriod] = useState<ActivityPeriod>("7d");
   const [series, setSeries] = useState<SeriesMode>("messages");
 
   // Memoize the sliced series — re-computed only when input or period flips.
   // Spec perf budget §T2.12: re-render on period toggle < 50ms.
   const sliced = useMemo(() => sliceTrailing(data, period), [data, period]);
+  const stalenessDays = useMemo(
+    () => computeStalenessDays(data, nowMs),
+    [data, nowMs],
+  );
+  const isStale =
+    stalenessDays !== null && stalenessDays > STALENESS_BANNER_THRESHOLD_DAYS;
 
   if (data.length === 0) {
     return (
@@ -78,6 +127,24 @@ export function ActivityChart({ data }: ActivityChartProps) {
       data-empty="false"
       className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
+      {isStale ? (
+        <div
+          data-testid="activity-stale-banner"
+          data-staleness-days={stalenessDays}
+          role="alert"
+          className="flex items-center gap-2 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-2 py-1 text-xs text-text-primary"
+        >
+          <AlertTriangle size={12} className="shrink-0 text-yellow-500" aria-hidden />
+          <span>
+            Chart data is {stalenessDays} days old. Claude Code CLI writes
+            <code className="mx-1 rounded bg-bg-tertiary px-1">~/.claude/stats-cache.json</code>
+            — upgrade to v2.1.105+ if you have
+            <code className="mx-1 rounded bg-bg-tertiary px-1">CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1</code>
+            set, or run a fresh CLI session to refresh.
+          </span>
+        </div>
+      ) : null}
+
       <div className="flex items-center justify-between gap-2">
         <div
           role="tablist"
