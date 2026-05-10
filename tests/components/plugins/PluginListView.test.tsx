@@ -283,4 +283,35 @@ describe("PluginListView", () => {
     expect(input.className).toContain("focus-visible:ring-accent");
     expect(input.className).not.toMatch(/(^|\s)focus:outline-none(\s|$)/);
   });
+
+  // UX bug: WebView2 (Tauri's webview) does not consistently honor the
+  // `<input type=search>` browser-default Escape-to-clear behavior, and
+  // even when it does, focus jumps off the input — the user has to click
+  // back into the field before they can type a new query. Wire an
+  // explicit Escape handler so the field clears and stays focused.
+  // Mirrors the McpPanel fix in PR #151.
+  it("Escape clears the search query while keeping focus on the input", () => {
+    render(<PluginListView />);
+    const input = screen.getByTestId("plugin-search") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "alpha" } });
+    expect(input.value).toBe("alpha");
+    input.focus();
+    expect(document.activeElement).toBe(input);
+    const evt = fireEvent.keyDown(input, { key: "Escape" });
+    expect(evt).toBe(false); // default prevented
+    expect(input.value).toBe("");
+    expect(document.activeElement).toBe(input);
+  });
+
+  // The Escape handler is gated on a non-empty query so an empty-state
+  // Esc keystroke does NOT preventDefault — leaves room for outer
+  // dialog/modal handlers to receive it.
+  it("Escape on an empty search field is a no-op (does not preventDefault)", () => {
+    render(<PluginListView />);
+    const input = screen.getByTestId("plugin-search") as HTMLInputElement;
+    expect(input.value).toBe("");
+    const evt = fireEvent.keyDown(input, { key: "Escape" });
+    expect(evt).toBe(true); // default NOT prevented
+    expect(input.value).toBe("");
+  });
 });
