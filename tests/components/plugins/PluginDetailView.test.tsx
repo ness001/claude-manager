@@ -138,6 +138,21 @@ describe("PluginDetailView", () => {
     }
   });
 
+  // WCAG 2.4.7 (Focus Visible): the two header action buttons (Open in File
+  // Browser, Open in VS Code) are wired interactive controls that shell out
+  // to the OS — but they had no focus ring at all, relying on the browser
+  // default which Tauri's WebView renders inconsistently across platforms.
+  // Mirrors PRs #117 / #118 / #119 / #125 / #126 / #128 / #129 / #132 / #133.
+  it("header action buttons expose a visible focus ring (WCAG 2.4.7)", () => {
+    render(<PluginDetailView plugin={makeDetail()} />);
+    for (const id of ["open-folder-btn", "open-vscode-btn"]) {
+      const btn = screen.getByTestId(id);
+      expect(btn.className).toContain("focus-visible:outline-none");
+      expect(btn.className).toContain("focus-visible:ring-2");
+      expect(btn.className).toContain("focus-visible:ring-accent");
+    }
+  });
+
   // WAI-ARIA APG "Tabs" pattern (automatic activation): the tablist needs
   // roving tabindex + arrow / Home / End key support, and the panel must
   // declare role=tabpanel + aria-labelledby pointing at the active tab.
