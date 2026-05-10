@@ -229,4 +229,19 @@ describe("PluginListView", () => {
     expect(btn).toBeDisabled();
     expect(btn).toHaveAttribute("title");
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): each header button has a fully readable
+  // text label ("Install Plugin", "Check for Updates"), so the leading
+  // lucide icon is decorative — without aria-hidden, screen readers may
+  // announce the SVG's computed name redundantly. Mirrors the SkillCard
+  // (PR #96), McpServerCard, and PluginCard fixes.
+  it("decorative icons inside header buttons are aria-hidden", () => {
+    render(<PluginListView />);
+    for (const id of ["install-plugin-btn", "check-updates-btn"]) {
+      const btn = screen.getByTestId(id);
+      const svg = btn.querySelector("svg");
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
 });
