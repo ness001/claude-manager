@@ -92,7 +92,11 @@ export function SystemHealth({
         System Health
       </h3>
       <ul className="flex flex-col gap-1.5 text-xs">
-        <Indicator label="MCP" status={mcpStatus} value={`${mcpCount} servers`} />
+        <Indicator
+          label="MCP"
+          status={mcpStatus}
+          value={`${mcpCount} ${mcpCount === 1 ? "server" : "servers"}`}
+        />
         <Indicator label="Plugins" status={pluginStatus} value={`${pluginCount} installed`} />
         <Indicator
           label="API"
