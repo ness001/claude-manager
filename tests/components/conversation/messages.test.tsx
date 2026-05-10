@@ -192,6 +192,18 @@ describe("ToolCallBlock", () => {
     expect(b).toBeTruthy();
     expect(a).not.toBe(b);
   });
+
+  // WCAG 2.4.7 Focus Visible — keyboard users tabbing into a tool-call entry
+  // need a visible focus indicator on the disclosure toggle (the only
+  // interactive element in the block). Without focus-visible:ring, Tab
+  // landed silently and users couldn't tell the toggle was focused before
+  // pressing Enter/Space. Mirrors PRs #17/#45/#48/#49/#56/#57/#67/#111/#112/#113.
+  it("toggle button has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<ToolCallBlock toolName="Bash" toolInput={{ cmd: "ls" }} />);
+    const toggle = screen.getByTestId("tool-call-toggle");
+    expect(toggle.className).toContain("focus-visible:ring-2");
+    expect(toggle.className).toContain("focus-visible:ring-accent");
+  });
 });
 
 describe("SystemDivider", () => {
