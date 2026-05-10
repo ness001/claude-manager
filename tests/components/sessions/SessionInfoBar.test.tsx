@@ -156,6 +156,27 @@ describe("SessionInfoBar", () => {
     expect(screen.getByTestId("action-open-vscode")).toBeDisabled();
   });
 
+  // WCAG 1.4.11 (3:1 contrast for non-text UI components / state indicators):
+  // the dead-CWD warning is a state indicator. Using `text-status-yellow`
+  // (#eab308 light) on `bg-bg-secondary` (#f8f9fa) gives ~1.7:1 — fails 1.4.11.
+  // Fix uses Tailwind's `text-yellow-700` (#a16207 ≈ 4.5:1 on the same surface)
+  // for light mode and falls back to `dark:text-status-yellow` (the pale
+  // #f9e2af) for dark mode where ~10:1 is comfortably above the bar.
+  it("dead-CWD warning icon uses contrast-safe yellow (WCAG 1.4.11)", async () => {
+    existsMock.mockResolvedValue(false);
+    render(
+      <SessionInfoBar
+        session={makeSession({ state: "ended", cwd: "/missing/path" })}
+      />,
+    );
+    const warning = await screen.findByTestId("dead-cwd-warning");
+    // Must include the darker light-mode token; must NOT use the bare
+    // `text-status-yellow` class (which was the failing color).
+    expect(warning.className).toContain("text-yellow-700");
+    expect(warning.className).toContain("dark:text-status-yellow");
+    expect(warning.className).not.toMatch(/(^|\s)text-status-yellow(\s|$)/);
+  });
+
   it("name field is editable and commits to the store on blur", () => {
     const session = makeSession({ sessionId: "edit-me", displayName: "Old" });
     useSessionStore.setState({ sessions: [session] });
