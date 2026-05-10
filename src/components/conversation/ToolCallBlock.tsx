@@ -5,7 +5,7 @@
 // inside a collapsible `<details>`. When the paired `tool_result` reports
 // `is_error: true`, the block gets a red left border.
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 interface ToolCallBlockProps {
@@ -22,6 +22,7 @@ export function ToolCallBlock({
   isError,
 }: ToolCallBlockProps) {
   const [open, setOpen] = useState(false);
+  const bodyId = useId();
   const borderClass = isError
     ? "border-l-status-red"
     : "border-l-status-blue";
@@ -38,6 +39,7 @@ export function ToolCallBlock({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-1 text-left text-text-primary"
         aria-expanded={open}
+        aria-controls={bodyId}
       >
         <ChevronRight
           size={14}
@@ -53,6 +55,7 @@ export function ToolCallBlock({
       </button>
       {open && (
         <div
+          id={bodyId}
           data-testid="tool-call-body"
           className="mt-2 flex flex-col gap-2"
         >
