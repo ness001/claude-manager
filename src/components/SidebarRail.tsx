@@ -39,6 +39,11 @@ const ITEMS: RailItemConfig[] = [
  * decoupled, matching the WAI-ARIA APG keyboard guidance for vertical
  * navigation rails. Without this, keyboard users were trapped Tab-stepping
  * through all 6 items with no way to jump.
+ *
+ * Tab model: only the active rail item is in the Tab sequence
+ * (`tabIndex=0`); the rest are `tabIndex=-1`. This is the standard WAI-ARIA
+ * roving-tabindex pattern — without it, Tab walks all 6 items one at a time
+ * and the arrow-key roving above is incomplete.
  */
 export function SidebarRail() {
   const activeSection = useNavigationStore((s) => s.activeSection);
@@ -79,6 +84,7 @@ export function SidebarRail() {
           Icon={Icon}
           shortcut={shortcut}
           active={activeSection === section}
+          tabIndex={activeSection === section ? 0 : -1}
           onClick={() => navigateTo(section)}
           onKeyDown={(e) => onKeyDown(e, idx)}
           buttonRef={(el) => {
