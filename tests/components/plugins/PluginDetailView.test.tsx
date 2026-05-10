@@ -1,7 +1,7 @@
 // Tests for PluginDetailView — tab switching renders the correct tab body.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, act } from "@testing-library/react";
 
 import { PluginDetailView } from "../../../src/components/plugins/PluginDetailView";
 import type { PluginDetail } from "../../../src/lib/plugin-types";
@@ -94,6 +94,39 @@ describe("PluginDetailView", () => {
     expect(openShellMock).toHaveBeenCalledWith(
       "vscode://file//cache/official/alpha/1.0.0",
     );
+  });
+
+  // Regression: openShell rejects when the install path is missing
+  // (broken plugin), the OS has no handler for vscode:// (VS Code not
+  // installed), or the Tauri shell allowlist forbids the path. The
+  // handlers used to only `console.error` — the user clicked, nothing
+  // happened, and they had no idea why. Surface inline as role=alert.
+  // Mirrors SkillCard / SessionInfoBar.
+  it("Open in File Browser surfaces an error inline when openShell rejects", async () => {
+    openShellMock.mockReset().mockRejectedValue(new Error("path not found"));
+    render(<PluginDetailView plugin={makeDetail()} />);
+    expect(screen.queryByTestId("plugin-open-error")).toBeNull();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("open-folder-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const err = screen.getByTestId("plugin-open-error");
+    expect(err.getAttribute("role")).toBe("alert");
+    expect(err.textContent).toContain("path not found");
+  });
+
+  it("Open in VS Code surfaces an error inline when openShell rejects", async () => {
+    openShellMock.mockReset().mockRejectedValue(new Error("no vscode handler"));
+    render(<PluginDetailView plugin={makeDetail()} />);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("open-vscode-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const err = screen.getByTestId("plugin-open-error");
+    expect(err.getAttribute("role")).toBe("alert");
+    expect(err.textContent).toContain("no vscode handler");
   });
 
   // WCAG 2.4.7 Focus Visible: tab buttons must show a keyboard-focus ring.

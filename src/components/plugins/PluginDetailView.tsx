@@ -67,14 +67,25 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
   const tabId = (t: Tab) => `${idBase}-tab-${t}`;
   const panelId = (t: Tab) => `${idBase}-panel-${t}`;
 
+  // Surface failures inline. `openShell` rejects when the install path is
+  // missing (broken plugin), the OS has no handler for the URI scheme
+  // (VS Code not installed → vscode:// has no registered handler), or the
+  // Tauri shell allowlist forbids the path. Previously these failures were
+  // only `console.error`'d — the user clicked Open in File Browser / VS
+  // Code, nothing happened, and they had no idea why. Mirrors SkillCard
+  // and SessionInfoBar `openError` patterns.
+  const [openError, setOpenError] = useState<string | null>(null);
+
   const openInFileBrowser = async () => {
+    setOpenError(null);
     try {
       await openShell(plugin.installPath);
     } catch (err) {
-      console.error("Failed to open install path:", err);
+      setOpenError(err instanceof Error ? err.message : String(err));
     }
   };
   const openInVsCode = async () => {
+    setOpenError(null);
     try {
       // The vscode://file/ URI scheme is RFC 3986; Windows paths like
       // "C:\Users\..." must use forward slashes, otherwise VS Code's URI
@@ -82,7 +93,7 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
       const uriPath = plugin.installPath.replace(/\\/g, "/");
       await openShell(`vscode://file/${uriPath}`);
     } catch (err) {
-      console.error("Failed to open in VS Code:", err);
+      setOpenError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -128,6 +139,16 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
         </div>
         <p className="text-sm text-text-secondary">{plugin.description}</p>
       </header>
+
+      {openError !== null && (
+        <p
+          data-testid="plugin-open-error"
+          role="alert"
+          className="text-xs text-status-red"
+        >
+          Couldn't open: {openError}
+        </p>
+      )}
 
       <nav
         data-testid="tab-bar"
