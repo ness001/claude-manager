@@ -3,7 +3,7 @@
 // search bar. Body: list of SkillCards. Info box at the bottom links the
 // reader to the Plugins panel for plugin-bundled skills.
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { open as openShell } from "@tauri-apps/plugin-shell";
 import { homeDir, join } from "@tauri-apps/api/path";
@@ -23,6 +23,13 @@ export function SkillsListView() {
   const isLoading = useSkillStore((s) => s.isLoading);
   const navigateTo = useNavigationStore((s) => s.navigateTo);
 
+  // Inline error surface for the Create Skill button. openShell rejects when
+  // the directory is missing, the Tauri shell allowlist denies, or no OS file
+  // browser handler is registered — without an inline alert the button
+  // appears to do nothing on click. Mirrors SkillCard (skill-open-error) and
+  // PluginDetailView (plugin-open-error, PR #168).
+  const [createError, setCreateError] = useState<string | null>(null);
+
   const filtered = useMemo(
     () => filterSkills(skills, searchQuery),
     [skills, searchQuery],
@@ -33,12 +40,13 @@ export function SkillsListView() {
     // directory)". Best-effort open of the skills root; user creates the
     // subdirectory + SKILL.md themselves. `openShell` does NOT expand `~`,
     // so resolve $HOME first.
+    setCreateError(null);
     try {
       const home = await homeDir();
       const abs = await join(home, ".claude", "skills");
       await openShell(abs);
     } catch (err) {
-      console.error("Failed to open skills directory:", err);
+      setCreateError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -73,6 +81,15 @@ export function SkillsListView() {
             {SKILLS_PATH}
           </code>
         </div>
+        {createError !== null && (
+          <p
+            data-testid="skill-create-error"
+            role="alert"
+            className="text-xs text-status-red"
+          >
+            Couldn't open skills directory: {createError}
+          </p>
+        )}
         <div className="relative">
           <Search
             size={14}
