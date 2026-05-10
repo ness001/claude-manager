@@ -67,10 +67,15 @@ export function McpServerCard({
           type="button"
           data-testid="expand-toggle"
           aria-label={expanded ? "Collapse" : "Expand"}
+          aria-expanded={expanded}
           onClick={() => setExpanded((e) => !e)}
-          className="text-text-muted hover:text-text-primary"
+          className="rounded-sm text-text-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          {expanded ? (
+            <ChevronDown size={14} aria-hidden="true" />
+          ) : (
+            <ChevronRight size={14} aria-hidden="true" />
+          )}
         </button>
         <StatusDot state={server.status} />
         <span className="truncate text-sm font-medium text-text-primary">
