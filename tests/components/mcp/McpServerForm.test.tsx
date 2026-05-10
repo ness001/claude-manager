@@ -390,4 +390,55 @@ describe("McpServerForm", () => {
     const err = screen.getByTestId("form-error");
     expect(err.getAttribute("role")).toBe("alert");
   });
+
+  // a11y: role="dialog" alone tells assistive tech the rest of the page is
+  // still navigable. The backdrop here behaves modally (covers the page,
+  // captures clicks, Esc closes), so it must declare aria-modal="true".
+  // Also: the title <h2> already names the dialog visibly — point
+  // aria-labelledby at it instead of duplicating the text via aria-label
+  // (WCAG 2.5.3 Label in Name).
+  it("backdrop is announced as modal and labelled by the visible heading", () => {
+    render(
+      <McpServerForm
+        initial={null}
+        existingNames={EMPTY_NAMES}
+        cwd="/tmp"
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    const backdrop = screen.getByTestId("mcp-form-backdrop");
+    expect(backdrop.getAttribute("role")).toBe("dialog");
+    expect(backdrop.getAttribute("aria-modal")).toBe("true");
+    const labelledBy = backdrop.getAttribute("aria-labelledby");
+    expect(labelledBy).not.toBeNull();
+    const titleEl = document.getElementById(labelledBy!);
+    expect(titleEl).not.toBeNull();
+    expect(titleEl!.textContent).toBe("Add MCP Server");
+    // Old aria-label removed — having both is redundant; aria-labelledby wins
+    // anyway but keeping the duplicate would be a sign of stale code.
+    expect(backdrop.getAttribute("aria-label")).toBeNull();
+  });
+
+  it("edit-mode dialog title flips to 'Edit MCP Server' and aria-labelledby tracks it", () => {
+    render(
+      <McpServerForm
+        initial={{
+          name: "x",
+          scope: "user",
+          type: "stdio",
+          command: "npx",
+          args: [],
+          env: {},
+        }}
+        existingNames={EMPTY_NAMES}
+        cwd="/tmp"
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    const backdrop = screen.getByTestId("mcp-form-backdrop");
+    const titleEl = document.getElementById(backdrop.getAttribute("aria-labelledby")!);
+    expect(titleEl!.textContent).toBe("Edit MCP Server");
+  });
 });
