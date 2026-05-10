@@ -132,7 +132,7 @@ function MaskedValue({
         aria-label={ariaLabel}
         aria-pressed={revealed}
         onClick={() => setRevealed((r) => !r)}
-        className="text-text-muted hover:text-text-primary"
+        className="rounded-sm text-text-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         {revealed ? <EyeOff size={12} aria-hidden="true" /> : <Eye size={12} aria-hidden="true" />}
       </button>
