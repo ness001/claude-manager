@@ -149,6 +149,7 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           type="button"
           role="switch"
           aria-checked={toggleOn}
+          aria-label={toggleOn ? `Disable ${plugin.name}` : `Enable ${plugin.name}`}
           data-testid="enable-toggle"
           disabled={toggleDisabled}
           onClick={(e) => {
