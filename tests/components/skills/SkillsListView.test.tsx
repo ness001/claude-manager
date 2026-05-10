@@ -242,4 +242,41 @@ describe("SkillsListView", () => {
     expect(evt).toBe(true); // default NOT prevented
     expect(input.value).toBe("");
   });
+
+  // Defect: openShell rejection (missing dir, Tauri shell allowlist denial,
+  // no OS file-browser handler) was swallowed into console.error — the user
+  // clicked the button and got zero feedback. Mirrors PR #168 (PluginDetailView
+  // Open in File Browser/VS Code silent failure) and the SkillCard
+  // skill-open-error pattern.
+  it("Create Skill rejection surfaces an inline alert", async () => {
+    openShellMock.mockRejectedValueOnce(new Error("ENOENT"));
+    render(<SkillsListView />);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("create-skill-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const alert = screen.getByTestId("skill-create-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toContain("ENOENT");
+  });
+
+  it("a successful retry clears the prior Create Skill error", async () => {
+    openShellMock
+      .mockRejectedValueOnce(new Error("first"))
+      .mockResolvedValueOnce(undefined);
+    render(<SkillsListView />);
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("create-skill-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId("skill-create-error")).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("create-skill-btn"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.queryByTestId("skill-create-error")).toBeNull();
+  });
 });
