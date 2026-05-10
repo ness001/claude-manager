@@ -289,6 +289,10 @@ function ActionButton({
     : prominent
       ? "border-status-error text-status-error hover:bg-status-error hover:text-white"
       : "border-border text-text-secondary hover:bg-bg-tertiary";
+  // WCAG 2.4.7 Focus Visible — all action buttons here (View Tools / Logs /
+  // Retry / Cancel / Edit / Remove) are keyboard targets but rely on the
+  // browser default ring, which Tauri's WebView renders inconsistently. Use
+  // the same focus-visible trio as #117 / #118 / #119 / #125 / #126.
   return (
     <button
       type="button"
@@ -297,7 +301,7 @@ function ActionButton({
       disabled={disabled}
       aria-disabled={disabled || undefined}
       title={title}
-      className={`rounded border px-2 py-1 text-[11px] ${cls}`}
+      className={`rounded border px-2 py-1 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${cls}`}
     >
       {children}
     </button>
