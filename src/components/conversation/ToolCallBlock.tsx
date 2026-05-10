@@ -37,7 +37,7 @@ export function ToolCallBlock({
         type="button"
         data-testid="tool-call-toggle"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-1 text-left text-text-primary"
+        className="flex w-full items-center gap-1 rounded text-left text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         aria-expanded={open}
         aria-controls={bodyId}
       >
