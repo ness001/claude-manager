@@ -208,4 +208,38 @@ describe("SkillsListView", () => {
     expect(empty.getAttribute("role")).toBe("status");
     expect(empty.getAttribute("aria-live")).toBe("polite");
   });
+
+  // UX bug: WebView2 (Tauri's webview) does not consistently honor the
+  // `<input type=search>` browser-default Escape-to-clear behavior, and
+  // even when it does, focus jumps off the input — the user has to click
+  // back into the field before they can type a new query. Wire an
+  // explicit Escape handler so the field clears and stays focused.
+  // Mirrors PRs #151 (McpPanel), #152 (PluginListView), #153 (SessionSearch).
+  it("Escape clears the search query while keeping focus on the input", () => {
+    useSkillStore.setState({
+      skills: [makeSkill({ name: "alpha" })],
+      searchQuery: "alpha",
+    });
+    render(<SkillsListView />);
+    const input = screen.getByTestId("skill-search") as HTMLInputElement;
+    expect(input.value).toBe("alpha");
+    input.focus();
+    expect(document.activeElement).toBe(input);
+    const evt = fireEvent.keyDown(input, { key: "Escape" });
+    expect(evt).toBe(false); // default prevented
+    expect(useSkillStore.getState().searchQuery).toBe("");
+    expect(document.activeElement).toBe(input);
+  });
+
+  // The Escape handler is gated on a non-empty query so an empty-state
+  // Esc keystroke does NOT preventDefault — leaves room for outer
+  // dialog/modal handlers to receive it.
+  it("Escape on an empty search field is a no-op (does not preventDefault)", () => {
+    render(<SkillsListView />);
+    const input = screen.getByTestId("skill-search") as HTMLInputElement;
+    expect(input.value).toBe("");
+    const evt = fireEvent.keyDown(input, { key: "Escape" });
+    expect(evt).toBe(true); // default NOT prevented
+    expect(input.value).toBe("");
+  });
 });
