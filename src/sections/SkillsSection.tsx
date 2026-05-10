@@ -11,7 +11,11 @@ export function SkillsSection() {
   }, [loadSkills]);
 
   return (
-    <section data-testid="skills-section" className="flex h-full">
+    <section
+      data-testid="skills-section"
+      aria-label="Custom Skills"
+      className="flex h-full"
+    >
       <SkillsListView />
     </section>
   );
