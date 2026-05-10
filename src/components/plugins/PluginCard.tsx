@@ -122,6 +122,15 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
             Files missing at install path. Reinstall or remove this plugin.
           </div>
           <div className="flex gap-2">
+            {/* TODO(ui-defect-sweep#L293): wire Reinstall to a `claude plugins
+              * install <name>` IPC. Tracked in
+              * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md (the
+              * Reinstall checkbox is currently marked done because the stub
+              * was deemed acceptable until the IPC ships, but the underlying
+              * IPC work is still outstanding). Per CLAUDE.md R2 (Orphan-
+              * placeholder rule), every disabled stub must declare its
+              * wire-up tracker inline so the placeholder isn't an
+              * undiscoverable orphan. */}
             <button
               type="button"
               data-testid="reinstall-btn"
@@ -131,6 +140,10 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
             >
               Reinstall
             </button>
+            {/* TODO(ui-defect-sweep#L294): wire Remove to a `claude plugins
+              * uninstall <name>` IPC. Tracked in
+              * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md ("Remove
+              * button has no onClick handler"). Per CLAUDE.md R2. */}
             <button
               type="button"
               data-testid="remove-btn"
