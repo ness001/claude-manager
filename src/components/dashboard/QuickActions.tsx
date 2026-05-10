@@ -16,10 +16,22 @@ interface ActionDef {
   variant: "accent" | "secondary";
 }
 
+// QuickActions buttons render `disabled` until backend wiring lands. Per
+// CLAUDE.md R2 (Orphan-placeholder rule), every disabled stub must declare
+// the task ID that will wire it up so the placeholder isn't an
+// undiscoverable orphan. Phase 4 task IDs:
+//   - New Session    → T4.1 (Launcher) + T4.2 (Dialog UI)
+//   - Resume Latest  → T4.5 (Command Palette)
+//   - Open CWD       → T4.5 (Command Palette)
+//   - Rebuild Stats  → T4.5 (Command Palette)
 const ACTIONS: ActionDef[] = [
+  // TODO(T4.1, T4.2): wire New Session button to launch the New Session dialog.
   { id: "new-session", label: "New Session", icon: <Plus size={14} aria-hidden="true" />, variant: "accent" },
+  // TODO(T4.5): wire Resume Latest to the Command Palette's resume-latest action.
   { id: "resume-latest", label: "Resume Latest", icon: <Play size={14} aria-hidden="true" />, variant: "secondary" },
+  // TODO(T4.5): wire Open CWD to the Command Palette's open-config-directory action.
   { id: "open-cwd", label: "Open CWD", icon: <FolderOpen size={14} aria-hidden="true" />, variant: "secondary" },
+  // TODO(T4.5): wire Rebuild Stats to the Command Palette's rebuild-stats action.
   { id: "rebuild-stats", label: "Rebuild Stats", icon: <RefreshCw size={14} aria-hidden="true" />, variant: "secondary" },
 ];
 
