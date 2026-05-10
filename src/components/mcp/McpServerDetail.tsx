@@ -130,10 +130,11 @@ function MaskedValue({
         type="button"
         data-testid={`${testid}-toggle`}
         aria-label={ariaLabel}
+        aria-pressed={revealed}
         onClick={() => setRevealed((r) => !r)}
         className="text-text-muted hover:text-text-primary"
       >
-        {revealed ? <EyeOff size={12} /> : <Eye size={12} />}
+        {revealed ? <EyeOff size={12} aria-hidden="true" /> : <Eye size={12} aria-hidden="true" />}
       </button>
     </span>
   );
