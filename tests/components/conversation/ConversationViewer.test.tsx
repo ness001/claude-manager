@@ -317,4 +317,22 @@ describe("ConversationViewer", () => {
     const elapsed = performance.now() - t0;
     expect(elapsed).toBeLessThan(2000);
   });
+
+  // WCAG 2.4.7 Focus Visible — the turn-input previously used
+  // `outline-none focus:ring-1 focus:ring-accent`, which (a) strips the
+  // browser default outline for *every* focus including mouse and (b)
+  // shows a 1-px ring on every focus event. Mirrors the focus-ring trio
+  // fix landed in PRs #138 / #139 / #140 / #141 — same defect, same swap.
+  it("turn-input has a focus-visible ring (WCAG 2.4.7)", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-input"));
+    const input = screen.getByTestId("turn-input");
+    expect(input.className).toContain("focus-visible:outline-none");
+    expect(input.className).toContain("focus-visible:ring-2");
+    expect(input.className).toContain("focus-visible:ring-accent");
+    // Regression guard: the old non-`focus-visible` classes are gone.
+    expect(input.className).not.toMatch(/(^|\s)outline-none(\s|$)/);
+    expect(input.className).not.toMatch(/(^|\s)focus:ring-1(\s|$)/);
+  });
 });

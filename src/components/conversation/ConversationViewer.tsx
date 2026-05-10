@@ -468,7 +468,7 @@ function TurnInput({
           (e.target as HTMLInputElement).blur();
         }
       }}
-      className="w-12 bg-bg-tertiary px-1 text-right outline-none focus:ring-1 focus:ring-accent rounded"
+      className="w-12 bg-bg-tertiary px-1 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
       aria-label="Jump to turn"
     />
   );
