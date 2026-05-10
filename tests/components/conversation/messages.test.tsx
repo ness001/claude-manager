@@ -282,6 +282,45 @@ describe("AssistantMessage", () => {
     expect(label.id).toBe(labelId);
     expect(label.textContent).toBe("Claude");
   });
+
+  // Functional bug: the onClick handler routes assistant-markdown links
+  // through plugin-shell so the WebView never navigates away. But keyboard
+  // users who Tab to a focused <a> and press Enter trigger the BROWSER'S
+  // default link-activation, which bypasses onClick entirely and would
+  // navigate the WebView. Mirror the click handoff in onKeyDown so Enter
+  // (and Space, for button-like parity) opens via the OS shell instead.
+  it("Enter on a focused link routes through plugin-shell (no WebView nav)", () => {
+    openShellMock.mockReset().mockResolvedValue(undefined);
+    render(
+      <AssistantMessage text="See [Anthropic](https://www.anthropic.com)." />,
+    );
+    const link = screen.getByTestId("assistant-link");
+    const evt = fireEvent.keyDown(link, { key: "Enter" });
+    expect(evt).toBe(false); // default prevented
+    expect(openShellMock).toHaveBeenCalledWith("https://www.anthropic.com");
+  });
+
+  it("Space on a focused link routes through plugin-shell (no WebView nav)", () => {
+    openShellMock.mockReset().mockResolvedValue(undefined);
+    render(
+      <AssistantMessage text="See [Anthropic](https://www.anthropic.com)." />,
+    );
+    const link = screen.getByTestId("assistant-link");
+    const evt = fireEvent.keyDown(link, { key: " " });
+    expect(evt).toBe(false);
+    expect(openShellMock).toHaveBeenCalledWith("https://www.anthropic.com");
+  });
+
+  it("non-activation keys on a focused link are a no-op", () => {
+    openShellMock.mockReset().mockResolvedValue(undefined);
+    render(
+      <AssistantMessage text="See [Anthropic](https://www.anthropic.com)." />,
+    );
+    const link = screen.getByTestId("assistant-link");
+    fireEvent.keyDown(link, { key: "Tab" });
+    fireEvent.keyDown(link, { key: "a" });
+    expect(openShellMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("ToolCallBlock", () => {
