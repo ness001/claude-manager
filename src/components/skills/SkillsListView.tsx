@@ -84,6 +84,19 @@ export function SkillsListView() {
             data-testid="skill-search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              // WebView2 (Tauri's webview) does not consistently honor the
+              // <input type=search> browser-default Escape-to-clear behavior,
+              // and even when it does, focus jumps off the input — the user
+              // has to click back into the field before they can type a new
+              // query. Wire an explicit Escape handler so the field clears
+              // and stays focused. Mirrors PRs #151 (McpPanel), #152
+              // (PluginListView), #153 (SessionSearch).
+              if (e.key === "Escape" && searchQuery !== "") {
+                e.preventDefault();
+                setSearchQuery("");
+              }
+            }}
             placeholder="Search skills by name or description…"
             aria-label="Search skills"
             className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
