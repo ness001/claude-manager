@@ -186,6 +186,11 @@ export function SessionListPanel() {
       data-testid="session-list-panel"
       className="flex h-full w-[260px] shrink-0 flex-col gap-2 border-r border-border bg-sidebar-bg p-3"
     >
+      {/* TODO(T4.1, T4.2): wire New Session button to launch the New Session
+        * dialog. Phase 4 plan tasks: T4.1 (New Session Dialog Types & Launcher),
+        * T4.2 (New Session Dialog UI). Per CLAUDE.md R2 (Orphan-placeholder
+        * rule), every disabled stub must declare its wire-up task ID inline
+        * so the placeholder isn't an undiscoverable orphan. */}
       <button
         type="button"
         data-testid="new-session-btn"
