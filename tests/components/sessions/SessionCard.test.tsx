@@ -166,6 +166,38 @@ describe("SessionCard", () => {
     expect(card.className).toContain("bg-sidebar-active");
   });
 
+  // WCAG 4.1.2 (Name, Role, Value) — the selected card had a visual marker
+  // ("bg-sidebar-active border-accent/40") and a data-selected attribute,
+  // but no programmatic indication of its selected/current state. Screen
+  // readers therefore announced every card identically, leaving users with
+  // no way to know which session was active without listening through every
+  // entry in the list.
+  //
+  // The session list is functionally a single-select set (one current
+  // session at a time), so the proper ARIA semantic is `aria-current="true"`
+  // on the selected card — the WAI-ARIA APG pattern for "current item in a
+  // set". `aria-pressed` would imply a toggle, which doesn't match the
+  // single-select behavior.
+  //
+  // Setting the value to `undefined` (vs `"false"`) on unselected cards is
+  // intentional: WAI-ARIA recommends omitting `aria-current` entirely on
+  // non-current items so AT can distinguish "not the current one" from
+  // "explicitly marked as non-current" — the latter would clutter the
+  // accessibility tree across a long list.
+  it("selected card sets aria-current='true'; unselected card omits it (WCAG 4.1.2)", () => {
+    const { unmount } = render(
+      <SessionCard session={makeSession()} selected={true} />,
+    );
+    expect(screen.getByTestId("session-card").getAttribute("aria-current")).toBe(
+      "true",
+    );
+    unmount();
+    render(<SessionCard session={makeSession()} selected={false} />);
+    expect(
+      screen.getByTestId("session-card").getAttribute("aria-current"),
+    ).toBeNull();
+  });
+
   it("status dot exposes session state to screen readers (WCAG 4.1.2 / 1.4.1)", () => {
     const states: Array<{ state: SessionState; label: string }> = [
       { state: "alive", label: "Alive" },

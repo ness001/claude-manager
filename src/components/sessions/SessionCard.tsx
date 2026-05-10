@@ -67,6 +67,7 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
       data-session-id={session.sessionId}
       data-state={session.state}
       data-selected={selected ? "true" : "false"}
+      aria-current={selected ? "true" : undefined}
       onClick={() => selectSession(session.sessionId)}
       style={style}
       className={[
