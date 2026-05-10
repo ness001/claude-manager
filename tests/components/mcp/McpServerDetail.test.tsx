@@ -56,6 +56,23 @@ describe("McpServerDetail", () => {
     expect(valueEl.textContent).toBe("•".repeat(8));
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): when masked, the visible text is 8
+  // U+2022 bullet glyphs ("••••••••"). Screen readers literally announce
+  // eight "bullet" characters — noisy and semantically meaningless. The
+  // <code> element gets an aria-label override so SR users hear
+  // "TOKEN value hidden" instead. When revealed, drop the override so
+  // the actual secret value is announced verbatim.
+  it("masked <code> exposes a meaningful aria-label and clears it when revealed", () => {
+    render(<McpServerDetail server={FIX_CONNECTED} />);
+    const valueEl = screen.getByTestId("env-value-TOKEN");
+    expect(valueEl.getAttribute("aria-label")).toBe("TOKEN value hidden");
+    fireEvent.click(screen.getByTestId("env-value-TOKEN-toggle"));
+    // Revealed: aria-label removed so SR reads the actual code text.
+    expect(valueEl.hasAttribute("aria-label")).toBe(false);
+    fireEvent.click(screen.getByTestId("env-value-TOKEN-toggle"));
+    expect(valueEl.getAttribute("aria-label")).toBe("TOKEN value hidden");
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): when env vars list multiple secrets,
   // a generic "Reveal value" / "Hide value" label gives SR users no way
   // to tell the toggles apart. Now the toggle is named after its env-var
