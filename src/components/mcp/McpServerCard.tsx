@@ -250,10 +250,16 @@ function StatusDot({ state }: { state: McpServerState }) {
         return "animate-pulse bg-status-warning";
     }
   })();
+  // WCAG 1.4.1 (Use of Color) + 4.1.2 (Name, Role, Value): the colored dot
+  // is the only programmatic state indicator on the card header. Without
+  // role="img" the bare aria-label is attached to a generic <span>, which
+  // most screen readers skip during element-by-element navigation. Mirrors
+  // SessionCard (PR #41) and PluginCard (status-dot tests).
   return (
     <span
       data-testid="status-dot"
       data-state={state}
+      role="img"
       aria-label={`status: ${state}`}
       className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${cls}`}
     />

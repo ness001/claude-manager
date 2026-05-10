@@ -275,6 +275,20 @@ describe("PluginListView", () => {
     expect(btn.className).toContain("focus-visible:ring-accent");
   });
 
+  // Disabled-state visual affordance — when Check for Updates is disabled
+  // (during an in-flight check, or when the plugin list is empty), the
+  // browser default cursor on a `<button disabled>` is still `default`,
+  // and the existing `hover:bg-bg-tertiary` rule still fires on hover —
+  // making the button look interactive when it isn't. Mirror the
+  // Install Plugin stub above (which uses `cursor-not-allowed`) and
+  // suppress the hover background while disabled.
+  it("Check for Updates shows disabled affordances (cursor + no hover bg)", () => {
+    render(<PluginListView />);
+    const btn = screen.getByTestId("check-updates-btn");
+    expect(btn.className).toContain("disabled:cursor-not-allowed");
+    expect(btn.className).toContain("disabled:hover:bg-transparent");
+  });
+
   // WCAG 2.4.7 Focus Visible — the search input previously used
   // `focus:outline-none focus:border-accent`, which (a) strips the browser
   // default outline for *every* focus including mouse, and (b) replaces it
