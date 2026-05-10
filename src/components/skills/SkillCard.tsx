@@ -60,6 +60,15 @@ export function SkillCard({ skill }: SkillCardProps) {
       <p className="text-xs text-text-secondary">{skill.description}</p>
       <code
         data-testid="skill-path"
+        // Path strings (e.g. C:\Users\…\.claude\skills\my-skill\skill.md)
+        // routinely overflow a card width and get clipped by `truncate`
+        // (text-overflow: ellipsis). Without a tooltip there's no way for
+        // a sighted user to recover the hidden tail — they'd have to open
+        // the file in VS Code or the file browser just to read where it
+        // lives. Mirror the visible string into `title` so hover / long-
+        // press surfaces the full path (and AT users continue to get the
+        // full string from the element's text content).
+        title={skill.skillMdPath}
         className="truncate rounded bg-bg-tertiary px-1.5 py-0.5 text-[11px] text-text-muted"
       >
         {skill.skillMdPath}
