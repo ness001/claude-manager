@@ -402,6 +402,7 @@ function KeyValueEditor({
       <button
         type="button"
         data-testid={`${testidPrefix}-add`}
+        aria-label={`Add ${fieldLabel} entry`}
         onClick={() => onChange([...entries, ["", ""]])}
         className="self-start rounded border border-border px-2 py-0.5 text-[11px] text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
