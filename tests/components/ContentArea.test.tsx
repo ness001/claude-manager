@@ -59,4 +59,27 @@ describe("ContentArea", () => {
       screen.queryByRole("heading", { level: 1, name: "MCP" }),
     ).not.toBeInTheDocument();
   });
+
+  // WCAG 2.4.1 / ARIA APG — the <main> landmark needs an accessible name so
+  // screen-reader landmark navigation can identify which of the six sections
+  // is mounted. Without aria-label, NVDA's "D" landmark cycle and the
+  // VoiceOver rotor announce only "main", indistinguishable across sections.
+  const labelCases: Array<{ section: Section; label: string }> = [
+    { section: "dashboard", label: "Dashboard" },
+    { section: "sessions", label: "Sessions" },
+    { section: "plugins", label: "Plugins" },
+    { section: "skills", label: "Skills" },
+    { section: "mcp", label: "MCP Servers" },
+    { section: "settings", label: "Settings" },
+  ];
+
+  it.each(labelCases)(
+    "main landmark aria-label is '$label' when activeSection is $section (WCAG 2.4.1)",
+    ({ section, label }) => {
+      useNavigationStore.getState().navigateTo(section);
+      render(<ContentArea />);
+      const main = screen.getByRole("main");
+      expect(main.getAttribute("aria-label")).toBe(label);
+    },
+  );
 });
