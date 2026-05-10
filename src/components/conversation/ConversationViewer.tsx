@@ -478,7 +478,15 @@ function TurnInput({
         }
       }}
       className="w-12 bg-bg-tertiary px-1 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
-      aria-label="Jump to turn"
+      // The previous aria-label was just "Jump to turn", which gave SR
+      // users the field's purpose but not the legal range. Embedding
+      // the bound makes the spin-button announcement actionable
+      // ("Jump to turn (1 to 12), spin button, 5") — without it, AT
+      // users had to discover the upper bound by trying values and
+      // hitting validation. Mirrors the input-context-in-name pattern
+      // (PRs #45 / #50 / #51 / #79 / #138 fixed the analogous gap on
+      // search inputs).
+      aria-label={`Jump to turn (1 to ${totalTurns})`}
     />
   );
 }
