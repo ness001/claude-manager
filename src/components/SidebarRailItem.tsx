@@ -16,6 +16,10 @@ export interface SidebarRailItemProps {
   /** Forwarded button ref — SidebarRail uses this to programmatically focus
    *  the next item on Arrow/Home/End. */
   buttonRef?: Ref<HTMLButtonElement>;
+  /** Tab index — SidebarRail uses this to implement WAI-ARIA roving tabindex
+   *  (only the active item is in the Tab order; arrow keys move focus among
+   *  the rest). */
+  tabIndex?: number;
 }
 
 /**
@@ -31,6 +35,7 @@ export function SidebarRailItem({
   shortcut,
   onKeyDown,
   buttonRef,
+  tabIndex,
 }: SidebarRailItemProps) {
   const base =
     "relative flex h-12 w-12 items-center justify-center border-l-[3px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset";
@@ -48,6 +53,7 @@ export function SidebarRailItem({
       aria-current={active ? "page" : undefined}
       title={title}
       data-active={active ? "true" : "false"}
+      tabIndex={tabIndex}
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={`${base} ${active ? activeClasses : inactiveClasses}`}
