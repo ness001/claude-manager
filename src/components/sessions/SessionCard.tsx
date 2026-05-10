@@ -112,7 +112,9 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
 
       <div className="flex items-center justify-between text-[11px] text-text-muted pl-4">
         <span data-testid="time-ago">{timeLabel}</span>
-        <span data-testid="message-count">{session.messageCount} msgs</span>
+        <span data-testid="message-count">
+          {session.messageCount} {session.messageCount === 1 ? "msg" : "msgs"}
+        </span>
       </div>
     </button>
   );
