@@ -132,6 +132,15 @@ export function McpPanel() {
       ) : filtered.length === 0 ? (
         <div
           data-testid="no-matches"
+          // Live region: this message appears as the user types into the
+          // search input above. Without role="status" + aria-live="polite",
+          // screen-reader users get NO feedback that their query produced
+          // zero results — they'd only find out by tabbing away to discover
+          // an empty result region. Mirrors PR #154 (PluginListView).
+          // "polite" so the announcement waits for typing pauses rather
+          // than firing on every keystroke.
+          role="status"
+          aria-live="polite"
           className="flex flex-1 items-center justify-center text-center text-sm text-text-muted"
         >
           No results for "{searchQuery}"
