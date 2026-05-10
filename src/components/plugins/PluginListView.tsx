@@ -86,10 +86,11 @@ export function PluginListView() {
                 void onCheckForUpdates();
               }}
               disabled={isChecking || plugins.length === 0}
+              aria-busy={isChecking}
               className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <RefreshCw size={14} aria-hidden="true" className={isChecking ? "animate-spin" : ""} />
-              Check for Updates
+              {isChecking ? "Checking…" : "Check for Updates"}
             </button>
           </div>
         </div>
