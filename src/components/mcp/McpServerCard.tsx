@@ -6,7 +6,7 @@
 // set varies per state. Shadowed servers (`isOverridden`) are dimmed
 // with an "Overridden by [scope]" badge.
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 import type { McpServer, McpServerState } from "../../lib/mcp-types";
@@ -36,6 +36,9 @@ export function McpServerCard({
 }: McpServerCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  // WAI-ARIA: a button with `aria-expanded` should also have `aria-controls`
+  // pointing to the disclosed region so SR users know what region toggles.
+  const detailId = useId();
 
   // Escape closes the Remove-confirm dialog without removing — same UX as
   // McpServerForm (PR #36). Without this, keyboard users have no fast escape
@@ -68,6 +71,7 @@ export function McpServerCard({
           data-testid="expand-toggle"
           aria-label={expanded ? "Collapse" : "Expand"}
           aria-expanded={expanded}
+          aria-controls={detailId}
           onClick={() => setExpanded((e) => !e)}
           className="rounded-sm text-text-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
@@ -93,7 +97,11 @@ export function McpServerCard({
         )}
       </div>
 
-      {expanded && <McpServerDetail server={server} />}
+      {expanded && (
+        <div id={detailId}>
+          <McpServerDetail server={server} />
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {server.status === "connected" && (
