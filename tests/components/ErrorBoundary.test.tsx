@@ -112,4 +112,28 @@ describe("ErrorBoundary", () => {
       errSpy.mockRestore();
     }
   });
+
+  // WCAG 1.4.11 Non-text Contrast (AA): the focus indicator must have ≥3:1
+  // contrast against adjacent colors. The 'Try again' button uses bg-accent
+  // as its background AND ring-accent for the focus ring — the ring is the
+  // same color as its own background, so it's invisible to keyboard users
+  // when focused. Adding a 2px ring-offset against the page background
+  // (bg-bg-primary) creates a clean visual separation in both themes.
+  // The Reload button is unaffected (it uses bg-bg-tertiary, so ring-accent
+  // already has adequate contrast against it).
+  it("'Try again' focus ring has an offset for contrast against bg-accent (WCAG 1.4.11)", () => {
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      render(
+        <ErrorBoundary>
+          <Boom />
+        </ErrorBoundary>,
+      );
+      const retry = screen.getByTestId("error-boundary-retry");
+      expect(retry.className).toContain("focus-visible:ring-offset-2");
+      expect(retry.className).toContain("focus-visible:ring-offset-bg-primary");
+    } finally {
+      errSpy.mockRestore();
+    }
+  });
 });
