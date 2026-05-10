@@ -60,6 +60,22 @@ describe("UserMessage", () => {
       "line two",
     );
   });
+
+  // WCAG 1.3.1 (Info and Relationships): the visible "You" label and the
+  // message body were two adjacent siblings with no programmatic
+  // relationship — AT users heard "You" as a free-floating uppercase
+  // fragment, then unrelated prose. Promote to role="region" +
+  // aria-labelledby pointing at the label span. Mirrors SummaryBanner.
+  it("exposes role='region' labelled by the 'You' span (a11y)", () => {
+    render(<UserMessage text="hi" />);
+    const bubble = screen.getByTestId("user-message");
+    expect(bubble.getAttribute("role")).toBe("region");
+    const labelId = bubble.getAttribute("aria-labelledby");
+    expect(labelId).toBeTruthy();
+    const label = screen.getByTestId("user-message-label");
+    expect(label.id).toBe(labelId);
+    expect(label.textContent).toBe("You");
+  });
 });
 
 describe("AssistantMessage", () => {
