@@ -100,4 +100,21 @@ describe("SidebarRail", () => {
     const btn = screen.getByRole("button", { name: "Dashboard" });
     expect(btn.className).toContain("focus-visible:ring-2");
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): each rail button is icon-only with its
+  // accessible name supplied by aria-label on the <button>. Without
+  // aria-hidden on the inner SVG, screen readers may announce the lucide
+  // icon's computed name (e.g. "LayoutDashboard") *in addition to* the
+  // button's aria-label, producing redundant noise like
+  // "Dashboard, LayoutDashboard, button". Mirrors PRs #96 (SkillCard) and
+  // #98 (PluginListView).
+  it("each rail button's icon SVG is aria-hidden", () => {
+    render(<SidebarRail />);
+    for (const label of labels) {
+      const btn = screen.getByRole("button", { name: label });
+      const svg = btn.querySelector("svg");
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
 });

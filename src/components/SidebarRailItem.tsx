@@ -4,7 +4,11 @@ export interface SidebarRailItemProps {
   /** Display label (used for aria-label and tooltip). */
   label: string;
   /** Lucide icon component. */
-  Icon: ComponentType<{ className?: string; size?: number }>;
+  Icon: ComponentType<{
+    className?: string;
+    size?: number;
+    "aria-hidden"?: boolean | "true" | "false";
+  }>;
   /** Whether this item represents the currently active section. */
   active: boolean;
   /** Click handler — typically dispatches navigation. */
@@ -43,7 +47,7 @@ export function SidebarRailItem({
       onClick={onClick}
       className={`${base} ${active ? activeClasses : inactiveClasses}`}
     >
-      <Icon size={20} />
+      <Icon size={20} aria-hidden="true" />
     </button>
   );
 }
