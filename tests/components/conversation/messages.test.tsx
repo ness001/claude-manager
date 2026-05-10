@@ -215,6 +215,45 @@ describe("SystemDivider", () => {
     expect(d.dataset.variant).toBe("compact");
     expect(d).toHaveTextContent("Context compacted");
   });
+
+  // WCAG 1.3.1 Info & Relationships — the divider is a thematic break in
+  // the conversation stream. Without role="separator" + aria-label, screen
+  // readers walk past the visual rule with no indication of structure
+  // (turn boundary or compaction) and the decorative <div> borders are
+  // pure presentation. Pair the role with aria-hidden on the visual rules
+  // so the label is the single accessible announcement.
+  it("turn variant exposes role=separator with the label as its accessible name (WCAG 1.3.1)", () => {
+    render(<SystemDivider text="— Turn — 1500ms —" turnNumber={3} />);
+    const d = screen.getByTestId("system-divider");
+    expect(d.getAttribute("role")).toBe("separator");
+    expect(d.getAttribute("aria-label")).toBe("— Turn 3 — 1500ms —");
+  });
+
+  // Regression for a pre-existing label-injection bug uncovered by the
+  // aria-label assertion above: the previous chained-`replace` approach
+  // matched "— Turn " a second time after the first pass had already
+  // produced "— Turn N —", yielding "— Turn N N —" for both shapes.
+  it("injects the turn number exactly once, even for the no-timing shape", () => {
+    render(<SystemDivider text="— Turn —" turnNumber={3} />);
+    const d = screen.getByTestId("system-divider");
+    expect(d).toHaveTextContent("— Turn 3 —");
+    expect(d).not.toHaveTextContent("Turn 3 3");
+    expect(d.getAttribute("aria-label")).toBe("— Turn 3 —");
+  });
+
+  it("compact variant exposes role=separator with the label as its accessible name (WCAG 1.3.1)", () => {
+    render(<SystemDivider text="--- Context compacted ---" />);
+    const d = screen.getByTestId("system-divider");
+    expect(d.getAttribute("role")).toBe("separator");
+    expect(d.getAttribute("aria-label")).toBe("--- Context compacted ---");
+  });
+
+  it("decorative rule lines flanking the label are aria-hidden", () => {
+    render(<SystemDivider text="— Turn —" turnNumber={1} />);
+    const d = screen.getByTestId("system-divider");
+    const rules = d.querySelectorAll("div[aria-hidden='true']");
+    expect(rules).toHaveLength(2);
+  });
 });
 
 describe("SummaryBanner", () => {
