@@ -11,6 +11,12 @@ vi.mock("@tauri-apps/plugin-fs", () => ({
   exists: (p: string) => existsMock(p),
 }));
 
+// plugin-shell open() is used by the now-wired open-cwd / open-vscode actions.
+const openMock = vi.fn();
+vi.mock("@tauri-apps/plugin-shell", () => ({
+  open: (...args: unknown[]) => openMock(...args),
+}));
+
 function makeSession(overrides: Partial<SessionMeta> = {}): SessionMeta {
   return {
     sessionId: overrides.sessionId ?? "id-x",
@@ -108,16 +114,21 @@ describe("SessionInfoBar", () => {
     expect(screen.getByTestId("action-resume-terminal")).toBeInTheDocument();
   });
 
-  it("all action buttons are disabled with a 'Coming soon' tooltip until handlers are wired", () => {
+  it("all action buttons are disabled with a 'Coming soon' tooltip until handlers are wired (except wired open-cwd / open-vscode)", () => {
     // Action wiring (terminal launch, SIGTERM, archive, …) is later-phase.
     // The defect: every button looks interactive but does nothing on click.
     // Fix: render `disabled` + `title="Coming soon"` so users can tell.
+    //
+    // open-cwd / open-vscode are now wired via @tauri-apps/plugin-shell and
+    // ARE interactive (when CWD exists). Skip them in this audit.
+    const WIRED = new Set(["action-open-cwd", "action-open-vscode"]);
     for (const state of ALL_STATES) {
       cleanup();
       render(<SessionInfoBar session={makeSession({ state })} />);
       const buttons = document.querySelectorAll('[data-testid^="action-"]');
       expect(buttons.length).toBeGreaterThan(0);
       for (const btn of Array.from(buttons)) {
+        if (WIRED.has(btn.getAttribute("data-testid") ?? "")) continue;
         expect(btn).toBeDisabled();
         expect(btn.getAttribute("title")).toBe("Coming soon");
       }
@@ -253,5 +264,58 @@ describe("SessionInfoBar", () => {
     expect(screen.getByTestId("message-count-badge")).toHaveTextContent(
       expected,
     );
+  });
+
+  // Functional gap: open-cwd / open-vscode were rendered `disabled` with a
+  // "Coming soon" tooltip even though @tauri-apps/plugin-shell is already
+  // allowlisted in capabilities and SkillCard uses the same pattern. Wire
+  // them now so the SessionInfoBar matches the rest of the app's CWD UX.
+  it("'Open CWD' invokes shell open with session.cwd when CWD exists", async () => {
+    openMock.mockReset().mockResolvedValue(undefined);
+    existsMock.mockResolvedValue(true);
+    render(<SessionInfoBar session={makeSession({ cwd: "/repos/foo" })} />);
+    const btn = screen.getByTestId("action-open-cwd") as HTMLButtonElement;
+    await waitFor(() => expect(btn.disabled).toBe(false));
+    fireEvent.click(btn);
+    expect(openMock).toHaveBeenCalledWith("/repos/foo");
+  });
+
+  it("'Open in VS Code' converts Windows backslashes to forward slashes (URI scheme)", async () => {
+    openMock.mockReset().mockResolvedValue(undefined);
+    existsMock.mockResolvedValue(true);
+    render(
+      <SessionInfoBar
+        session={makeSession({ cwd: "C:\\Users\\me\\repos\\foo" })}
+      />,
+    );
+    const btn = screen.getByTestId("action-open-vscode") as HTMLButtonElement;
+    await waitFor(() => expect(btn.disabled).toBe(false));
+    fireEvent.click(btn);
+    expect(openMock).toHaveBeenCalledWith(
+      "vscode://file/C:/Users/me/repos/foo",
+    );
+  });
+
+  it("'Open CWD' / 'Open in VS Code' stay disabled when CWD is missing (§17.5 wins over wiring)", async () => {
+    existsMock.mockResolvedValue(false);
+    render(<SessionInfoBar session={makeSession({ cwd: "/gone" })} />);
+    const cwd = screen.getByTestId("action-open-cwd") as HTMLButtonElement;
+    const vsc = screen.getByTestId("action-open-vscode") as HTMLButtonElement;
+    await waitFor(() => expect(cwd.disabled).toBe(true));
+    expect(cwd.title).toBe("Directory not found");
+    expect(vsc.disabled).toBe(true);
+    expect(vsc.title).toBe("Directory not found");
+  });
+
+  it("openShell rejection surfaces an inline alert (mirrors SkillCard)", async () => {
+    existsMock.mockResolvedValue(true);
+    openMock.mockReset().mockRejectedValueOnce(new Error("ENOENT"));
+    render(<SessionInfoBar session={makeSession({ cwd: "/repos/foo" })} />);
+    const btn = screen.getByTestId("action-open-cwd") as HTMLButtonElement;
+    await waitFor(() => expect(btn.disabled).toBe(false));
+    fireEvent.click(btn);
+    const alert = await screen.findByTestId("session-open-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toContain("ENOENT");
   });
 });
