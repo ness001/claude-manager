@@ -24,7 +24,12 @@ const SEGMENT_VARS = [
 
 function formatTokens(n: number): string {
   if (n < 1000) return String(n);
-  if (n < 1_000_000) return `${(n / 1000).toFixed(1)}k`;
+  // Round into the unit before deciding which suffix to use, otherwise the
+  // boundary cases (e.g. 999_999 → "1000.0k", 999_999_999 → "1000.0M") leak
+  // a "1000.0X" string. 999.95 is the largest value that still rounds to
+  // "999.9" at one decimal — anything above promotes to the next unit.
+  const k = n / 1000;
+  if (k < 999.95) return `${k.toFixed(1)}k`;
   return `${(n / 1_000_000).toFixed(1)}M`;
 }
 
