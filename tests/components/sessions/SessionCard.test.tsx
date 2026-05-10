@@ -122,7 +122,28 @@ describe("SessionCard", () => {
     const pills = screen.getAllByTestId("tag-pill");
     expect(pills.map((p) => p.textContent)).toEqual(["urgent", "spike"]);
     expect(screen.getByTestId("time-ago").textContent).toBe("5m ago");
-    expect(screen.getByTestId("message-count").textContent).toBe("42 msgs");
+    expect(screen.getByTestId("message-count").textContent?.trim()).toBe(
+      "42 msgs",
+    );
+  });
+
+  // Pluralization: "1 msg" (singular) vs "N msgs" / "0 msgs" (plural).
+  // Regression — previously hardcoded to "msgs" so a session with one
+  // message rendered the ungrammatical "1 msgs".
+  it.each([
+    { count: 0, expected: "0 msgs" },
+    { count: 1, expected: "1 msg" },
+    { count: 2, expected: "2 msgs" },
+  ])("message count pluralization — $count → $expected", ({ count, expected }) => {
+    render(
+      <SessionCard
+        session={makeSession({ messageCount: count })}
+        selected={false}
+      />,
+    );
+    expect(screen.getByTestId("message-count").textContent?.replace(/\s+/g, " ").trim()).toBe(
+      expected,
+    );
   });
 
   it("click → calls selectSession(id) on the store", () => {
