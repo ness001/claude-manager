@@ -90,6 +90,66 @@ describe("ModelDonut", () => {
     }
   });
 
+  // Spec §4.1 Row 2 — the legend is required to show "model name, its
+  // share, and absolute token count". The share (percentage) was missing,
+  // so users had to mentally divide tokens / total to know that
+  // claude-opus = "1.4M of 2.0M total" was 70%. SR users had no access
+  // at all (the donut's aria-label only reports model count + total).
+  // Add a `donut-legend-share` span that renders the per-slice percent.
+  it("legend shows the per-slice share as a percentage (spec §4.1 Row 2)", () => {
+    render(
+      <ModelDonut
+        data={[
+          { model: "claude-opus-4.6", tokens: 700 },
+          { model: "claude-sonnet-4.6", tokens: 300 },
+        ]}
+      />,
+    );
+    const shares = screen.getAllByTestId("donut-legend-share");
+    expect(shares).toHaveLength(2);
+    expect(shares[0].textContent).toBe("70.0%");
+    expect(shares[1].textContent).toBe("30.0%");
+  });
+
+  // Boundary: a tiny non-zero slice (e.g. 1 token out of 100_000) computes
+  // to 0.001%, which rounds to "0.0%" with one decimal — falsely reading
+  // as "this slice is nothing". Surface as "<0.1%" so the user sees the
+  // slice exists but is negligible.
+  it("legend shows '<0.1%' for a tiny non-zero slice (rounding floor)", () => {
+    render(
+      <ModelDonut
+        data={[
+          { model: "main", tokens: 99_999 },
+          { model: "trace", tokens: 1 },
+        ]}
+      />,
+    );
+    const shares = screen.getAllByTestId("donut-legend-share");
+    expect(shares[1].textContent).toBe("<0.1%");
+    // And the main slice is announced normally.
+    expect(shares[0].textContent).toBe("100.0%");
+  });
+
+  // The shares MUST sum to ~100% so the user can sanity-check the donut.
+  // (Floating-point rounding may cost ±0.1, which is acceptable.)
+  it("legend shares sum to ~100% across all slices", () => {
+    render(
+      <ModelDonut
+        data={[
+          { model: "a", tokens: 333 },
+          { model: "b", tokens: 333 },
+          { model: "c", tokens: 334 },
+        ]}
+      />,
+    );
+    const shares = screen.getAllByTestId("donut-legend-share");
+    const sum = shares.reduce(
+      (s, el) => s + parseFloat(el.textContent!.replace("%", "")),
+      0,
+    );
+    expect(Math.abs(sum - 100)).toBeLessThanOrEqual(0.2);
+  });
+
   // WCAG 1.1.1 (Non-text Content): the donut is a CSS conic-gradient div
   // — pure visual data with no programmatic equivalent. Screen-reader users
   // need an aria-label summarizing what the chart shows. The legend is
