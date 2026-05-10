@@ -149,4 +149,31 @@ describe("SidebarRail", () => {
     fireEvent.keyDown(dash, { key: "a" });
     expect(document.activeElement).toBe(dash);
   });
+
+  // WAI-ARIA roving tabindex pattern — only the active rail item should be
+  // in the Tab sequence. Without this, native <button> defaults give every
+  // item tabIndex=0, so Tab walks all 6 items one at a time, defeating the
+  // purpose of the arrow-key roving above.
+  it("only the active rail item has tabIndex=0; the rest are tabIndex=-1", () => {
+    render(<SidebarRail />);
+    const dash = screen.getByRole("button", { name: "Dashboard" });
+    expect(dash.tabIndex).toBe(0);
+    for (const label of labels.filter((l) => l !== "Dashboard")) {
+      const btn = screen.getByRole("button", { name: label });
+      expect(btn.tabIndex).toBe(-1);
+    }
+  });
+
+  it("changing the active section moves tabIndex=0 to the new active item", () => {
+    useNavigationStore.setState({ activeSection: "skills" });
+    render(<SidebarRail />);
+    expect(
+      screen.getByRole("button", { name: "Skills" }).tabIndex,
+    ).toBe(0);
+    for (const label of labels.filter((l) => l !== "Skills")) {
+      expect(
+        screen.getByRole("button", { name: label }).tabIndex,
+      ).toBe(-1);
+    }
+  });
 });
