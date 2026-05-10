@@ -354,6 +354,28 @@ describe("McpServerForm", () => {
     }
   });
 
+  // WCAG 1.4.11 Non-text Contrast (AA): the focus indicator must have ≥3:1
+  // contrast against adjacent colors. The Save button uses bg-accent as its
+  // background AND ring-accent for the focus ring — same color on same color
+  // is invisible to keyboard users. Adding a 2-px ring-offset against the
+  // page background (bg-bg-primary) creates clean visual separation in both
+  // light (#ffffff) and dark (#0f0f1a) themes. Mirrors PR #117 (ErrorBoundary
+  // 'Try again' button). The Cancel button uses border + bg-transparent so
+  // its ring-accent already has adequate contrast — left untouched.
+  it("Save focus ring has an offset for contrast against bg-accent (WCAG 1.4.11)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    const cls = screen.getByTestId("form-save").className;
+    expect(cls).toContain("focus-visible:ring-offset-2");
+    expect(cls).toContain("focus-visible:ring-offset-bg-primary");
+  });
+
   it("Escape key closes the form without saving (a11y: dialog pattern)", () => {
     const onClose = vi.fn();
     render(
