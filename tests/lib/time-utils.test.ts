@@ -43,12 +43,35 @@ describe("time-utils.timeAgo", () => {
   });
 
   // case 6: older than 7 days → date string (e.g. "Jan 15")
-  it('case 6: older than 7 days → "Mon DD" date string', () => {
+  it('case 6: older than 7 days, current year → "Mon DD" (no year)', () => {
     const t = new Date(2026, 0, 15, 10, 0, 0).getTime(); // 2026-01-15
     const result = timeAgo(t);
     // Allow either localised format, but require it contain "Jan" + "15".
     expect(result).toMatch(/Jan/);
     expect(result).toMatch(/15/);
+    // Regression guard: must NOT include the current year.
+    expect(result).not.toMatch(/2026/);
+  });
+
+  // case 6b: prior calendar year → year suffix is appended so the user
+  // can distinguish e.g. Dec 2024 from Dec 2025 from Dec 2026 (spec-9).
+  it('case 6b: prior calendar year → "Mon DD, YYYY"', () => {
+    const t = new Date(2024, 11, 15, 10, 0, 0).getTime(); // 2024-12-15
+    expect(timeAgo(t)).toBe("Dec 15, 2024");
+  });
+
+  // case 6c: Dec 31 of the previous year (one day across the boundary
+  // beyond the 7-day window) — must include the year.
+  it('case 6c: Dec 31 of prior year → "Dec 31, YYYY"', () => {
+    const t = new Date(2025, 11, 31, 10, 0, 0).getTime(); // 2025-12-31
+    expect(timeAgo(t)).toBe("Dec 31, 2025");
+  });
+
+  // case 6d: far-past year is not collapsed — explicit year keeps
+  // the user honest about how stale a record is.
+  it('case 6d: far-past year keeps explicit year', () => {
+    const t = new Date(2019, 5, 4, 10, 0, 0).getTime(); // 2019-06-04
+    expect(timeAgo(t)).toBe("Jun 4, 2019");
   });
 
   // case 7: falsy / NaN inputs → ""

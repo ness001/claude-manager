@@ -24,9 +24,14 @@ const MONTHS = [
  *   same day      → "Nh ago"
  *   prev. day     → "Yesterday"
  *   < 7 days      → "Nd ago"
- *   ≥ 7 days      → "Mon DD"
+ *   ≥ 7 days, current year → "Mon DD"          (e.g. "Jan 15")
+ *   ≥ 7 days, other year   → "Mon DD, YYYY"    (e.g. "Dec 15, 2024")
  *
  * Falsy/NaN input → "". Future timestamps are clamped to "just now".
+ *
+ * The year suffix on prior-year dates avoids the silent-staleness bug
+ * where e.g. a session from 2024-12-15 viewed in 2026-05 would otherwise
+ * render as "Dec 15" — indistinguishable from a 5-month-old session.
  */
 export function timeAgo(timestamp: number): string {
   if (!timestamp || Number.isNaN(timestamp)) return "";
@@ -59,5 +64,8 @@ export function timeAgo(timestamp: number): string {
   }
   if (dayDelta === 1) return "Yesterday";
   if (dayDelta < 7) return `${dayDelta}d ago`;
-  return `${MONTHS[tsDate.getMonth()]} ${tsDate.getDate()}`;
+  const monDay = `${MONTHS[tsDate.getMonth()]} ${tsDate.getDate()}`;
+  return tsDate.getFullYear() === nowDate.getFullYear()
+    ? monDay
+    : `${monDay}, ${tsDate.getFullYear()}`;
 }
