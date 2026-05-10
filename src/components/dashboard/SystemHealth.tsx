@@ -13,6 +13,9 @@ import { useEffect, useState } from "react";
 
 type HealthStatus = "ok" | "warn" | "fail" | "checking";
 
+/** Hard timeout for the API HEAD probe (ms). See useEffect below for rationale. */
+const API_CHECK_TIMEOUT_MS = 8000;
+
 interface SystemHealthProps {
   /** Number of configured MCP servers (default 0 — unknown). */
   mcpCount?: number;
@@ -58,24 +61,41 @@ export function SystemHealth({
   // Non-blocking HEAD probe. We deliberately do NOT await this in any way
   // that could stall first paint. Errors (network, CORS, 4xx, 5xx) → "fail";
   // any 2xx/3xx → "ok". The check fires once on mount.
+  //
+  // Hard timeout: 8s. Without it a stalled connection (no SYN-ACK, captive
+  // portal, dropped packets) leaves the dot stuck on "Checking…" forever —
+  // the user can't tell whether the API is degraded or whether the probe
+  // just never finished. AbortController + setTimeout cancels the in-flight
+  // request and surfaces "fail" so the indicator is always actionable.
   useEffect(() => {
     if (skipApiCheck) {
       setApiStatus("ok");
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_CHECK_TIMEOUT_MS);
     void (async () => {
       try {
-        const res = await fetch(apiCheckUrl, { method: "HEAD" });
+        const res = await fetch(apiCheckUrl, {
+          method: "HEAD",
+          signal: controller.signal,
+        });
         if (cancelled) return;
         // 401/403 still mean the API is reachable — surface as OK.
         setApiStatus(res.ok || res.status === 401 || res.status === 403 ? "ok" : "fail");
       } catch {
+        // AbortError (timeout or unmount) and network errors both → fail.
+        // Unmount is handled by the cancelled flag below so we don't write state.
         if (!cancelled) setApiStatus("fail");
+      } finally {
+        clearTimeout(timeoutId);
       }
     })();
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
+      controller.abort();
     };
   }, [apiCheckUrl, skipApiCheck]);
 

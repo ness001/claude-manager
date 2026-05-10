@@ -1,7 +1,7 @@
 // Tests for SystemHealth — T2.12.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 
 import { SystemHealth } from "../../../src/components/dashboard/SystemHealth";
 
@@ -77,6 +77,42 @@ describe("SystemHealth", () => {
     await waitFor(() => {
       expect(screen.getByTestId("health-api").getAttribute("data-status")).toBe("fail");
     });
+  });
+
+  // Defect: a stalled HEAD probe (network never responds) used to leave the
+  // dot stuck on "Checking…" forever. Fix adds an 8s AbortController-driven
+  // timeout that flips the dot to "fail" so the indicator stays actionable.
+  it("API check times out after 8s and surfaces 'fail'", async () => {
+    vi.useFakeTimers();
+    // Pending fetch: rejects only when its signal aborts (mirrors real
+    // browser semantics — fetch throws an AbortError when controller.abort()
+    // fires).
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+        return new Promise((_resolve, reject) => {
+          const sig = init.signal;
+          if (sig) {
+            sig.addEventListener("abort", () => {
+              reject(new DOMException("aborted", "AbortError"));
+            });
+          }
+        });
+      }),
+    );
+
+    render(<SystemHealth apiCheckUrl="http://example.test/v1" />);
+    expect(screen.getByTestId("health-api").getAttribute("data-status")).toBe("checking");
+
+    // Advance past the 8 s timeout. waitFor doesn't mix with fake timers, so
+    // drive the timer + microtask queue explicitly via act.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(8001);
+    });
+
+    expect(screen.getByTestId("health-api").getAttribute("data-status")).toBe("fail");
+
+    vi.useRealTimers();
   });
 
   it("status dots expose status to screen readers (WCAG 4.1.2 / 1.4.1)", () => {
