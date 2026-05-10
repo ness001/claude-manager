@@ -22,6 +22,10 @@
   --color-border-strong: #d1d5db;
   --color-status-green: #16a34a;
   --color-status-yellow: #eab308;
+  /* Darker yellow for use as TEXT on light card-bg. The stripe color
+   * (#eab308) on white = ~1.6:1 contrast — fails WCAG 1.4.3 (3:1 large-text
+   * floor). #a16207 on white ≈ 4.5:1, comfortably above the bar. */
+  --color-status-yellow-text: #a16207;
   --color-status-red: #dc2626;
   --color-status-blue: #2563eb;
   --color-status-amber: #d97706;
@@ -54,6 +58,10 @@
   --color-border-strong: #3d3d5a;
   --color-status-green: #a6e3a1;
   --color-status-yellow: #f9e2af;
+  /* Dark theme: card-bg is #1e1e2e, the existing pale yellow #f9e2af on it
+   * already exceeds 10:1, so reuse it. Token kept distinct from the stripe
+   * so the StatCard component can reference it independently. */
+  --color-status-yellow-text: #f9e2af;
   --color-status-red: #f38ba8;
   --color-status-blue: #89b4fa;
   --color-status-amber: #fab387;
