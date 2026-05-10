@@ -191,4 +191,21 @@ describe("SkillsListView", () => {
     expect(input.className).toContain("focus-visible:ring-accent");
     expect(input.className).not.toMatch(/(^|\s)focus:outline-none(\s|$)/);
   });
+
+  // a11y: the no-matches message appears as the user types into the search
+  // box. Without role="status" + aria-live="polite", screen-reader users
+  // get NO feedback that their query produced zero results — they'd only
+  // discover it by tabbing into an empty result region. "polite" so the
+  // announcement waits for the user to pause typing rather than firing on
+  // every keystroke. Mirrors PluginListView (PR #154) and McpPanel (PR #155).
+  it("no-matches message is a polite live region (a11y: search announce)", () => {
+    useSkillStore.setState({ skills: [makeSkill({ name: "alpha" })] });
+    render(<SkillsListView />);
+    fireEvent.change(screen.getByTestId("skill-search"), {
+      target: { value: "zzz" },
+    });
+    const empty = screen.getByTestId("no-matches");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
 });
