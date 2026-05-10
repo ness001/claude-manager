@@ -51,8 +51,18 @@ export function DashboardSection() {
   return (
     <section
       data-testid="dashboard-section"
+      aria-labelledby="dashboard-heading"
       className="flex flex-col gap-4 p-6 h-full overflow-auto"
     >
+      {/* Visually hidden but exposed to AT — gives the section landmark an
+          accessible name (WCAG 2.4.6 / 1.3.1) and starts the heading
+          hierarchy at h1, so the inner panel <h3>s no longer leap from
+          nothing. The other sections (PluginsSection via PluginListView,
+          SettingsSection) already render an <h1>. */}
+      <h1 id="dashboard-heading" className="sr-only">
+        Dashboard
+      </h1>
+
       {loadError ? (
         <div
           data-testid="dashboard-load-error"
