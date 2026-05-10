@@ -100,4 +100,53 @@ describe("SidebarRail", () => {
     const btn = screen.getByRole("button", { name: "Dashboard" });
     expect(btn.className).toContain("focus-visible:ring-2");
   });
+
+  it("ArrowDown moves focus to the next rail item, wrapping at the end", () => {
+    render(<SidebarRail />);
+    const dash = screen.getByRole("button", { name: "Dashboard" });
+    const sessions = screen.getByRole("button", { name: "Sessions" });
+    const settings = screen.getByRole("button", { name: "Settings" });
+    dash.focus();
+    fireEvent.keyDown(dash, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(sessions);
+
+    settings.focus();
+    fireEvent.keyDown(settings, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(dash);
+  });
+
+  it("ArrowUp moves focus to the previous rail item, wrapping at the start", () => {
+    render(<SidebarRail />);
+    const dash = screen.getByRole("button", { name: "Dashboard" });
+    const sessions = screen.getByRole("button", { name: "Sessions" });
+    const settings = screen.getByRole("button", { name: "Settings" });
+    sessions.focus();
+    fireEvent.keyDown(sessions, { key: "ArrowUp" });
+    expect(document.activeElement).toBe(dash);
+
+    dash.focus();
+    fireEvent.keyDown(dash, { key: "ArrowUp" });
+    expect(document.activeElement).toBe(settings);
+  });
+
+  it("Home jumps to the first item, End jumps to the last", () => {
+    render(<SidebarRail />);
+    const dash = screen.getByRole("button", { name: "Dashboard" });
+    const plugins = screen.getByRole("button", { name: "Plugins" });
+    const settings = screen.getByRole("button", { name: "Settings" });
+    plugins.focus();
+    fireEvent.keyDown(plugins, { key: "End" });
+    expect(document.activeElement).toBe(settings);
+
+    fireEvent.keyDown(settings, { key: "Home" });
+    expect(document.activeElement).toBe(dash);
+  });
+
+  it("non-navigation keys are ignored (no preventDefault, focus unchanged)", () => {
+    render(<SidebarRail />);
+    const dash = screen.getByRole("button", { name: "Dashboard" });
+    dash.focus();
+    fireEvent.keyDown(dash, { key: "a" });
+    expect(document.activeElement).toBe(dash);
+  });
 });
