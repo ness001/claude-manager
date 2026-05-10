@@ -382,4 +382,20 @@ describe("SummaryBanner", () => {
     expect(b).toHaveTextContent("Session summary");
     expect(b).toHaveTextContent("we discussed X");
   });
+
+  // WCAG 1.3.1 (Info and Relationships): the visual "Session summary"
+  // label and the body text were two adjacent <span>s with no programmatic
+  // relationship — assistive tech could not navigate to the banner via
+  // the landmarks list, and the label was not associated with its content.
+  // Promote to role="region" + aria-labelledby pointing at the label span.
+  it("exposes role='region' labelled by the 'Session summary' span (a11y)", () => {
+    render(<SummaryBanner text="we discussed X" />);
+    const b = screen.getByTestId("summary-banner");
+    expect(b.getAttribute("role")).toBe("region");
+    const labelId = b.getAttribute("aria-labelledby");
+    expect(labelId).toBeTruthy();
+    const label = screen.getByTestId("summary-banner-label");
+    expect(label.id).toBe(labelId);
+    expect(label.textContent).toBe("Session summary");
+  });
 });
