@@ -155,6 +155,43 @@ describe("ToolCallBlock", () => {
     expect(svg).not.toBeNull();
     expect(svg!.getAttribute("aria-hidden")).toBe("true");
   });
+
+  // WAI-ARIA disclosure pattern (WCAG 1.3.1, 4.1.2): the toggle button declares
+  // aria-expanded but previously had no aria-controls, so screen readers
+  // couldn't tell the user *which* region was being expanded. The id must
+  // (a) match the body's id when open and (b) be unique per instance so two
+  // tool calls on the same page don't collide.
+  it("toggle button has aria-controls pointing to the body id", () => {
+    render(
+      <ToolCallBlock
+        toolName="Bash"
+        toolInput={{ cmd: "ls" }}
+        toolOutput="ok"
+      />,
+    );
+    const toggle = screen.getByTestId("tool-call-toggle");
+    const controls = toggle.getAttribute("aria-controls");
+    expect(controls).toBeTruthy();
+    fireEvent.click(toggle);
+    const body = screen.getByTestId("tool-call-body");
+    expect(body.id).toBe(controls);
+  });
+
+  it("two ToolCallBlocks on the same page have distinct aria-controls ids", () => {
+    render(
+      <>
+        <ToolCallBlock toolName="A" toolInput={{}} />
+        <ToolCallBlock toolName="B" toolInput={{}} />
+      </>,
+    );
+    const toggles = screen.getAllByTestId("tool-call-toggle");
+    expect(toggles).toHaveLength(2);
+    const a = toggles[0].getAttribute("aria-controls");
+    const b = toggles[1].getAttribute("aria-controls");
+    expect(a).toBeTruthy();
+    expect(b).toBeTruthy();
+    expect(a).not.toBe(b);
+  });
 });
 
 describe("SystemDivider", () => {
