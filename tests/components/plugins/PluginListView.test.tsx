@@ -244,4 +244,15 @@ describe("PluginListView", () => {
       expect(svg!.getAttribute("aria-hidden")).toBe("true");
     }
   });
+
+  // WCAG 2.4.7 Focus Visible — keyboard users tabbing through the Plugins
+  // page need a visible focus indicator on the Check for Updates button
+  // (the only enabled header control; Install Plugin is disabled). Mirrors
+  // PRs #17/#45/#48/#49/#56/#57/#67/#111/#112.
+  it("Check for Updates button has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<PluginListView />);
+    const btn = screen.getByTestId("check-updates-btn");
+    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-visible:ring-accent");
+  });
 });
