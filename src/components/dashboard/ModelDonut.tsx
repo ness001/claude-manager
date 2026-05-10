@@ -70,12 +70,18 @@ export function ModelDonut({ data }: ModelDonutProps) {
 
       <div className="flex flex-1 items-center gap-4">
         {isEmpty ? (
-          <div className="flex h-32 w-32 items-center justify-center rounded-full border-8 border-bg-tertiary text-xs text-text-muted">
+          <div
+            role="img"
+            aria-label="No model usage data"
+            className="flex h-32 w-32 items-center justify-center rounded-full border-8 border-bg-tertiary text-xs text-text-muted"
+          >
             No data
           </div>
         ) : (
           <div
             data-testid="donut-chart"
+            role="img"
+            aria-label={`Model usage donut: ${data.length} ${data.length === 1 ? "model" : "models"}, ${formatTokens(total)} total tokens`}
             style={{ background: conic }}
             className="relative h-32 w-32 shrink-0 rounded-full"
           >
