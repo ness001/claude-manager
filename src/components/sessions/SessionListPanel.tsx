@@ -184,6 +184,7 @@ export function SessionListPanel() {
   return (
     <aside
       data-testid="session-list-panel"
+      aria-label="Session list"
       className="flex h-full w-[260px] shrink-0 flex-col gap-2 border-r border-border bg-sidebar-bg p-3"
     >
       {/* TODO(T4.1, T4.2): wire New Session button to launch the New Session

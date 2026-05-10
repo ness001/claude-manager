@@ -189,4 +189,17 @@ describe("SessionListPanel", () => {
     const elapsed = performance.now() - t0;
     expect(elapsed).toBeLessThan(100);
   });
+
+  // WCAG 2.4.1 / WAI-ARIA Naming Landmarks — the <aside> sidebar is a
+  // top-level landmark (semantic <aside> exposes role="complementary" to
+  // AT). Without an aria-label, NVDA's "D" landmark cycle and VoiceOver's
+  // rotor announce only "complementary", which is indistinguishable from
+  // any other unnamed aside on the page (e.g. the future plugin sidebar).
+  // Mirrors PR #114 which gave <main> per-section aria-labels.
+  it("session list <aside> landmark has aria-label='Session list' (WCAG 2.4.1)", () => {
+    render(<SessionListPanel />);
+    const panel = screen.getByTestId("session-list-panel");
+    expect(panel.tagName).toBe("ASIDE");
+    expect(panel.getAttribute("aria-label")).toBe("Session list");
+  });
 });
