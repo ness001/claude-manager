@@ -157,7 +157,7 @@ export function McpServerForm({
             aria-label="Server name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-sm text-text-primary"
+            className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
         </Field>
 
@@ -204,7 +204,7 @@ export function McpServerForm({
                 aria-label="Command"
                 value={command}
                 onChange={(e) => setCommand(e.target.value)}
-                className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-sm text-text-primary"
+                className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               />
             </Field>
             <Field label="Args">
@@ -240,7 +240,7 @@ export function McpServerForm({
                   }}
                   placeholder="add arg + Enter"
                   aria-label="Add command argument"
-                  className="flex-1 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary"
+                  className="flex-1 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 />
               </div>
             </Field>
@@ -254,7 +254,7 @@ export function McpServerForm({
                 aria-label="URL"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-sm text-text-primary"
+                className="w-full rounded border border-border bg-bg-tertiary px-2 py-1 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               />
             </Field>
             <Field label="Headers">
@@ -367,7 +367,7 @@ function KeyValueEditor({
             onChange={(e) => updateAt(i, e.target.value, v)}
             placeholder="KEY"
             aria-label={`${fieldLabel} ${i + 1} key`}
-            className="w-32 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary"
+            className="w-32 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
           <input
             data-testid={`${testidPrefix}-val-${i}`}
@@ -376,7 +376,7 @@ function KeyValueEditor({
             onChange={(e) => updateAt(i, k, e.target.value)}
             placeholder="value"
             aria-label={k ? `${fieldLabel} ${k} value` : `${fieldLabel} ${i + 1} value`}
-            className="flex-1 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary"
+            className="flex-1 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
           <button
             type="button"
