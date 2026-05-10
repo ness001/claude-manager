@@ -197,6 +197,12 @@ export function SessionListPanel() {
         data-testid="new-session-btn"
         disabled
         aria-disabled="true"
+        // Sighted users see the "Coming soon …" tooltip on hover; mirror
+        // the gist into the accessible name so screen-reader users hear
+        // the same hint instead of just "New Session, button, dimmed"
+        // and assuming the app is broken (WCAG 4.1.2). Mirrors the same
+        // fix applied to QuickActions buttons.
+        aria-label="New Session (coming soon)"
         title="Coming soon — launch a new Claude session from here once the IPC is wired"
         className="flex items-center justify-center gap-1 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white opacity-50 cursor-not-allowed"
       >
