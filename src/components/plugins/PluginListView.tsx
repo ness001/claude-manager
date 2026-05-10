@@ -21,6 +21,7 @@ export function PluginListView() {
   const isLoading = usePluginStore((s) => s.isLoading);
 
   const [isChecking, setIsChecking] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const filtered = useMemo(
     () => filterPlugins(plugins, searchQuery),
@@ -35,11 +36,17 @@ export function PluginListView() {
 
   const onCheckForUpdates = async () => {
     setIsChecking(true);
+    setUpdateError(null);
     try {
       const refreshed = await checkPluginUpdates(plugins, { force: true });
       // Push the new state back into the store. We mirror the loadPlugins
       // shape so the cards re-render with `update-available` markers.
       usePluginStore.setState({ plugins: refreshed });
+    } catch (err) {
+      // Without this catch the rejection was silently swallowed by `void
+      // onCheckForUpdates()` — the spinner stopped but the user got no
+      // feedback that the check failed (registry down, IPC error, etc.).
+      setUpdateError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsChecking(false);
     }
@@ -84,6 +91,15 @@ export function PluginListView() {
           <span data-testid="stat-active">{activeCount} active</span>
           <span data-testid="stat-disabled">{disabledCount} disabled</span>
         </div>
+        {updateError && (
+          <p
+            data-testid="check-updates-error"
+            role="alert"
+            className="text-xs text-status-error"
+          >
+            Couldn't check for updates: {updateError}
+          </p>
+        )}
         <div className="relative">
           <Search
             size={14}
