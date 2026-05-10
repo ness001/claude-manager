@@ -62,4 +62,16 @@ describe("StatCard", () => {
       expect(card.getAttribute("data-accent")).toBe(accent);
     },
   );
+
+  // WCAG 1.4.3 (large-text contrast ≥3:1): the stripe yellow #eab308 on the
+  // light card-bg #ffffff is only ~1.6:1, so the value text MUST use the
+  // darker `--color-status-yellow-text` token (#a16207 light) instead. The
+  // stripe is decorative (aria-hidden) and may stay vivid.
+  it("yellow accent value text uses --color-status-yellow-text (not the stripe yellow)", () => {
+    render(<StatCard value={42} label="Longest Session" accent="yellow" />);
+    const valueStyle = screen.getByTestId("stat-value").getAttribute("style") ?? "";
+    expect(valueStyle).toContain("var(--color-status-yellow-text)");
+    // Must NOT reference the bare stripe yellow var (it's #eab308 — fails contrast).
+    expect(valueStyle).not.toMatch(/var\(--color-status-yellow\)/);
+  });
 });
