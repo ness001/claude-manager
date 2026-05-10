@@ -122,6 +122,23 @@ describe("McpPanel", () => {
     expect(mark.textContent).toBe("connected");
   });
 
+  // a11y: the no-matches message appears as the user types into the search
+  // box. Without role="status" + aria-live="polite", screen-reader users
+  // get NO feedback that their query produced zero results — they'd only
+  // discover it by tabbing into an empty result region. "polite" so the
+  // announcement waits for the user to pause typing rather than firing on
+  // every keystroke. Mirrors PR #154 (PluginListView).
+  it("no-matches message is a polite live region (a11y: search announce)", () => {
+    useMcpStore.setState({ servers: [FIX_CONNECTED] });
+    render(<McpPanel />);
+    fireEvent.change(screen.getByTestId("mcp-search"), {
+      target: { value: "zzznoneofthese" },
+    });
+    const empty = screen.getByTestId("no-matches");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
+
   it("loading shows 2 skeleton cards per scope group", () => {
     useMcpStore.setState({ isLoading: true, servers: [] });
     render(<McpPanel />);
