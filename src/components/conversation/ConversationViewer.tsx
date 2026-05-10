@@ -262,6 +262,20 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
   // 6) Keyboard navigation (Ctrl+ArrowUp/Down). Skip when focus is in a text
   // input (e.g. the turn-input number field) so arrow-key cursor movement
   // and value adjustment aren't hijacked. Mirrors App.tsx's Ctrl+1..6 guard.
+  //
+  // The listener is registered ONCE on mount and reads fresh `currentTurn` /
+  // `jumpToTurn` via refs. Re-registering on every turn change opened a race
+  // where keydowns dispatched between a re-render and the effect remount
+  // hit no listener — observed as a flaky "expected '1' to be '2'" failure
+  // under load.
+  const currentTurnRef = useRef(currentTurn);
+  const jumpToTurnRef = useRef(jumpToTurn);
+  useEffect(() => {
+    currentTurnRef.current = currentTurn;
+  }, [currentTurn]);
+  useEffect(() => {
+    jumpToTurnRef.current = jumpToTurn;
+  }, [jumpToTurn]);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
@@ -274,15 +288,15 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
       }
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        jumpToTurn(currentTurn + 1);
+        jumpToTurnRef.current(currentTurnRef.current + 1);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        jumpToTurn(currentTurn - 1);
+        jumpToTurnRef.current(currentTurnRef.current - 1);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [currentTurn, jumpToTurn]);
+  }, []);
 
   if (loading) {
     return (
