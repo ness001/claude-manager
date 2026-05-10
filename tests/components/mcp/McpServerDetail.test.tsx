@@ -67,4 +67,30 @@ describe("McpServerDetail", () => {
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-label")).toBe("Hide TOKEN");
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): a stateful toggle button must expose
+  // its pressed state, otherwise SR users cannot tell whether the secret
+  // is currently revealed or hidden — particularly important for a
+  // secret-masking control.
+  it("env reveal toggle exposes aria-pressed and flips with state", () => {
+    render(<McpServerDetail server={FIX_CONNECTED} />);
+    const toggle = screen.getByTestId("env-value-TOKEN-toggle");
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  // The Eye / EyeOff icons are decorative — the button already has a
+  // descriptive aria-label ("Reveal TOKEN" / "Hide TOKEN"). aria-hidden
+  // on the SVG prevents AT from double-announcing the icon's accessible
+  // name (if the lucide build leaks one) on top of the button's label.
+  it("env reveal toggle icon is aria-hidden in both states", () => {
+    render(<McpServerDetail server={FIX_CONNECTED} />);
+    const toggle = screen.getByTestId("env-value-TOKEN-toggle");
+    expect(toggle.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    fireEvent.click(toggle);
+    expect(toggle.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
 });
