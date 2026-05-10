@@ -587,4 +587,29 @@ describe("McpServerForm", () => {
     const nameInput = screen.getByTestId("form-name");
     expect(document.activeElement).toBe(nameInput);
   });
+
+  // WCAG 2.4.6 (Headings and Labels) — both Headers and Env KeyValueEditor
+  // instances render a button with the bare visible text "+ Add". A screen
+  // reader user navigating the form by buttons hears "+ Add, button" twice
+  // with no indication of WHICH list they'd extend. Inject the parent
+  // field's label into an aria-label so the two buttons are unique and
+  // self-describing.
+  it("KeyValueEditor add button aria-label includes the field name (WCAG 2.4.6)", () => {
+    // Switch to HTTP type so both Headers + Env KeyValueEditors render.
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    expect(
+      screen.getByTestId("form-header-add").getAttribute("aria-label"),
+    ).toBe("Add HTTP header entry");
+    expect(
+      screen.getByTestId("form-env-add").getAttribute("aria-label"),
+    ).toBe("Add Environment variable entry");
+  });
 });
