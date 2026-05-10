@@ -178,4 +178,21 @@ describe("McpPanel", () => {
       expect(btn.className).toContain("focus-visible:ring-accent");
     }
   });
+
+  // WCAG 2.4.7 Focus Visible — the search input previously used
+  // `focus:outline-none focus:border-accent`, which (a) strips the browser
+  // default for *every* focus (including mouse) and (b) replaces it with a
+  // 1-px border-color shift between border-border and border-accent on
+  // bg-bg-tertiary — barely visible. Mirrors the input focus-ring trio
+  // used elsewhere in the codebase.
+  it("search input has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<McpPanel />);
+    const input = screen.getByTestId("mcp-search");
+    expect(input.className).toContain("focus-visible:outline-none");
+    expect(input.className).toContain("focus-visible:ring-2");
+    expect(input.className).toContain("focus-visible:ring-accent");
+    // The old `focus:` (non-`focus-visible`) class is removed so mouse
+    // clicks no longer strip the outline silently.
+    expect(input.className).not.toMatch(/(^|\s)focus:outline-none(\s|$)/);
+  });
 });
