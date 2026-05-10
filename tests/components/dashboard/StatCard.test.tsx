@@ -74,4 +74,26 @@ describe("StatCard", () => {
     // Must NOT reference the bare stripe yellow var (it's #eab308 — fails contrast).
     expect(valueStyle).not.toMatch(/var\(--color-status-yellow\)/);
   });
+
+  // UX bug: the sublabel div has `truncate` but no `title`, so a long
+  // session name (the "Longest Session" use case) gets clipped with no
+  // recovery — sighted users have no way to read the hidden tail. Mirror
+  // the visible string into `title`. Mirrors PR #167 (SkillCard), PR #170
+  // (RecentSessions), PR #171 (SystemHealth), PR #175 (SessionCard),
+  // PR #176 (PluginCard).
+  it("sublabel mirrors its visible text into the `title` attribute (UX truncation recovery)", () => {
+    const longName =
+      "Refactor authentication middleware to support multiple OIDC providers and migrate session storage to Redis";
+    render(
+      <StatCard
+        value={89}
+        label="Longest Session"
+        accent="yellow"
+        sublabel={longName}
+      />,
+    );
+    const sub = screen.getByTestId("stat-sublabel");
+    expect(sub.className).toContain("truncate");
+    expect(sub.getAttribute("title")).toBe(longName);
+  });
 });
