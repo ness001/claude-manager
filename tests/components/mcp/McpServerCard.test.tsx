@@ -256,4 +256,22 @@ describe("McpServerCard", () => {
     fireEvent.click(btn);
     expect(onViewLogs).toHaveBeenCalledWith(FIX_CONNECTED);
   });
+
+  // WCAG 2.4.7 (Focus Visible): the ActionButton helper renders all action
+  // buttons here (View Tools/Logs/Retry/Cancel/Edit/Remove) and previously
+  // relied on the browser default ring, which Tauri's WebView renders
+  // inconsistently across platforms — keyboard users could lose track of
+  // focus. Mirrors PRs #117 / #118 / #119 / #125 / #126.
+  it.each([
+    ["action-edit"],
+    ["action-remove"],
+  ])("%s exposes a visible focus ring (WCAG 2.4.7)", (testId) => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    const btn = screen.getByTestId(testId);
+    expect(btn.className).toContain("focus-visible:outline-none");
+    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-visible:ring-accent");
+  });
 });
