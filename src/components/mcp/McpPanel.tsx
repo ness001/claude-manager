@@ -94,6 +94,17 @@ export function McpPanel() {
             data-testid="mcp-search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              // Esc-to-clear: WebView2 does not consistently honor the
+              // `<input type=search>` browser-default Esc behavior, and
+              // even when it does, it bubbles a `change` event without
+              // keeping focus on the input. Clear explicitly so the
+              // user can keep typing a new query without re-focusing.
+              if (e.key === "Escape" && searchQuery !== "") {
+                e.preventDefault();
+                setSearchQuery("");
+              }
+            }}
             placeholder="Search servers by name, command, args, or URL…"
             aria-label="Search MCP servers"
             className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"

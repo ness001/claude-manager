@@ -195,4 +195,35 @@ describe("McpPanel", () => {
     // clicks no longer strip the outline silently.
     expect(input.className).not.toMatch(/(^|\s)focus:outline-none(\s|$)/);
   });
+
+  // UX bug: WebView2 (Tauri's webview) does not consistently honor the
+  // `<input type=search>` browser-default Escape-to-clear behavior, and
+  // even when it does, the keystroke bubbles up without giving the input
+  // focus back — so the user has to click the field again before they can
+  // type a new query. Wire an explicit Escape handler so the field clears
+  // and stays focused, the standard search-box pattern.
+  it("Escape clears the search query while keeping focus on the input", () => {
+    render(<McpPanel />);
+    const input = screen.getByTestId("mcp-search") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "git" } });
+    expect(input.value).toBe("git");
+    input.focus();
+    expect(document.activeElement).toBe(input);
+    const evt = fireEvent.keyDown(input, { key: "Escape" });
+    expect(evt).toBe(false); // default prevented (no form-close etc.)
+    expect(input.value).toBe("");
+    expect(document.activeElement).toBe(input);
+  });
+
+  // The Escape handler is gated on a non-empty query so that an empty-state
+  // Esc keystroke does NOT preventDefault — leaving room for any outer
+  // dialog/modal to receive it.
+  it("Escape on an empty search field is a no-op (does not preventDefault)", () => {
+    render(<McpPanel />);
+    const input = screen.getByTestId("mcp-search") as HTMLInputElement;
+    expect(input.value).toBe("");
+    const evt = fireEvent.keyDown(input, { key: "Escape" });
+    expect(evt).toBe(true); // default NOT prevented
+    expect(input.value).toBe("");
+  });
 });
