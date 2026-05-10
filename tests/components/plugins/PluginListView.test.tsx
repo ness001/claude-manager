@@ -319,4 +319,21 @@ describe("PluginListView", () => {
     expect(evt).toBe(true); // default NOT prevented
     expect(input.value).toBe("");
   });
+
+  // CLAUDE.md R2 (Orphan-placeholder rule): the Install Plugin header button
+  // is disabled until the IPC ships. The source MUST reference the open
+  // tracker in docs/superpowers/plans/2026-05-08-ui-defect-sweep.md (line
+  // 295) so the placeholder isn't an undiscoverable orphan. Mirrors PR #105.
+  it("PluginListView source has an R2 wire-up TODO for the Install Plugin stub", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const src = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        "../../../src/components/plugins/PluginListView.tsx",
+      ),
+      "utf8",
+    );
+    expect(src).toMatch(/TODO\(ui-defect-sweep#L295\)[\s\S]*install-plugin-btn/);
+  });
 });
