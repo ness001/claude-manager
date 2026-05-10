@@ -197,7 +197,7 @@ export function McpServerCard({
                 setConfirming(false);
                 onRemove(server);
               }}
-              className="rounded border border-status-error px-2 py-0.5 text-status-error hover:bg-status-error hover:text-white"
+              className="rounded border border-status-error px-2 py-0.5 text-status-error hover:bg-status-error hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
             >
               Remove
             </button>
@@ -205,7 +205,7 @@ export function McpServerCard({
               type="button"
               data-testid="remove-cancel"
               onClick={() => setConfirming(false)}
-              className="rounded border border-border px-2 py-0.5 text-text-secondary hover:bg-bg-secondary"
+              className="rounded border border-border px-2 py-0.5 text-text-secondary hover:bg-bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Cancel
             </button>
