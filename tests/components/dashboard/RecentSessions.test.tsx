@@ -93,4 +93,27 @@ describe("RecentSessions", () => {
     expect(row.className).not.toMatch(/hover:bg-/);
     expect(row.getAttribute("onclick")).toBeNull();
   });
+
+  // Defect: row showed "1 msgs" for sessions with exactly one message.
+  // Mirrors PR #87 (SessionCard) and PR #90 (SystemHealth MCP row).
+  it.each([
+    [0, "0 msgs"],
+    [1, "1 msg"],
+    [2, "2 msgs"],
+  ])("pluralizes message count correctly (%i → %s)", (count, expected) => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s",
+            displayName: "n",
+            messageCount: count,
+            startedAt: Date.now(),
+          },
+        ]}
+      />,
+    );
+    const cell = screen.getByTestId("recent-session-msg-count");
+    expect(cell.textContent).toBe(expected);
+  });
 });

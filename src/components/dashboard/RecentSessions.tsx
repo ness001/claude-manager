@@ -59,8 +59,11 @@ export function RecentSessions({ data }: RecentSessionsProps) {
               <span className="text-[11px] text-text-muted tabular-nums shrink-0">
                 {timeAgo(s.startedAt)}
               </span>
-              <span className="text-[11px] text-text-muted tabular-nums shrink-0">
-                {s.messageCount} msgs
+              <span
+                data-testid="recent-session-msg-count"
+                className="text-[11px] text-text-muted tabular-nums shrink-0"
+              >
+                {s.messageCount} {s.messageCount === 1 ? "msg" : "msgs"}
               </span>
             </li>
           ))}
