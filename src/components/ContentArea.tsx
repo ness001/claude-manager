@@ -19,11 +19,30 @@ const SECTION_MAP: Record<Section, ComponentType> = {
   settings: SettingsSection,
 };
 
+/**
+ * Human-readable label for the <main> landmark per active section. Without
+ * an accessible name, screen-reader users navigating by landmarks (NVDA "D",
+ * VoiceOver rotor) hear only "main" — they can't tell which of the six
+ * sections is currently mounted, especially since the sidebar nav and the
+ * <main> landmark swap content independently. WCAG 2.4.1 / ARIA APG.
+ */
+const SECTION_LABEL: Record<Section, string> = {
+  dashboard: "Dashboard",
+  sessions: "Sessions",
+  plugins: "Plugins",
+  skills: "Skills",
+  mcp: "MCP Servers",
+  settings: "Settings",
+};
+
 export function ContentArea() {
   const activeSection = useNavigationStore((s) => s.activeSection);
   const Component = SECTION_MAP[activeSection];
   return (
-    <main className="flex-1 overflow-auto bg-bg-primary">
+    <main
+      aria-label={SECTION_LABEL[activeSection]}
+      className="flex-1 overflow-auto bg-bg-primary"
+    >
       <Component />
     </main>
   );
