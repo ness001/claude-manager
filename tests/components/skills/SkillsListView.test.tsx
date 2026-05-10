@@ -162,4 +162,21 @@ describe("SkillsListView", () => {
     expect(svg).not.toBeNull();
     expect(svg!.getAttribute("aria-hidden")).toBe("true");
   });
+
+  // WCAG 2.4.7 Focus Visible — keyboard users tabbing through the Skills page
+  // need a visible focus indicator on every interactive control. Mirrors the
+  // family of focus-ring fixes in PRs #17/#45/#48/#49/#56/#57/#67.
+  it("Create Skill button has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<SkillsListView />);
+    const btn = screen.getByTestId("create-skill-btn");
+    expect(btn.className).toContain("focus-visible:ring-2");
+    expect(btn.className).toContain("focus-visible:ring-accent");
+  });
+
+  it("Plugins panel link has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<SkillsListView />);
+    const link = screen.getByTestId("plugins-panel-link");
+    expect(link.className).toContain("focus-visible:ring-2");
+    expect(link.className).toContain("focus-visible:ring-accent");
+  });
 });
