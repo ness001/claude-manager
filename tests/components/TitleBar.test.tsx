@@ -58,4 +58,27 @@ describe("TitleBar", () => {
       expect(svg?.getAttribute("aria-hidden")).toBe("true");
     }
   });
+
+  // WCAG 2.4.7 Focus Visible — keyboard users tabbing into the title bar
+  // need a visible focus indicator on every window control. The Close
+  // button is the highest-stakes control in the entire app — it tears
+  // down the window with no confirmation — so a missed focus state on
+  // it is particularly dangerous. Uses ring-inset because the title
+  // bar is only 32-px tall; an outside ring would clip against the
+  // parent flex container's edge. Mirrors PRs #17/#45/#48/#49/#56/#57
+  // /#67/#111/#112/#113/#116.
+  it("all three window controls have a focus-visible ring (WCAG 2.4.7)", async () => {
+    render(<TitleBar />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Maximize" }),
+      ).toBeInTheDocument();
+    });
+    for (const name of ["Minimize", "Maximize", "Close"]) {
+      const cls = screen.getByRole("button", { name }).className;
+      expect(cls).toContain("focus-visible:ring-2");
+      expect(cls).toContain("focus-visible:ring-accent");
+      expect(cls).toContain("focus-visible:ring-inset");
+    }
+  });
 });
