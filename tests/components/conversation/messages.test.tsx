@@ -180,6 +180,40 @@ describe("ToolCallBlock", () => {
     expect(block).toHaveTextContent("Error");
   });
 
+  // WCAG 1.4.1 (Use of Color) + 4.1.2 (Name, Role, Value): when isError is
+  // true, the only error signals were a red left border, a red badge, and
+  // the bare word "Error" inline in the toggle button's accessible name —
+  // so SR users hear "Read Error, button, collapsed", with "Error" reading
+  // like an arbitrary part of the tool name. Color-only differentiation
+  // also fails for color-blind users on light backgrounds. Promote the
+  // badge to an explicit status icon: role="img" + a descriptive
+  // aria-label override ("Tool call failed") so SR users get a discrete,
+  // unambiguous error announcement instead of a stray "Error" word.
+  // Visual rendering ("Error" pill in red) is unchanged.
+  it("error badge exposes role=img + aria-label so SR users hear a discrete error indicator", () => {
+    render(
+      <ToolCallBlock
+        toolName="Read"
+        toolInput={{}}
+        toolOutput="permission denied"
+        isError
+      />,
+    );
+    const badge = screen.getByTestId("tool-call-error-badge");
+    expect(badge.getAttribute("role")).toBe("img");
+    expect(badge.getAttribute("aria-label")).toBe("Tool call failed");
+    // Visible text is preserved for sighted users.
+    expect(badge.textContent).toBe("Error");
+  });
+
+  // Negative case: when isError is false (or undefined), no badge renders.
+  // Guards against the bug where a stray badge with a "Tool call failed"
+  // label could leak into successful tool calls.
+  it("no error badge renders when isError is false/undefined", () => {
+    render(<ToolCallBlock toolName="Bash" toolInput={{ cmd: "ls" }} />);
+    expect(screen.queryByTestId("tool-call-error-badge")).toBeNull();
+  });
+
   // Regression (WCAG 4.1.2): the chevron is decorative — the toolName <span>
   // already provides the toggle's accessible name. Without aria-hidden, some
   // screen readers announce the icon's computed name redundantly.
