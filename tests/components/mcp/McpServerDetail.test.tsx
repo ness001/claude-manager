@@ -93,4 +93,17 @@ describe("McpServerDetail", () => {
     fireEvent.click(toggle);
     expect(toggle.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
+
+  // WCAG 2.4.7 (Focus Visible): the env-value reveal/hide toggle had no
+  // focus ring — relying on the browser default, which Tauri's WebView
+  // renders inconsistently across platforms. A keyboard user could land on
+  // a button that toggles secret visibility without seeing it. Mirrors
+  // PRs #117 / #118 / #119 / #125 / #126 / #128 / #129.
+  it("env reveal toggle exposes a visible focus ring (WCAG 2.4.7)", () => {
+    render(<McpServerDetail server={FIX_CONNECTED} />);
+    const toggle = screen.getByTestId("env-value-TOKEN-toggle");
+    expect(toggle.className).toContain("focus-visible:outline-none");
+    expect(toggle.className).toContain("focus-visible:ring-2");
+    expect(toggle.className).toContain("focus-visible:ring-accent");
+  });
 });
