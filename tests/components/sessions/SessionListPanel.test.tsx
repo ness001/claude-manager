@@ -156,6 +156,27 @@ describe("SessionListPanel", () => {
     expect(screen.getByText("No sessions found")).toBeInTheDocument();
   });
 
+  // a11y: the empty/no-matches block is shown either on initial empty load
+  // ("No sessions found") OR when the user types a query that filters out
+  // every session ("No matches for 'X'"). The latter is the load-bearing
+  // case — without role="status" + aria-live="polite", screen-reader users
+  // who type into the filter get NO feedback that their query produced zero
+  // results. Polite (not assertive) so the announcement waits for the user
+  // to pause typing rather than firing on every keystroke. Mirrors
+  // PluginListView (#154), McpPanel (#155), and SkillsListView (#157).
+  it("no-matches/empty block is a polite live region (a11y: search announce)", () => {
+    useSessionStore.setState({
+      sessions: [makeSession({ sessionId: "s1", projectName: "alpha" })],
+      searchQuery: "zzz-no-match",
+      viewMode: "my",
+    });
+    render(<SessionListPanel />);
+    const empty = screen.getByTestId("session-list-empty");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+    expect(empty.textContent).toContain("No matches");
+  });
+
   it("New Session button is reachable", () => {
     render(<SessionListPanel />);
     const btn = screen.getByTestId("new-session-btn");
