@@ -23,6 +23,8 @@ function SessionListSkeleton() {
   return (
     <aside
       data-testid="session-list-skeleton"
+      aria-label="Session list"
+      aria-busy="true"
       className="flex h-full w-[260px] shrink-0 flex-col gap-2 border-r border-border bg-sidebar-bg p-3"
     >
       {Array.from({ length: 4 }).map((_, i) => (
