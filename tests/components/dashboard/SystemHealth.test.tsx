@@ -107,4 +107,16 @@ describe("SystemHealth", () => {
     const heading = screen.getByRole("heading", { name: "System Health", level: 3 });
     expect(heading.tagName).toBe("H3");
   });
+
+  // MCP indicator pluralization. Previously hardcoded to "servers", so a
+  // single configured server rendered the ungrammatical "1 servers".
+  it.each([
+    { mcpCount: 0, expected: "0 servers" },
+    { mcpCount: 1, expected: "1 server" },
+    { mcpCount: 2, expected: "2 servers" },
+  ])("MCP row pluralization — $mcpCount → $expected", ({ mcpCount, expected }) => {
+    render(<SystemHealth skipApiCheck mcpCount={mcpCount} />);
+    const indicators = screen.getAllByTestId(/^health-indicator|^health-api/);
+    expect(indicators[0].textContent).toContain(expected);
+  });
 });
