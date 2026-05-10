@@ -111,6 +111,17 @@ export function PluginListView() {
             data-testid="plugin-search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              // Esc-to-clear: WebView2 does not consistently honor the
+              // `<input type=search>` browser-default Esc behavior, and
+              // even when it does, focus jumps off the input. Clear
+              // explicitly so the user can keep typing without re-focusing.
+              // Mirrors the McpPanel search Esc handler (PR #151).
+              if (e.key === "Escape" && searchQuery !== "") {
+                e.preventDefault();
+                setSearchQuery("");
+              }
+            }}
             placeholder="Search plugins by name, description, or marketplace…"
             aria-label="Search plugins"
             className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
