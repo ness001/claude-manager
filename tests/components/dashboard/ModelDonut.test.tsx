@@ -69,4 +69,24 @@ describe("ModelDonut", () => {
     const heading = screen.getByRole("heading", { name: "Model Usage", level: 3 });
     expect(heading.tagName).toBe("H3");
   });
+
+  // Boundary regression: token formatter promoted into the wrong unit at the
+  // edge of each magnitude. 999_999 was rendering as "1000.0k" instead of
+  // "1.0M" because the threshold check happened before rounding to one decimal.
+  it.each([
+    { tokens: 999, expected: "999" },
+    { tokens: 1000, expected: "1.0k" },
+    { tokens: 999_499, expected: "999.5k" },
+    { tokens: 999_999, expected: "1.0M" }, // <-- previously "1000.0k"
+    { tokens: 1_000_000, expected: "1.0M" },
+    { tokens: 12_500_000, expected: "12.5M" },
+  ])("legend formats $tokens tokens as $expected", ({ tokens, expected }) => {
+    render(<ModelDonut data={[{ model: "m", tokens }]} />);
+    const item = screen.getByTestId("donut-legend-item");
+    expect(item.textContent).toContain(expected);
+    // Specifically guard against the "1000.0k" leak.
+    if (expected === "1.0M") {
+      expect(item.textContent).not.toContain("1000.0k");
+    }
+  });
 });
