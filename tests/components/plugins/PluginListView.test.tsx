@@ -97,6 +97,25 @@ describe("PluginListView", () => {
     expect(screen.getByTestId("no-matches")).toBeInTheDocument();
   });
 
+  // a11y: the no-matches message appears as the user types into the search
+  // box. Without role="status" + aria-live="polite", screen-reader users
+  // get NO feedback that their query produced zero results — they'd only
+  // discover it by tabbing into an empty result region. "polite" so the
+  // announcement waits for the user to pause typing rather than firing on
+  // every keystroke.
+  it("no-matches message is a polite live region (a11y: search announce)", () => {
+    usePluginStore.setState({
+      plugins: [makePlugin({ name: "alpha", description: "first" })],
+    });
+    render(<PluginListView />);
+    fireEvent.change(screen.getByTestId("plugin-search"), {
+      target: { value: "zzz" },
+    });
+    const empty = screen.getByTestId("no-matches");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): a placeholder is not an accessible name
   // (it disappears once the user types). Mirrors PRs #45 (SessionSearch),
   // #50 (McpPanel), #51 (SkillsListView).
