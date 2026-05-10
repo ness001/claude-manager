@@ -3,8 +3,9 @@ import type { ComponentType, KeyboardEvent, Ref } from "react";
 export interface SidebarRailItemProps {
   /** Display label (used for aria-label and tooltip). */
   label: string;
-  /** Lucide icon component. */
-  Icon: ComponentType<{ className?: string; size?: number }>;
+  /** Lucide icon component. Includes `aria-hidden` so the decorative SVG
+   *  doesn't double-announce alongside the button's `aria-label`. */
+  Icon: ComponentType<{ className?: string; size?: number; "aria-hidden"?: boolean | "true" | "false" }>;
   /** Whether this item represents the currently active section. */
   active: boolean;
   /** Click handler — typically dispatches navigation. */
@@ -58,7 +59,12 @@ export function SidebarRailItem({
       onKeyDown={onKeyDown}
       className={`${base} ${active ? activeClasses : inactiveClasses}`}
     >
-      <Icon size={20} />
+      {/* The button's accessible name comes from `aria-label={label}`. The
+          icon is purely decorative — without aria-hidden, lucide's SVG can
+          contribute its own computed name (e.g. "Settings") and screen
+          readers may announce the label twice. WCAG 4.1.2. Mirrors the
+          icon-hidden pattern used across QuickActions / SystemHealth. */}
+      <Icon size={20} aria-hidden="true" />
     </button>
   );
 }
