@@ -150,6 +150,22 @@ describe("AssistantMessage", () => {
     expect(link.className).toContain("underline");
     expect(link.className).toContain("text-accent");
   });
+
+  // WCAG 1.3.1 (Info and Relationships): the visible "Claude" label and
+  // the message body were two adjacent siblings with no programmatic
+  // relationship — AT users heard "Claude" then the body as if unrelated.
+  // Promote to role="region" + aria-labelledby pointing at the label
+  // span. Mirrors UserMessage (#165) and SummaryBanner (#164).
+  it("exposes role='region' labelled by the 'Claude' span (a11y)", () => {
+    render(<AssistantMessage text="hi" />);
+    const bubble = screen.getByTestId("assistant-message");
+    expect(bubble.getAttribute("role")).toBe("region");
+    const labelId = bubble.getAttribute("aria-labelledby");
+    expect(labelId).toBeTruthy();
+    const label = screen.getByTestId("assistant-message-label");
+    expect(label.id).toBe(labelId);
+    expect(label.textContent).toBe("Claude");
+  });
 });
 
 describe("ToolCallBlock", () => {

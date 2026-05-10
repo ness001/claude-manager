@@ -16,6 +16,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
 import { open as openShell } from "@tauri-apps/plugin-shell";
+import { useId } from "react";
 
 interface AssistantMessageProps {
   text: string;
@@ -23,13 +24,28 @@ interface AssistantMessageProps {
 }
 
 export function AssistantMessage({ text, model }: AssistantMessageProps) {
+  // WCAG 1.3.1 (Info and Relationships): the visual "Claude" label, the
+  // optional model badge, and the message body are grouped by the bubble
+  // visually, but the DOM previously exposed them as adjacent siblings
+  // with no programmatic relationship. SR users heard "Claude" then the
+  // model name then unrelated prose. Promote the bubble to a labelled
+  // region so AT can navigate to it via the landmarks list and announce
+  // the speaker label together with the body. Mirrors UserMessage (#165)
+  // and SummaryBanner (#164).
+  const labelId = useId();
   return (
     <div
       data-testid="assistant-message"
+      role="region"
+      aria-labelledby={labelId}
       className="flex flex-col gap-1 rounded-lg bg-bg-secondary px-3 py-2"
     >
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+        <span
+          id={labelId}
+          data-testid="assistant-message-label"
+          className="text-[10px] font-semibold uppercase tracking-wide text-text-muted"
+        >
           Claude
         </span>
         {model && (
