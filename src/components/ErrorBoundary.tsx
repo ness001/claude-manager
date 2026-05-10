@@ -26,6 +26,8 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("Unhandled render error:", error, info.componentStack);
   }
 
+  reset = () => this.setState({ error: null });
+
   render() {
     if (this.state.error) {
       return (
@@ -40,14 +42,24 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="max-w-md text-sm text-text-secondary">
             {this.state.error.message || "An unexpected error occurred."}
           </p>
-          <button
-            type="button"
-            data-testid="error-boundary-reload"
-            onClick={() => window.location.reload()}
-            className="rounded-md border border-border bg-bg-tertiary px-3 py-1.5 text-sm text-text-primary hover:bg-bg-secondary"
-          >
-            Reload
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              data-testid="error-boundary-retry"
+              onClick={this.reset}
+              className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Try again
+            </button>
+            <button
+              type="button"
+              data-testid="error-boundary-reload"
+              onClick={() => window.location.reload()}
+              className="rounded-md border border-border bg-bg-tertiary px-3 py-1.5 text-sm text-text-primary hover:bg-bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Reload
+            </button>
+          </div>
         </div>
       );
     }
