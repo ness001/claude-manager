@@ -380,22 +380,82 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
           className="absolute bottom-2 right-3 flex items-center gap-1 rounded-md border border-border bg-bg-secondary px-2 py-1 text-xs text-text-secondary shadow"
         >
           <span>Turn</span>
-          <input
-            data-testid="turn-input"
-            type="number"
-            min={1}
-            max={totalTurns}
-            value={currentTurn}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              if (!Number.isNaN(v)) jumpToTurn(v);
-            }}
-            className="w-12 bg-bg-tertiary px-1 text-right outline-none focus:ring-1 focus:ring-accent rounded"
-            aria-label="Jump to turn"
+          <TurnInput
+            currentTurn={currentTurn}
+            totalTurns={totalTurns}
+            onCommit={jumpToTurn}
           />
           <span>/ {totalTurns}</span>
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Numeric "jump to turn N" input. Behaves as an editing field while the user
+ * is typing — multi-digit values, transient out-of-range values, and an
+ * empty string are all allowed in the displayed draft. The actual jump
+ * (clamped to [1, totalTurns]) happens on Enter or blur. When `currentTurn`
+ * changes from the outside (Ctrl+ArrowUp/Down), the draft re-syncs.
+ *
+ * The previous controlled-on-every-keystroke version snapped the user's view
+ * (and the displayed value) on every digit, e.g. typing "15" in a 10-turn
+ * session made the input flash 1 → 10 mid-keystroke.
+ */
+function TurnInput({
+  currentTurn,
+  totalTurns,
+  onCommit,
+}: {
+  currentTurn: number;
+  totalTurns: number;
+  onCommit: (n: number) => void;
+}) {
+  const [draft, setDraft] = useState<string>(String(currentTurn));
+  const [editing, setEditing] = useState(false);
+  // Re-sync the draft when the canonical turn changes from outside (keyboard
+  // nav, scroll). Skip while the user is actively editing so we don't yank
+  // their in-progress text.
+  useEffect(() => {
+    if (!editing) setDraft(String(currentTurn));
+  }, [currentTurn, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const v = Number(draft);
+    if (draft === "" || Number.isNaN(v)) {
+      setDraft(String(currentTurn));
+      return;
+    }
+    onCommit(v); // jumpToTurn clamps to [1, totalTurns] and updates currentTurn
+    // The effect above will re-sync `draft` to the clamped value.
+  };
+
+  return (
+    <input
+      data-testid="turn-input"
+      type="number"
+      min={1}
+      max={totalTurns}
+      value={draft}
+      onFocus={() => setEditing(true)}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit();
+          (e.target as HTMLInputElement).blur();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          setDraft(String(currentTurn));
+          setEditing(false);
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      className="w-12 bg-bg-tertiary px-1 text-right outline-none focus:ring-1 focus:ring-accent rounded"
+      aria-label="Jump to turn"
+    />
   );
 }
