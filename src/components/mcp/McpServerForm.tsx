@@ -9,7 +9,7 @@
 // Save calls saveMcpServer via the parent's onSave; Cancel closes without
 // touching disk.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 
 import { saveMcpServer } from "../../lib/mcp-loader";
 import type {
@@ -39,6 +39,7 @@ export function McpServerForm({
   onSaved,
 }: McpServerFormProps) {
   const isEdit = initial !== null && initial !== undefined;
+  const titleId = useId();
   const [name, setName] = useState(initial?.name ?? "");
   const [scope, setScope] = useState<McpScope>(
     initial?.scope === "local" ? "local" : "user",
@@ -135,7 +136,8 @@ export function McpServerForm({
     <div
       data-testid="mcp-form-backdrop"
       role="dialog"
-      aria-label={isEdit ? "Edit MCP server" : "Add MCP server"}
+      aria-modal="true"
+      aria-labelledby={titleId}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onClick={onClose}
     >
@@ -144,7 +146,7 @@ export function McpServerForm({
         className="flex max-h-[90vh] w-[500px] flex-col gap-3 overflow-auto rounded-md border border-border bg-card-bg p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-base font-semibold text-text-primary">
+        <h2 id={titleId} className="text-base font-semibold text-text-primary">
           {isEdit ? "Edit MCP Server" : "Add MCP Server"}
         </h2>
 
