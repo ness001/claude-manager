@@ -260,6 +260,7 @@ export function McpServerForm({
                 entries={headers}
                 onChange={setHeaders}
                 testidPrefix="form-header"
+                fieldLabel="HTTP header"
               />
             </Field>
           </>
@@ -270,6 +271,7 @@ export function McpServerForm({
             entries={env}
             onChange={setEnv}
             testidPrefix="form-env"
+            fieldLabel="Environment variable"
           />
         </Field>
 
@@ -340,10 +342,12 @@ function KeyValueEditor({
   entries,
   onChange,
   testidPrefix,
+  fieldLabel,
 }: {
   entries: [string, string][];
   onChange: (next: [string, string][]) => void;
   testidPrefix: string;
+  fieldLabel: string;
 }) {
   const updateAt = (i: number, k: string, v: string) => {
     const next = entries.slice();
@@ -360,6 +364,7 @@ function KeyValueEditor({
             value={k}
             onChange={(e) => updateAt(i, e.target.value, v)}
             placeholder="KEY"
+            aria-label={`${fieldLabel} ${i + 1} key`}
             className="w-32 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary"
           />
           <input
@@ -368,6 +373,7 @@ function KeyValueEditor({
             value={v}
             onChange={(e) => updateAt(i, k, e.target.value)}
             placeholder="value"
+            aria-label={k ? `${fieldLabel} ${k} value` : `${fieldLabel} ${i + 1} value`}
             className="flex-1 rounded border border-border bg-bg-tertiary px-2 py-1 text-xs text-text-primary"
           />
           <button
