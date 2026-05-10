@@ -92,6 +92,7 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
             "truncate text-sm text-text-primary",
             session.state === "orphaned" ? "italic" : "",
           ].join(" ")}
+          title={label}
         >
           {label}
         </span>
