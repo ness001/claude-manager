@@ -389,4 +389,24 @@ describe("McpServerCard", () => {
     const cancel = screen.getByTestId("remove-cancel");
     expect(document.activeElement).toBe(cancel);
   });
+
+  // WAI-ARIA APG: a destructive confirmation that interrupts the user's
+  // workflow to acquire a yes/no response is precisely the alertdialog
+  // pattern, not a generic dialog. Additionally the question text must
+  // be programmatically associated as the dialog's description so SR
+  // users hear "Remove server X?" — not just the dialog's aria-label.
+  it("remove confirm uses role=alertdialog and aria-describedby points at the question text", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    fireEvent.click(screen.getByTestId("action-remove"));
+    const dlg = screen.getByTestId("remove-confirm-dialog");
+    expect(dlg.getAttribute("role")).toBe("alertdialog");
+    const describedBy = dlg.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    const msg = document.getElementById(describedBy!);
+    expect(msg).not.toBeNull();
+    expect(msg!.textContent).toContain("Remove server");
+    expect(msg!.textContent).toContain(FIX_CONNECTED.name);
+  });
 });
