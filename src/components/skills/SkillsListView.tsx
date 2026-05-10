@@ -58,7 +58,7 @@ export function SkillsListView() {
             onClick={() => {
               void onCreateSkill();
             }}
-            className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary"
+            className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <Plus size={14} aria-hidden="true" />
             Create Skill
@@ -136,7 +136,7 @@ export function SkillsListView() {
           type="button"
           data-testid="plugins-panel-link"
           onClick={() => navigateTo("plugins")}
-          className="underline hover:text-text-primary"
+          className="rounded underline hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           Plugins panel
         </button>
