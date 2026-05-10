@@ -123,9 +123,22 @@ function MaskedValue({
   }
   const action = revealed ? "Hide" : "Reveal";
   const ariaLabel = name ? `${action} ${name}` : `${action} value`;
+  // When the value is masked, the visible text is 8 bullet glyphs
+  // (`••••••••`). Screen readers will literally announce eight "bullet"
+  // characters — a noisy, semantically meaningless reading. Override the
+  // accessible name so SR users hear "TOKEN value hidden" (or just
+  // "value hidden" when no key name is provided) instead of bullet noise.
+  // When revealed, drop the override so the actual value is announced.
+  const valueAriaLabel = revealed
+    ? undefined
+    : name
+      ? `${name} value hidden`
+      : "value hidden";
   return (
     <span className="flex items-center gap-1">
-      <code data-testid={testid}>{revealed ? value : "•".repeat(8)}</code>
+      <code data-testid={testid} aria-label={valueAriaLabel}>
+        {revealed ? value : "•".repeat(8)}
+      </code>
       <button
         type="button"
         data-testid={`${testid}-toggle`}
