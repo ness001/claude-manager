@@ -210,4 +210,21 @@ describe("PluginCard", () => {
     expect(toggle.className).toContain("focus-visible:ring-offset-2");
     expect(toggle.className).toContain("focus-visible:ring-offset-bg-primary");
   });
+
+  // CLAUDE.md R2 (Orphan-placeholder rule): every disabled stub must declare
+  // its wire-up tracker inline so the placeholder isn't an undiscoverable
+  // orphan. The Reinstall + Remove buttons in PluginCard are disabled until
+  // the `claude plugins install/uninstall` IPC ships; both must reference
+  // the open tracker in docs/superpowers/plans/2026-05-08-ui-defect-sweep.md
+  // (lines 293–294). Mirrors PR #105 (QuickActions).
+  it("PluginCard source has R2 wire-up TODOs for the Reinstall + Remove stubs", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const src = fs.readFileSync(
+      path.resolve(__dirname, "../../../src/components/plugins/PluginCard.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/TODO\(ui-defect-sweep#L293\)[\s\S]*Reinstall/);
+    expect(src).toMatch(/TODO\(ui-defect-sweep#L294\)[\s\S]*Remove/);
+  });
 });
