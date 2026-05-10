@@ -28,7 +28,7 @@ export function RecentSessions({ data }: RecentSessionsProps) {
           type="button"
           data-testid="view-all-sessions"
           onClick={() => navigateTo("sessions")}
-          className="text-xs text-accent hover:text-accent-hover hover:underline"
+          className="rounded text-xs text-accent hover:text-accent-hover hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           View All Sessions
         </button>
