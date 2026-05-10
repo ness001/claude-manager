@@ -303,7 +303,7 @@ export function McpServerForm({
             onClick={() => {
               void handleSubmit();
             }}
-            className="rounded bg-accent px-3 py-1 text-sm text-white hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+            className="rounded bg-accent px-3 py-1 text-sm text-white hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary disabled:opacity-50"
           >
             Save
           </button>
