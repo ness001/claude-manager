@@ -166,4 +166,16 @@ describe("McpPanel", () => {
       expect(svg!.getAttribute("aria-hidden")).toBe("true");
     }
   });
+
+  // WCAG 2.4.7 Focus Visible — keyboard users tabbing through the MCP page
+  // need a visible focus indicator on every interactive control. Mirrors the
+  // family of focus-ring fixes in PRs #17/#45/#48/#49/#56/#57/#67/#111.
+  it("header + empty-state buttons have a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<McpPanel />);
+    for (const id of ["add-server-btn", "refresh-status-btn", "empty-add-btn"]) {
+      const btn = screen.getByTestId(id);
+      expect(btn.className).toContain("focus-visible:ring-2");
+      expect(btn.className).toContain("focus-visible:ring-accent");
+    }
+  });
 });
