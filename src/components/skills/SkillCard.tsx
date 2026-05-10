@@ -71,7 +71,7 @@ export function SkillCard({ skill }: SkillCardProps) {
           onClick={() => {
             void openInVsCode();
           }}
-          className="flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary"
+          className="flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Code2 size={12} aria-hidden="true" />
           Open in VS Code
@@ -82,7 +82,7 @@ export function SkillCard({ skill }: SkillCardProps) {
           onClick={() => {
             void openInFileBrowser();
           }}
-          className="flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary"
+          className="flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <FolderOpen size={12} aria-hidden="true" />
           Open in File Browser
