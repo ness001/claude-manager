@@ -569,4 +569,22 @@ describe("McpServerForm", () => {
       expect(el.className).toContain("focus-visible:ring-accent");
     }
   });
+
+  // WAI-ARIA APG modal-dialog pattern: when a modal opens, focus must
+  // move into it. Otherwise focus stays on the trigger button outside the
+  // dialog (e.g. "Add Server"), and keyboard/SR users have to manually
+  // click into the dialog before typing. Name is the first required
+  // field — a sensible default.
+  it("auto-focuses the Name input when the modal opens", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    const nameInput = screen.getByTestId("form-name");
+    expect(document.activeElement).toBe(nameInput);
+  });
 });
