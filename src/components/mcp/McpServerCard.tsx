@@ -80,7 +80,11 @@ export function McpServerCard({
         <button
           type="button"
           data-testid="expand-toggle"
-          aria-label={expanded ? "Collapse" : "Expand"}
+          aria-label={
+            expanded
+              ? `Collapse details for ${server.name}`
+              : `Expand details for ${server.name}`
+          }
           aria-expanded={expanded}
           aria-controls={detailId}
           onClick={() => setExpanded((e) => !e)}

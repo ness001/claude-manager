@@ -425,4 +425,23 @@ describe("McpServerCard", () => {
     expect(msg!.textContent).toContain("Remove server");
     expect(msg!.textContent).toContain(FIX_CONNECTED.name);
   });
+
+  // WCAG 2.4.6 (Headings and Labels) — the bare "Expand" / "Collapse"
+  // accessible name is non-descriptive: a screen-reader user navigating a
+  // long list of MCP servers hears "Expand, button" repeatedly with no
+  // indication of WHICH server's details would open. Including the server
+  // name in the aria-label makes the control self-describing in isolation.
+  it("expand-toggle aria-label includes the server name (WCAG 2.4.6)", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    const btn = screen.getByTestId("expand-toggle");
+    expect(btn.getAttribute("aria-label")).toBe(
+      `Expand details for ${FIX_CONNECTED.name}`,
+    );
+    fireEvent.click(btn);
+    expect(btn.getAttribute("aria-label")).toBe(
+      `Collapse details for ${FIX_CONNECTED.name}`,
+    );
+  });
 });
