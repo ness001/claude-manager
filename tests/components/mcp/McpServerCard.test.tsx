@@ -82,6 +82,22 @@ describe("McpServerCard", () => {
     }
   });
 
+  // WCAG 1.4.1 (Use of Color) + 4.1.2 (Name, Role, Value): the status dot is
+  // the only programmatic state cue on the card header. Without role="img"
+  // the bare aria-label sits on a generic <span> that screen readers skip
+  // during element-by-element navigation. Mirrors SessionCard / PluginCard.
+  it("status dot exposes role='img' with the state in its aria-label (a11y)", () => {
+    for (const fix of [FIX_CONNECTED, FIX_DISCONNECTED, FIX_ERROR, FIX_STARTING]) {
+      const { unmount } = render(
+        <McpServerCard server={fix} onEdit={noop} onRemove={noop} />,
+      );
+      const dot = screen.getByTestId("status-dot");
+      expect(dot.getAttribute("role")).toBe("img");
+      expect(dot.getAttribute("aria-label")).toBe(`status: ${fix.status}`);
+      unmount();
+    }
+  });
+
   it("action set varies per state (spec §8.3)", () => {
     const cases: Array<[typeof FIX_CONNECTED, string[]]> = [
       [
