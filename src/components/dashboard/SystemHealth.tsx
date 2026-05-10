@@ -97,7 +97,7 @@ export function SystemHealth({
           status={mcpStatus}
           value={`${mcpCount} ${mcpCount === 1 ? "server" : "servers"}`}
         />
-        <Indicator label="Plugins" status={pluginStatus} value={`${pluginCount} installed`} />
+        <Indicator label="Plugins" status={pluginStatus} value={`${pluginCount} ${pluginCount === 1 ? "plugin" : "plugins"} installed`} />
         <Indicator
           label="API"
           status={apiStatus}
