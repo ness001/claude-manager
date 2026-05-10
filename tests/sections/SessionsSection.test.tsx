@@ -119,6 +119,26 @@ describe("SessionsSection", () => {
     });
   });
 
+  // WCAG 2.4.1 / WAI-ARIA Naming Landmarks — the loading-state <aside> is
+  // the SAME landmark as the real SessionListPanel (same dimensions, same
+  // semantic role) just temporarily filled with skeletons. It needs the
+  // SAME aria-label so screen-reader landmark navigation finds the same
+  // region whether the list is loading or loaded. aria-busy='true' tells
+  // AT the region's content is being prepared so it can suppress mid-load
+  // announcements. Mirrors PR #114 (per-section <main> aria-labels).
+  it("loading skeleton <aside> has aria-label='Session list' + aria-busy='true' (WCAG 2.4.1)", async () => {
+    useSessionStore.setState({ isLoading: true, sessions: [] });
+    render(<SessionsSection />);
+    const skel = screen.getByTestId("session-list-skeleton");
+    expect(skel.tagName).toBe("ASIDE");
+    expect(skel.getAttribute("aria-label")).toBe("Session list");
+    expect(skel.getAttribute("aria-busy")).toBe("true");
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+  });
+
   it("empty state: 'No sessions found' + New Session CTA when sessions=[]", async () => {
     render(<SessionsSection />);
     // Allow loadSessions() promise + state updates to flush.
