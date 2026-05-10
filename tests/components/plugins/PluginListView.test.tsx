@@ -350,4 +350,44 @@ describe("PluginListView", () => {
     );
     expect(src).toMatch(/TODO\(ui-defect-sweep#L295\)[\s\S]*install-plugin-btn/);
   });
+
+  // WCAG 4.1.3 (Status Messages, Level AA) — while the Check-for-Updates
+  // network call is in flight the button only signaled "busy" via a spinning
+  // icon (sighted-only) and the `disabled` state. Screen-reader users heard
+  // "Check for Updates, dimmed" with no indication an async operation was
+  // running. Add aria-busy + a label swap to "Checking…" so the in-flight
+  // state is announced.
+  it("Check-for-Updates exposes aria-busy + label swap while in flight (WCAG 4.1.3)", async () => {
+    usePluginStore.setState({ plugins: [makePlugin({ name: "alpha" })] });
+    // A pending invoke that never resolves keeps isChecking=true so we can
+    // assert the in-flight rendering without racing the resolution.
+    let resolveInvoke!: (value: unknown) => void;
+    invokeMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveInvoke = resolve;
+        }),
+    );
+    render(<PluginListView />);
+    const btn = screen.getByTestId("check-updates-btn");
+
+    // Idle state.
+    expect(btn.getAttribute("aria-busy")).toBe("false");
+    expect(btn.textContent).toContain("Check for Updates");
+
+    // Trigger the check; the click hands the promise to React but doesn't
+    // resolve it.
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+
+    expect(btn.getAttribute("aria-busy")).toBe("true");
+    expect(btn.textContent).toContain("Checking…");
+
+    // Cleanup — let the pending promise resolve so React doesn't warn.
+    await act(async () => {
+      resolveInvoke([]);
+      await Promise.resolve();
+    });
+  });
 });
