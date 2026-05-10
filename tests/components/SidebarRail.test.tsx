@@ -176,4 +176,19 @@ describe("SidebarRail", () => {
       ).toBe(-1);
     }
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): each rail button already exposes its
+  // section name via aria-label. The lucide-react SVG inside is purely
+  // decorative — without aria-hidden it can contribute its own computed
+  // name (e.g. "Settings") and a screen reader may announce the label
+  // twice. Mirrors the icon-hidden pattern used in QuickActions.
+  it("decorative rail icons are hidden from assistive tech (aria-hidden)", () => {
+    render(<SidebarRail />);
+    for (const label of labels) {
+      const btn = screen.getByRole("button", { name: label });
+      const svg = btn.querySelector("svg");
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
 });
