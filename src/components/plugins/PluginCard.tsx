@@ -158,6 +158,12 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           }}
           className={[
             "relative h-4 w-7 rounded-full transition-colors",
+            // Focus-visible ring with offset: when toggleOn the bar is itself
+            // accent-purple, so a plain accent ring would be invisible. The
+            // offset breaks the ring off the bar edge against the surrounding
+            // surface (mirrors #117 / #118 / #119 — same `ring-offset-bg-primary`
+            // token they validated).
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary",
             toggleOn ? "bg-accent" : "bg-border-strong",
             toggleDisabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
           ].join(" ")}

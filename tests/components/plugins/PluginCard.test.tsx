@@ -195,4 +195,19 @@ describe("PluginCard", () => {
     const toggle = screen.getByTestId("enable-toggle");
     expect(toggle.getAttribute("aria-label")).toBe("Enable other-plugin");
   });
+
+  // WCAG 2.4.7 (Focus Visible): the enable/disable switch is keyboard-
+  // focusable but had no focus-visible ring at all — Tab into it and the
+  // cursor disappears for keyboard users. When toggleOn the bar itself is
+  // accent-purple, so a plain accent ring would blend in; we need the
+  // offset trio (matches #117 / #118 / #119).
+  it("enable toggle has a visible focus ring with offset (WCAG 2.4.7)", () => {
+    render(<PluginCard plugin={makePlugin({ state: "active" })} selected={false} />);
+    const toggle = screen.getByTestId("enable-toggle");
+    expect(toggle.className).toContain("focus-visible:outline-none");
+    expect(toggle.className).toContain("focus-visible:ring-2");
+    expect(toggle.className).toContain("focus-visible:ring-accent");
+    expect(toggle.className).toContain("focus-visible:ring-offset-2");
+    expect(toggle.className).toContain("focus-visible:ring-offset-bg-primary");
+  });
 });
