@@ -197,7 +197,7 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
               (e.target as HTMLInputElement).blur();
             }
           }}
-          className="flex-1 min-w-0 truncate bg-transparent text-base font-semibold text-text-primary outline-none focus:ring-1 focus:ring-accent rounded px-1"
+          className="flex-1 min-w-0 truncate bg-transparent text-base font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded px-1"
           aria-label="Session name (session-scoped — not yet saved across reloads)"
           title="Renames are session-scoped — not yet saved across reloads"
         />

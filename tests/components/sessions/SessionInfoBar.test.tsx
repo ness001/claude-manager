@@ -318,4 +318,21 @@ describe("SessionInfoBar", () => {
     expect(alert.getAttribute("role")).toBe("alert");
     expect(alert.textContent).toContain("ENOENT");
   });
+
+  // WCAG 2.4.7 Focus Visible — the inline name-edit input previously used
+  // `outline-none focus:ring-1 focus:ring-accent`, which (a) strips the
+  // browser default outline for *every* focus including mouse and (b)
+  // replaces it with a 1-px ring shown on every focus event. Mirrors the
+  // focus-ring trio fix landed in PRs #138 / #139 / #140.
+  it("session-name input has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<SessionInfoBar session={makeSession()} />);
+    const input = screen.getByTestId("session-name-input");
+    expect(input.className).toContain("focus-visible:outline-none");
+    expect(input.className).toContain("focus-visible:ring-2");
+    expect(input.className).toContain("focus-visible:ring-accent");
+    // Regression guard: the old non-`focus-visible` classes are gone, so
+    // mouse clicks no longer strip the outline silently.
+    expect(input.className).not.toMatch(/(^|\s)outline-none(\s|$)/);
+    expect(input.className).not.toMatch(/(^|\s)focus:ring-1(\s|$)/);
+  });
 });
