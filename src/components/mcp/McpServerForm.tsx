@@ -221,7 +221,7 @@ export function McpServerForm({
                       data-testid={`form-arg-remove-${i}`}
                       aria-label={`Remove ${a}`}
                       onClick={() => setArgs((xs) => xs.filter((_, j) => j !== i))}
-                      className="text-text-muted hover:text-status-error"
+                      className="rounded-sm text-text-muted hover:text-status-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       ×
                     </button>
@@ -383,7 +383,7 @@ function KeyValueEditor({
             data-testid={`${testidPrefix}-remove-${i}`}
             aria-label={k ? `Remove ${k}` : "Remove row"}
             onClick={() => onChange(entries.filter((_, j) => j !== i))}
-            className="px-1 text-text-muted hover:text-status-error"
+            className="rounded-sm px-1 text-text-muted hover:text-status-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             ×
           </button>
@@ -393,7 +393,7 @@ function KeyValueEditor({
         type="button"
         data-testid={`${testidPrefix}-add`}
         onClick={() => onChange([...entries, ["", ""]])}
-        className="self-start rounded border border-border px-2 py-0.5 text-[11px] text-text-secondary hover:bg-bg-tertiary"
+        className="self-start rounded border border-border px-2 py-0.5 text-[11px] text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         + Add
       </button>
