@@ -179,4 +179,16 @@ describe("SkillsListView", () => {
     expect(link.className).toContain("focus-visible:ring-2");
     expect(link.className).toContain("focus-visible:ring-accent");
   });
+
+  // WCAG 2.4.7 Focus Visible — the search input previously used
+  // `focus:outline-none focus:border-accent`, same flaw fixed for McpPanel
+  // in PR #138. Mirrors PluginListView search-input fix.
+  it("search input has a focus-visible ring (WCAG 2.4.7)", () => {
+    render(<SkillsListView />);
+    const input = screen.getByTestId("skill-search");
+    expect(input.className).toContain("focus-visible:outline-none");
+    expect(input.className).toContain("focus-visible:ring-2");
+    expect(input.className).toContain("focus-visible:ring-accent");
+    expect(input.className).not.toMatch(/(^|\s)focus:outline-none(\s|$)/);
+  });
 });
