@@ -207,7 +207,7 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
           data-testid="message-count-badge"
           className="rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary"
         >
-          {session.messageCount} msgs
+          {session.messageCount} {session.messageCount === 1 ? "msg" : "msgs"}
         </span>
 
         <span
