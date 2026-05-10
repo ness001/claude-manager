@@ -53,7 +53,18 @@ export function RecentSessions({ data }: RecentSessionsProps) {
                 aria-hidden="true"
                 className="inline-block h-2 w-2 rounded-full shrink-0 bg-text-muted"
               />
-              <span className="flex-1 truncate text-text-primary">
+              {/* Session names like "Claude Manager Phase 2 — T2.13 wire up
+                  recent-sessions live state" routinely overflow the row width
+                  and get clipped by `truncate`. Without `title`, sighted users
+                  have no way to recover the hidden tail (rows are intentionally
+                  non-interactive per spec §4.1, so opening the session isn't
+                  an option). Mirror the visible string into title so hover
+                  surfaces the full name. Same fix as SkillCard skill-path
+                  (PR #167). */}
+              <span
+                className="flex-1 truncate text-text-primary"
+                title={s.displayName || "(untitled)"}
+              >
                 {s.displayName || "(untitled)"}
               </span>
               <span className="text-[11px] text-text-muted tabular-nums shrink-0">

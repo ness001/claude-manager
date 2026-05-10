@@ -127,4 +127,49 @@ describe("RecentSessions", () => {
     const cell = screen.getByTestId("recent-session-msg-count");
     expect(cell.textContent).toBe(expected);
   });
+
+  // Defect: row name has `truncate`, so long session names get clipped with
+  // an ellipsis. Rows are non-interactive (see test above), so a sighted user
+  // has NO way to recover the hidden tail — they'd have to switch to the
+  // Sessions section and search. Mirror the visible string into `title` so
+  // hover surfaces the full name. Mirrors PR #167 (SkillCard skill-path).
+  it("session-name span mirrors its visible text into the `title` attribute (UX truncation recovery)", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s",
+            displayName: "a really long session name that overflows",
+            messageCount: 1,
+            startedAt: Date.now(),
+          },
+        ]}
+      />,
+    );
+    const row = screen.getByTestId("recent-session-row");
+    const nameSpan = row.querySelector("span.truncate") as HTMLElement | null;
+    expect(nameSpan).not.toBeNull();
+    expect(nameSpan!.getAttribute("title")).toBe(
+      "a really long session name that overflows",
+    );
+  });
+
+  it("untitled session falls back to the same '(untitled)' string in `title`", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s",
+            displayName: "",
+            messageCount: 1,
+            startedAt: Date.now(),
+          },
+        ]}
+      />,
+    );
+    const row = screen.getByTestId("recent-session-row");
+    const nameSpan = row.querySelector("span.truncate") as HTMLElement | null;
+    expect(nameSpan).not.toBeNull();
+    expect(nameSpan!.getAttribute("title")).toBe("(untitled)");
+  });
 });
