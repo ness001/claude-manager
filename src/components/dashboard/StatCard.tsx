@@ -35,8 +35,23 @@ const ACCENT_VAR: Record<StatAccent, string> = {
   mauve: "var(--color-accent)",
 };
 
+/**
+ * Value-text color per accent. Diverges from ACCENT_VAR only for `yellow`,
+ * because the stripe yellow (#eab308) on the white card-bg gives ~1.6:1
+ * contrast — well below WCAG 1.4.3's 3:1 large-text floor. The stripe is
+ * decorative (aria-hidden) so it can stay vivid; the value text needs the
+ * darker `--color-status-yellow-text` to be readable in light mode.
+ */
+const VALUE_COLOR_VAR: Record<StatAccent, string> = {
+  green: "var(--color-status-green)",
+  blue: "var(--color-status-blue)",
+  yellow: "var(--color-status-yellow-text)",
+  mauve: "var(--color-accent)",
+};
+
 export function StatCard({ value, label, accent, sublabel }: StatCardProps) {
-  const color = ACCENT_VAR[accent];
+  const stripeColor = ACCENT_VAR[accent];
+  const valueColor = VALUE_COLOR_VAR[accent];
   return (
     <div
       data-testid="stat-card"
@@ -47,12 +62,12 @@ export function StatCard({ value, label, accent, sublabel }: StatCardProps) {
       <span
         data-testid="stat-accent"
         aria-hidden="true"
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: stripeColor }}
         className="absolute left-0 top-0 h-full w-1"
       />
       <div
         data-testid="stat-value"
-        style={{ color }}
+        style={{ color: valueColor }}
         className="text-2xl font-semibold tabular-nums"
       >
         {value}
