@@ -36,6 +36,25 @@ describe("SystemHealth", () => {
     expect(screen.getByTestId("health-api").getAttribute("data-status")).toBe("ok");
   });
 
+  it("warn dot uses the contrast-safe status-amber background, not the bare yellow (WCAG 1.4.11)", () => {
+    // The original `bg-status-yellow` (#eab308) on the white card-bg gave
+    // ~1.6:1 contrast — well below the 3:1 non-text floor. Sighted users
+    // in light mode saw what was effectively an invisible dot for the
+    // primary visual signal distinguishing "warn" from "ok" rows. Pin
+    // both the positive (status-amber present) and the negative (no bare
+    // status-yellow) so a future refactor can't silently regress.
+    render(<SystemHealth skipApiCheck />);
+    const indicators = screen.getAllByTestId(/^health-indicator|^health-api/);
+    // First indicator (MCP) defaults to "warn" (mcpCount=0).
+    const warnRow = indicators[0];
+    expect(warnRow.getAttribute("data-status")).toBe("warn");
+    const dot = warnRow.querySelector("[data-testid='health-dot']");
+    expect(dot).not.toBeNull();
+    const cls = dot!.getAttribute("class") ?? "";
+    expect(cls).toContain("bg-status-amber");
+    expect(cls).not.toMatch(/bg-status-yellow(?!-)/);
+  });
+
   it("populated values flip MCP / Plugins / CLI to ok", () => {
     render(
       <SystemHealth
