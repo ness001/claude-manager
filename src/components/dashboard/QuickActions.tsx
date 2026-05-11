@@ -52,6 +52,10 @@ export function QuickActions() {
             data-testid={`action-${a.id}`}
             disabled
             aria-disabled="true"
+            // Sighted users see the "Coming soon" tooltip on hover; mirror
+            // that hint into the accessible name so screen-reader users
+            // aren't left thinking the button is just broken (WCAG 4.1.2).
+            aria-label={`${a.label} (coming soon)`}
             title="Coming soon"
             className={[
               "flex items-center justify-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium",
