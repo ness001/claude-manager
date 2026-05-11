@@ -265,9 +265,27 @@ export function McpServerCard({
           server.status === "disconnected" ||
           server.status === "error") && (
           <>
-            <ActionButton testid="action-edit" onClick={() => onEdit(server)}>
-              Edit
-            </ActionButton>
+            {/* Project-scoped servers are loaded from <root>/.mcp.json (per
+              * spec §17.10 the Edit dialog only offers User/Local radios).
+              * Routing them through this form silently downgraded scope to
+              * "user" on save — a data-loss path. Disable Edit for project
+              * scope and point the user at the source-of-truth file via
+              * the title tooltip + aria-label. Same disabled-stub pattern
+              * as the Coming-soon stubs (PRs #181/#183/#184). */}
+            {server.scope === "project" ? (
+              <ActionButton
+                testid="action-edit"
+                onClick={() => {}}
+                disabled
+                title="Edit project-scoped servers by editing the project's .mcp.json"
+              >
+                Edit
+              </ActionButton>
+            ) : (
+              <ActionButton testid="action-edit" onClick={() => onEdit(server)}>
+                Edit
+              </ActionButton>
+            )}
             <ActionButton testid="action-remove" onClick={() => setConfirming(true)}>
               Remove
             </ActionButton>
