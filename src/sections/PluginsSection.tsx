@@ -24,8 +24,18 @@ export function PluginsSection() {
 
   if (selectedPlugin) {
     return (
+      // WCAG 1.3.1 (Info and Relationships) + 2.4.6 (Headings and Labels):
+      // <section> contributes a "region" landmark to the AT tree only when
+      // it carries an accessible name. Without aria-label, SR users navigating
+      // by landmarks (NVDA "D", JAWS region nav, VoiceOver rotor → Landmarks)
+      // saw a generic, unnamed region wrapping the plugins panel and could
+      // not jump to "Plugins" by name. McpSection / SkillsSection already
+      // carry an aria-label on their outer <section> for the same reason —
+      // this closes the matching gap on PluginsSection (both list and
+      // detail code paths).
       <section
         data-testid="plugins-section"
+        aria-label="Plugins"
         className="flex h-full flex-col"
       >
         <button
@@ -45,7 +55,11 @@ export function PluginsSection() {
   }
 
   return (
-    <section data-testid="plugins-section" className="flex h-full">
+    <section
+      data-testid="plugins-section"
+      aria-label="Plugins"
+      className="flex h-full"
+    >
       <PluginListView />
     </section>
   );
