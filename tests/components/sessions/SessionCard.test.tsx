@@ -234,4 +234,34 @@ describe("SessionCard", () => {
     expect(span.className).toContain("truncate");
     expect(span.getAttribute("title")).toBe(longName);
   });
+
+  // UX recovery: the visible "5m ago" / "Yesterday" string is great for
+  // scanning but useless for forensics ("which session ran at 14:23?").
+  // Surface the absolute timestamp via a title tooltip on hover so the
+  // exact start time is recoverable without leaving the list. Mirrors
+  // PR #185 (RecentSessions time-ago tooltip).
+  it("time-ago span exposes the absolute timestamp via title tooltip", () => {
+    const startedAt = "2026-05-09T14:23:00";
+    const expected = new Date(startedAt).toLocaleString();
+    render(
+      <SessionCard
+        session={makeSession({ startedAt })}
+        selected={false}
+      />,
+    );
+    expect(screen.getByTestId("time-ago").getAttribute("title")).toBe(expected);
+  });
+
+  // Defensive: when startedAt is empty / unparseable, the tooltip must
+  // be omitted rather than rendered as title="" (which some browsers
+  // display as a 1-px tooltip artifact).
+  it("time-ago span omits title when startedAt is empty", () => {
+    render(
+      <SessionCard
+        session={makeSession({ startedAt: "" })}
+        selected={false}
+      />,
+    );
+    expect(screen.getByTestId("time-ago").hasAttribute("title")).toBe(false);
+  });
 });
