@@ -59,6 +59,14 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
   const dotClass = STATUS_COLOR[session.state];
   const pulse = session.state === "alive" ? "animate-pulse" : "";
   const timeLabel = timeAgo(startedAtMs(session.startedAt));
+  // Tooltip: surface the absolute timestamp on hover so the relative
+  // "3h ago" / "Yesterday" string isn't the only handle to a session's
+  // start time. Mirrors PR #185 (RecentSessions). Skip when missing/0
+  // so we don't render an empty title="" artifact.
+  const startedAtAbsolute = (() => {
+    const ms = startedAtMs(session.startedAt);
+    return ms > 0 ? new Date(ms).toLocaleString() : undefined;
+  })();
 
   return (
     <button
@@ -113,7 +121,7 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
       )}
 
       <div className="flex items-center justify-between text-[11px] text-text-muted pl-4">
-        <span data-testid="time-ago">{timeLabel}</span>
+        <span data-testid="time-ago" title={startedAtAbsolute}>{timeLabel}</span>
         <span data-testid="message-count">
           {session.messageCount} {session.messageCount === 1 ? "msg" : "msgs"}
         </span>
