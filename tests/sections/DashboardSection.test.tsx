@@ -172,6 +172,32 @@ describe("DashboardSection", () => {
     expect(banner.textContent).toContain("disk on fire");
   });
 
+  it("load-error banner uses theme-aware status-amber, not bare yellow-500 (WCAG 1.4.11)", async () => {
+    // The original implementation used Tailwind's bare `yellow-500`
+    // (#eab308) for border, background, and the AlertTriangle icon —
+    // failing the 3:1 non-text contrast floor on light card-bg and
+    // bypassing the codebase's theme-token convention. Pin both
+    // positive (status-amber present) and negative (no bare
+    // yellow-500) so a future refactor can't silently regress.
+    // Mirrors PR #293 (ActivityChart staleness banner).
+    dbSelectMock.mockReset();
+    dbSelectMock.mockRejectedValue(new Error("disk on fire"));
+    render(<DashboardSection />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const banner = screen.getByTestId("dashboard-load-error");
+    expect(banner.className).toContain("border-status-amber/40");
+    expect(banner.className).toContain("bg-status-amber/10");
+    expect(banner.className).not.toMatch(/yellow-500/);
+    const icon = banner.querySelector("svg");
+    expect(icon).not.toBeNull();
+    expect(icon!.getAttribute("class")).toContain("text-status-amber");
+    expect(icon!.getAttribute("class")).not.toMatch(/yellow-500/);
+  });
+
   // WCAG 1.3.1 (Info and Relationships) + 2.4.6 (Headings and Labels):
   // the section landmark previously had no accessible name AND the heading
   // hierarchy started at <h3> (the inner panel headings), skipping h1 and

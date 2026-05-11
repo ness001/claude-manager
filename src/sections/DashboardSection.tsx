@@ -67,9 +67,24 @@ export function DashboardSection() {
         <div
           data-testid="dashboard-load-error"
           role="alert"
-          className="flex items-center gap-2 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs text-text-primary"
+          // WCAG 1.4.11 (Non-text Contrast) + theme-token convention:
+          // the original `yellow-500` Tailwind palette gave the
+          // AlertTriangle icon ~1.7:1 against the `bg-yellow-500/10`
+          // tinted card-bg in light mode — well below the 3:1 floor
+          // for graphical UI components. The bare `yellow-500` also
+          // bypassed this codebase's theme-token convention (every
+          // other warning UI uses `--color-status-amber`, theme-aware:
+          // #d97706 light / #fab387 dark) so the banner did not swap
+          // correctly between themes. Swap to `status-amber` to match
+          // the sibling fix (PR #293 ActivityChart staleness banner)
+          // and the larger four-PR sweep for warning-color contrast
+          // (#294 / #295 / #296 / #297). On light card-bg the icon
+          // stroke is now ~4.0:1 — comfortably above the 3:1 non-text
+          // floor — and dark theme already had adequate contrast
+          // because #fab387 is a pale color on dark surfaces.
+          className="flex items-center gap-2 rounded-md border border-status-amber/40 bg-status-amber/10 px-3 py-2 text-xs text-text-primary"
         >
-          <AlertTriangle size={14} className="shrink-0 text-yellow-500" aria-hidden />
+          <AlertTriangle size={14} className="shrink-0 text-status-amber" aria-hidden />
           <span>
             Couldn&apos;t load some dashboard stats — figures may be stale.
             <span className="ml-1 text-text-muted">({loadError})</span>
