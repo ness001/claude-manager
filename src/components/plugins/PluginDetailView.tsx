@@ -168,17 +168,41 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
         ))}
       </nav>
 
-      <div
-        role="tabpanel"
-        id={panelId(tab)}
-        aria-labelledby={tabId(tab)}
-        data-testid={`tabpanel-${tab}`}
-        className="flex-1 overflow-auto"
-      >
-        {tab === "skills" && <PluginSkillsTab skills={plugin.skills} />}
-        {tab === "agents" && <PluginAgentsTab agents={plugin.agents} />}
-        {tab === "hooks" && <PluginHooksTab hooks={plugin.hooks} />}
-      </div>
+      {/*
+        WAI-ARIA Tabs Pattern: every tab in the tablist must reference its
+        owning panel via aria-controls, and every IDREF must resolve to an
+        element actually in the DOM. Previously we rendered a single
+        tabpanel whose id was `panelId(tab)` (the *current* tab), so the
+        two non-active tabs' aria-controls pointed at ids that did not
+        exist anywhere — 2/3 dangling IDREFs at all times. NVDA / VoiceOver
+        flag dangling IDREFs as invalid references or drop the disclosure
+        relationship entirely. Same defect class as PR #189
+        (ToolCallBlock) and PR #191 (McpServerCard); the chosen fix here
+        differs because the WAI-ARIA Tabs Pattern explicitly recommends
+        rendering all panels and toggling visibility via the `hidden`
+        attribute (rather than conditionally mounting), so all three
+        IDREFs always resolve.
+
+        The three child tabs (PluginSkillsTab/Agents/Hooks) are pure
+        presentational components with no useState / useEffect / fetch
+        hooks, so always-mounting them costs nothing at runtime — verified
+        via grep before adopting this approach.
+      */}
+      {TABS.map((t) => (
+        <div
+          key={t}
+          role="tabpanel"
+          id={panelId(t)}
+          aria-labelledby={tabId(t)}
+          data-testid={`tabpanel-${t}`}
+          hidden={tab !== t}
+          className="flex-1 overflow-auto"
+        >
+          {t === "skills" && <PluginSkillsTab skills={plugin.skills} />}
+          {t === "agents" && <PluginAgentsTab agents={plugin.agents} />}
+          {t === "hooks" && <PluginHooksTab hooks={plugin.hooks} />}
+        </div>
+      ))}
     </section>
   );
 }
