@@ -113,9 +113,18 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
         </p>
 
         <div className="flex gap-2 text-[10px] text-text-muted">
-          <span data-testid="skill-count">{plugin.skillCount} skills</span>
-          <span data-testid="agent-count">{plugin.agentCount} agents</span>
-          <span data-testid="hook-count">{plugin.hookCount} hooks</span>
+          {/* Pluralize each count so SR users (and sighted users) don't see
+            * "1 skills" / "1 agents" / "1 hooks". Mirrors PR #87 (SessionCard),
+            * PR #90 (SystemHealth MCP row), PR #133 (RecentSessions). */}
+          <span data-testid="skill-count">
+            {plugin.skillCount} {plugin.skillCount === 1 ? "skill" : "skills"}
+          </span>
+          <span data-testid="agent-count">
+            {plugin.agentCount} {plugin.agentCount === 1 ? "agent" : "agents"}
+          </span>
+          <span data-testid="hook-count">
+            {plugin.hookCount} {plugin.hookCount === 1 ? "hook" : "hooks"}
+          </span>
         </div>
       </button>
 
