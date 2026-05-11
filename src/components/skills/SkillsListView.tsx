@@ -198,18 +198,38 @@ export function SkillsListView() {
           No results for "{searchQuery}"
         </div>
       ) : (
-        <div
+        // WCAG 1.3.1 (Info and Relationships): a visible collection of related items
+        // must expose list semantics so SR list-rotor (NVDA/JAWS "L", VoiceOver
+        // rotor → Lists) can navigate and announce count. Mirrors PR #236
+        // (PluginListView grid → labeled <ul>) and PR #235 (SkillCard collection).
+        <ul
           data-testid="skill-grid"
+          aria-label="Custom skills"
           className="flex flex-col gap-2 overflow-auto"
         >
           {filtered.map((s) => (
-            <SkillCard key={s.dirPath} skill={s} />
+            <li key={s.dirPath}>
+              <SkillCard skill={s} />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
+      {/* WCAG 1.3.1 + WAI-ARIA APG (Landmark Regions): `<aside>` carries
+        * an implicit `complementary` landmark role. Without an accessible
+        * name, the SR landmarks rotor (NVDA D, JAWS R, VoiceOver rotor →
+        * Landmarks) surfaces an anonymous "complementary" entry — users
+        * can't tell what the side region contains until they enter it.
+        * Per the APG, every complementary landmark should be named (the
+        * rule becomes hard when more than one exists on a page; even with
+        * one, naming improves rotor navigability). aria-label ships the
+        * visible context ("Plugin-bundled skills info") into the AT
+        * channel without altering the visible layout. Mirrors the
+        * region-landmark sweep (#262/#263/#264/#265/#266) and the labeled-
+        * collection sweep (#235/#254). */}
       <aside
         data-testid="plugins-info-box"
+        aria-label="Plugin-bundled skills info"
         className="rounded-md border border-border bg-bg-tertiary px-3 py-2 text-xs text-text-secondary"
       >
         These are <strong>custom skills</strong> in{" "}

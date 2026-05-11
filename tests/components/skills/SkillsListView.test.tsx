@@ -161,6 +161,25 @@ describe("SkillsListView", () => {
     expect(cards[0].dataset.skillName).toBe("beta");
   });
 
+  // WCAG 1.3.1 (Info and Relationships): the SkillCard collection was rendered
+  // as flat siblings inside a bare <div>, so SR list-rotor (NVDA/JAWS "L",
+  // VoiceOver rotor → Lists) saw nothing for the collection and announced
+  // no count. Mirrors PR #236 (PluginListView grid → labeled <ul>).
+  it("skill-grid is a labeled <ul> with each card wrapped in <li> (WCAG 1.3.1)", () => {
+    useSkillStore.setState({
+      skills: [makeSkill({ name: "a" }), makeSkill({ name: "b", dirPath: "/h/.claude/skills/b" })],
+    });
+    render(<SkillsListView />);
+    const grid = screen.getByTestId("skill-grid");
+    expect(grid.tagName).toBe("UL");
+    expect(grid.getAttribute("aria-label")).toBe("Custom skills");
+    const items = grid.querySelectorAll(":scope > li");
+    expect(items).toHaveLength(2);
+    items.forEach((li) => {
+      expect(li.querySelector("[data-testid='skill-card']")).not.toBeNull();
+    });
+  });
+
   it("empty state matches spec §17.6", () => {
     render(<SkillsListView />);
     const empty = screen.getByTestId("empty-state");
@@ -191,6 +210,27 @@ describe("SkillsListView", () => {
     expect(aside.textContent).toMatch(/Plugin-bundled skills/i);
     fireEvent.click(screen.getByTestId("plugins-panel-link"));
     expect(useNavigationStore.getState().activeSection).toBe("plugins");
+  });
+
+  // WCAG 1.3.1 + WAI-ARIA APG (Landmark Regions): <aside> exposes the
+  // implicit `complementary` landmark role. Without an accessible name,
+  // the SR landmarks rotor surfaces an anonymous "complementary" entry —
+  // users can't preview what the side region contains. Mirror the
+  // visible context into the AT channel via aria-label.
+  it("plugins-info-box <aside> exposes a 'complementary' landmark with an accessible name", () => {
+    render(<SkillsListView />);
+    const aside = screen.getByTestId("plugins-info-box");
+    expect(aside.tagName).toBe("ASIDE");
+    expect(aside.getAttribute("aria-label")).toBe(
+      "Plugin-bundled skills info",
+    );
+    // getByRole("complementary", { name }) confirms the labelled landmark
+    // is reachable via the rotor — the contract that matters for SR users.
+    expect(
+      screen.getByRole("complementary", {
+        name: "Plugin-bundled skills info",
+      }),
+    ).toBe(aside);
   });
 
   it("clicking Create Skill resolves $HOME before passing to openShell (no literal ~)", async () => {
