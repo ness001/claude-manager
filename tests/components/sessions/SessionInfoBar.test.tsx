@@ -524,4 +524,66 @@ describe("SessionInfoBar", () => {
     expect(cls).toContain("bg-status-amber");
     expect(cls).not.toMatch(/bg-status-yellow(?!-)/);
   });
+
+  // WAI-ARIA Toolbar pattern (https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/):
+  // declaring role="toolbar" without implementing the keyboard model is a
+  // false promise. SR users hearing "toolbar, View Live, button" expect
+  // arrow-key navigation between the action buttons; sighted keyboard users
+  // expect Tab to enter the toolbar once and skip past it (not land on
+  // every button). The pattern requires roving tabindex: only one button is
+  // tabIndex=0; the rest are -1, with arrows + Home/End moving among them.
+  // Same defect class fixed on ViewModeToggle in PR #316.
+  it("toolbar implements roving tabindex (only one action is tabIndex=0)", () => {
+    // ENDED state has 7 actions — enough to exercise roving non-trivially.
+    render(<SessionInfoBar session={makeSession({ state: "ended" })} />);
+    const buttons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-testid^="action-"]'),
+    );
+    expect(buttons.length).toBeGreaterThan(1);
+    const tabStops = buttons.filter((b) => b.tabIndex === 0);
+    const offStops = buttons.filter((b) => b.tabIndex === -1);
+    expect(tabStops).toHaveLength(1);
+    expect(offStops).toHaveLength(buttons.length - 1);
+  });
+
+  it("ArrowRight / ArrowLeft / Home / End move focus within the toolbar", async () => {
+    render(<SessionInfoBar session={makeSession({ state: "ended" })} />);
+    const buttons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-testid^="action-"]'),
+    );
+    // Focus the initial tab stop (index 0) and verify arrows move focus.
+    buttons[0].focus();
+    expect(document.activeElement).toBe(buttons[0]);
+
+    fireEvent.keyDown(buttons[0], { key: "ArrowRight" });
+    await waitFor(() => expect(document.activeElement).toBe(buttons[1]));
+
+    fireEvent.keyDown(buttons[1], { key: "End" });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(buttons[buttons.length - 1]),
+    );
+
+    fireEvent.keyDown(buttons[buttons.length - 1], { key: "Home" });
+    await waitFor(() => expect(document.activeElement).toBe(buttons[0]));
+
+    // Wrap: ArrowLeft from index 0 → last.
+    fireEvent.keyDown(buttons[0], { key: "ArrowLeft" });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(buttons[buttons.length - 1]),
+    );
+  });
+
+  it("focusing a different action moves the tab stop with the user (APG)", () => {
+    render(<SessionInfoBar session={makeSession({ state: "ended" })} />);
+    const buttons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-testid^="action-"]'),
+    );
+    // Initially button 0 is the tab stop.
+    expect(buttons[0].tabIndex).toBe(0);
+    // Click-focus a later button — the tab stop should follow.
+    buttons[2].focus();
+    fireEvent.focus(buttons[2]);
+    expect(buttons[2].tabIndex).toBe(0);
+    expect(buttons[0].tabIndex).toBe(-1);
+  });
 });

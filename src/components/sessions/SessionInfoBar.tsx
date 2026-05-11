@@ -198,6 +198,53 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
     }
   };
 
+  // WAI-ARIA Toolbar pattern keyboard model — roving tabindex + arrow-key
+  // navigation between buttons. Without this, declaring role="toolbar" is a
+  // false promise: SR users hearing "toolbar, View Live, button" expect
+  // arrow-key navigation, and sighted keyboard users get the pre-fix
+  // surprise of Tab landing on every action button instead of skipping the
+  // toolbar as a unit. Mirrors ViewModeToggle's roving tabindex (PR #316).
+  const actionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  // Index of the currently tab-stop action — initially 0 (the first
+  // button). Click/focus on a different action moves the tab stop there
+  // so re-entering with Tab returns to the user's last position (APG).
+  const [tabStopIdx, setTabStopIdx] = useState(0);
+  // If the action set length changes (state transitions: ended → archived,
+  // etc.), clamp tabStopIdx so it never points past the new length.
+  useEffect(() => {
+    setTabStopIdx((i) => Math.min(i, Math.max(0, ACTIONS[session.state].length - 1)));
+  }, [session.state]);
+
+  const focusActionAt = (idx: number, count: number) => {
+    if (count <= 0) return;
+    const wrapped = (idx + count) % count;
+    const target = actionRefs.current[wrapped];
+    if (target) {
+      target.focus();
+      setTabStopIdx(wrapped);
+    }
+  };
+
+  const onToolbarKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    i: number,
+    count: number,
+  ) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      focusActionAt(i - 1, count);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      focusActionAt(i + 1, count);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusActionAt(0, count);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusActionAt(count - 1, count);
+    }
+  };
+
   const pill = STATE_PILL[session.state];
   const actions = ACTIONS[session.state];
 
@@ -346,7 +393,7 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
         data-testid="session-actions-toolbar"
         className="flex flex-wrap gap-2"
       >
-        {actions.map((a) => {
+        {actions.map((a, i) => {
           const cwdDead = CWD_DEPENDENT.has(a.id) && !cwdExists;
           const wired =
             (a.id === "open-cwd" || a.id === "open-vscode") && !cwdDead;
@@ -374,15 +421,24 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
               : a.variant === "danger"
                 ? "bg-bg-tertiary text-status-red"
                 : "bg-bg-tertiary text-text-secondary";
+          // Roving tabindex: only the active stop is in the Tab order; the
+          // rest are -1 so arrow keys (handled below) move focus among them.
+          const isTabStop = i === tabStopIdx;
           return (
             <button
               key={a.id}
+              ref={(el) => {
+                actionRefs.current[i] = el;
+              }}
               type="button"
               data-testid={`action-${a.id}`}
               disabled={!wired}
               aria-disabled={!wired || undefined}
               aria-label={ariaLabel}
+              tabIndex={isTabStop ? 0 : -1}
               onClick={wired ? onClick : undefined}
+              onFocus={() => setTabStopIdx(i)}
+              onKeyDown={(e) => onToolbarKeyDown(e, i, actions.length)}
               title={
                 cwdDead
                   ? "Directory not found"
