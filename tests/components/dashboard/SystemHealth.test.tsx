@@ -207,4 +207,55 @@ describe("SystemHealth", () => {
       "1.2.3+build.20260511.commit-abcdef0123456789",
     );
   });
+
+  // WCAG 1.3.1 (Info and Relationships) / 4.1.2 (Name, Role, Value): the
+  // indicator visually composes label + value + status-dot into one tile,
+  // but the DOM is a colored dot ("OK") plus two flat sibling spans
+  // ("MCP", "0 servers") with no programmatic linkage. SR users walking
+  // the list hear three disconnected fragments per item; rotor list view
+  // shows each <li> only by its first text node. Promote the <li> to a
+  // self-contained announcement combining all three pieces:
+  // "MCP: 0 servers — Warning". Mirrors StatCard (#37) coherent-tile
+  // pattern. Visible layout unchanged.
+  it("each <li> exposes a coherent label+value+status aria-label (WCAG 1.3.1 / 4.1.2)", () => {
+    render(
+      <SystemHealth
+        skipApiCheck
+        mcpCount={2}
+        pluginCount={5}
+        cliVersion="1.2.3"
+      />,
+    );
+    const indicators = screen.getAllByTestId(/^health-indicator|^health-api/);
+    // Order matches the JSX in SystemHealth.tsx: MCP, Plugins, API, CLI.
+    expect(indicators[0].getAttribute("aria-label")).toBe(
+      "MCP: 2 servers — OK",
+    );
+    expect(indicators[1].getAttribute("aria-label")).toBe(
+      "Plugins: 5 plugins installed — OK",
+    );
+    expect(indicators[2].getAttribute("aria-label")).toBe("API: OK — OK");
+    expect(indicators[3].getAttribute("aria-label")).toBe("CLI: 1.2.3 — OK");
+  });
+
+  // Singular case: 1 server / 1 plugin must read naturally. Ensures the
+  // existing pluralization in the value string flows through to the
+  // aria-label without grammar drift like "1 servers".
+  it("aria-label respects singular pluralization (n=1)", () => {
+    render(
+      <SystemHealth
+        skipApiCheck
+        mcpCount={1}
+        pluginCount={1}
+        cliVersion="2.0.0"
+      />,
+    );
+    const indicators = screen.getAllByTestId(/^health-indicator|^health-api/);
+    expect(indicators[0].getAttribute("aria-label")).toBe(
+      "MCP: 1 server — OK",
+    );
+    expect(indicators[1].getAttribute("aria-label")).toBe(
+      "Plugins: 1 plugin installed — OK",
+    );
+  });
 });
