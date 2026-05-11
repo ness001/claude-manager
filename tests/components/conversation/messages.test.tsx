@@ -104,6 +104,27 @@ describe("AssistantMessage", () => {
     expect(code?.className).toMatch(/hljs/);
   });
 
+  // WCAG 2.1.1 (Keyboard): the markdown <pre> wrapper has [&_pre]:overflow-auto
+  // applied via Tailwind, so wide content (long shell lines, JSON dumps, base64
+  // blobs) clips horizontally and mouse users can scroll. Keyboard-only users
+  // cannot focus a default <pre>, so the clipped tail was unreachable. Override
+  // the `pre` renderer to set tabIndex=0 + an accessible name + a focus-visible
+  // ring so keyboard users can Tab into the block and arrow-scroll. Mirrors the
+  // conversation-scroller tabIndex=0 treatment in ConversationViewer.
+  it("fenced code block <pre> is keyboard-focusable for horizontal scroll (WCAG 2.1.1)", () => {
+    render(
+      <AssistantMessage text={"```js\nconst veryLongLine = 'aaaaaaaaaaaaaaaaaa';\n```"} />,
+    );
+    const pre = screen
+      .getByTestId("assistant-markdown")
+      .querySelector("pre");
+    expect(pre).toBeTruthy();
+    expect(pre!.getAttribute("tabindex")).toBe("0");
+    expect(pre!.getAttribute("aria-label")).toBe("Code block");
+    expect(pre!.className).toContain("focus-visible:ring-2");
+    expect(pre!.className).toContain("focus-visible:ring-accent");
+  });
+
   it("renders LaTeX math via KaTeX", () => {
     render(<AssistantMessage text={"Inline: $x^2$"} />);
     // KaTeX inserts elements with className containing "katex".
