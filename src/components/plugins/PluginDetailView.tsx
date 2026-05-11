@@ -98,8 +98,19 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
   };
 
   return (
+    // WCAG 1.3.1 + WAI-ARIA APG: the detail-view <section> already wrapped
+    // the panel but was unlabeled — the SR landmarks rotor surfaced an
+    // anonymous "section" entry with no name. Bind aria-labelledby to the
+    // visible <h2> (the plugin name) so users routing by landmarks
+    // (NVDA D, JAWS R, VoiceOver rotor → Landmarks) jump to a region named
+    // after the currently-shown plugin. Using `${idBase}-name` keeps the
+    // id stable across re-renders and unique even if the layout ever
+    // mounts more than one detail view. Mirrors PRs #266/#267/#268
+    // (page-level region landmarks) and the dashboard sweep
+    // (#262/#263/#264/#265).
     <section
       data-testid="plugin-detail-view"
+      aria-labelledby={`${idBase}-name`}
       className="flex h-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2 border-b border-border pb-3">
@@ -115,6 +126,7 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
               (#167/#170/#171/#175 + PluginCard). */}
           <div className="flex min-w-0 flex-col">
             <h2
+              id={`${idBase}-name`}
               data-testid="plugin-detail-name"
               title={plugin.name}
               className="truncate text-xl font-semibold text-text-primary"

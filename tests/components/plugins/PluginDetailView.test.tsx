@@ -349,4 +349,25 @@ describe("PluginDetailView", () => {
     // name width and the action buttons get pushed off the row.
     expect(h2.parentElement?.className).toContain("min-w-0");
   });
+
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — the detail-view <section> must be a
+  // labelled landmark bound to the visible plugin-name <h2> so SR rotor
+  // users routing by landmarks (NVDA D, JAWS R, VoiceOver rotor →
+  // Landmarks) jump to a region named after the currently-shown plugin
+  // instead of an anonymous "section". Mirrors PRs #266 (PluginListView),
+  // #267 (SkillsListView), #268 (McpPanel), and the dashboard
+  // region-landmark sweep (#262/#263/#264/#265).
+  it("root <section> is a labelled region bound to the visible plugin-name <h2>", () => {
+    const plugin = makeDetail({ name: "my-plugin" });
+    render(<PluginDetailView plugin={plugin} />);
+    const root = screen.getByTestId("plugin-detail-view");
+    expect(root.tagName).toBe("SECTION");
+    const labelledBy = root.getAttribute("aria-labelledby");
+    expect(labelledBy).not.toBeNull();
+    const heading = document.getElementById(labelledBy!);
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H2");
+    expect(heading!.getAttribute("data-testid")).toBe("plugin-detail-name");
+    expect(heading!.textContent).toBe("my-plugin");
+  });
 });
