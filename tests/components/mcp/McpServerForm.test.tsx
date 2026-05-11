@@ -266,6 +266,44 @@ describe("McpServerForm", () => {
 
   // === a11y assertions (PRs #36, #72-#79) ===
 
+  it("Scope radios are wrapped in role=radiogroup with an accessible name (WAI-ARIA Radio Group)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    // Walk up from a known radio to find the radiogroup ancestor — pinning
+    // by closest("[role=radiogroup]") survives layout reshuffles that pure
+    // testid lookups would miss.
+    const userRadio = screen.getByTestId("form-scope-user");
+    const group = userRadio.closest('[role="radiogroup"]');
+    expect(group).not.toBeNull();
+    expect(group!.getAttribute("aria-label")).toBe("Scope");
+    // Both scope radios live inside this group (sanity).
+    expect(group!.contains(screen.getByTestId("form-scope-local"))).toBe(true);
+  });
+
+  it("Type radios are wrapped in role=radiogroup with an accessible name (WAI-ARIA Radio Group)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    const stdioRadio = screen.getByTestId("form-type-stdio");
+    const group = stdioRadio.closest('[role="radiogroup"]');
+    expect(group).not.toBeNull();
+    expect(group!.getAttribute("aria-label")).toBe("Type");
+    // All three type radios live inside this group.
+    expect(group!.contains(screen.getByTestId("form-type-sse"))).toBe(true);
+    expect(group!.contains(screen.getByTestId("form-type-http"))).toBe(true);
+  });
+
   it("name input has an accessible name (aria-label)", () => {
     render(
       <McpServerForm
