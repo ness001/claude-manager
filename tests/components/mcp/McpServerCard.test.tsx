@@ -210,6 +210,50 @@ describe("McpServerCard", () => {
     expect(onRemove).not.toHaveBeenCalled();
   });
 
+  // WCAG 2.4.3 Focus Order + WAI-ARIA APG alertdialog pattern: closing the
+  // alertdialog must return focus to the element that opened it. Without
+  // this, dismissing the Remove-confirm via Cancel or Escape dumped focus
+  // at <body>. Mirrors PR #204 (McpServerForm dialog close-side restore).
+  it("Remove-confirm: Cancel restores focus to the Remove ActionButton (WCAG 2.4.3)", () => {
+    const noop = () => {};
+    render(
+      <McpServerCard
+        server={FIX_CONNECTED}
+        onEdit={noop}
+        onRemove={() => {}}
+      />,
+    );
+    const trigger = screen.getByTestId("action-remove") as HTMLButtonElement;
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    fireEvent.click(trigger);
+    // Open-side: focus moved into the alertdialog (Cancel auto-focused).
+    expect(document.activeElement).toBe(screen.getByTestId("remove-cancel"));
+
+    fireEvent.click(screen.getByTestId("remove-cancel"));
+    // Close-side: focus restored to the trigger.
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("Remove-confirm: Escape restores focus to the Remove ActionButton (WCAG 2.4.3)", () => {
+    const noop = () => {};
+    render(
+      <McpServerCard
+        server={FIX_CONNECTED}
+        onEdit={noop}
+        onRemove={() => {}}
+      />,
+    );
+    const trigger = screen.getByTestId("action-remove") as HTMLButtonElement;
+    trigger.focus();
+    fireEvent.click(trigger);
+    expect(document.activeElement).toBe(screen.getByTestId("remove-cancel"));
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(document.activeElement).toBe(trigger);
+  });
+
   it("View Tools button is disabled when no onViewTools callback is wired", () => {
     const noop = () => {};
     render(
