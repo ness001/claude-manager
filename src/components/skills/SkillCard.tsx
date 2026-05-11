@@ -57,7 +57,9 @@ export function SkillCard({ skill }: SkillCardProps) {
           {skill.name}
         </span>
       </div>
-      <p className="text-xs text-text-secondary">{skill.description}</p>
+      {skill.description && (
+        <p data-testid="skill-description" className="text-xs text-text-secondary">{skill.description}</p>
+      )}
       <code
         data-testid="skill-path"
         // Path strings (e.g. C:\Users\…\.claude\skills\my-skill\skill.md)

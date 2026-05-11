@@ -50,6 +50,24 @@ describe("SkillCard", () => {
     );
   });
 
+  // UX/a11y: SKILL.md frontmatter `description` is documented as "may be
+  // empty". When empty, the previous code rendered an empty <p> element,
+  // which (a) still consumed a `gap-2` slot in the flex column (visible
+  // dead vertical space between the name row and the path code), and
+  // (b) created an empty paragraph that some screen readers announce as
+  // an empty pause. Render the <p> only when there is text to show.
+  it("omits the description <p> entirely when description is empty", () => {
+    render(<SkillCard skill={{ ...SKILL, description: "" }} />);
+    expect(screen.queryByTestId("skill-description")).not.toBeInTheDocument();
+  });
+
+  it("renders the description <p> when non-empty", () => {
+    render(<SkillCard skill={SKILL} />);
+    const desc = screen.getByTestId("skill-description");
+    expect(desc.tagName).toBe("P");
+    expect(desc.textContent).toBe("the alpha skill");
+  });
+
   // UX gap: skill paths are routinely long (e.g.
   // C:\Users\…\.claude\skills\my-skill\skill.md) and the `truncate`
   // CSS clips them with an ellipsis. Without `title`, sighted users
