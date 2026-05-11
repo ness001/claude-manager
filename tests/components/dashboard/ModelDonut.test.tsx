@@ -47,6 +47,17 @@ describe("ModelDonut", () => {
     expect(items[1].textContent).toContain("500");
   });
 
+  it("legend list has an accessible name (WCAG 2.4.6 / 1.3.1)", () => {
+    render(
+      <ModelDonut
+        data={[{ model: "claude-opus-4.6", tokens: 100 }]}
+      />,
+    );
+    const legend = screen.getByTestId("donut-legend");
+    expect(legend.tagName).toBe("UL");
+    expect(legend.getAttribute("aria-label")).toBe("Model usage breakdown");
+  });
+
   it("conic-gradient style applied to the donut element", () => {
     render(
       <ModelDonut
