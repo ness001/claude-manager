@@ -119,6 +119,15 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           {isUpdateAvailable && (
             <span
               data-testid="update-pill"
+              // WCAG 4.1.2 (Name, Role, Value): the visible text is just
+              // "Update" — SR users hear an opaque token that could
+              // plausibly be a button command, a section label, or a
+              // count. Sighted users infer "update available" from the
+              // amber pill placement next to the version. Mirror that
+              // into the accessible name. Same pattern as the
+              // version-pill above (line 114) and the model / messages /
+              // entrypoint / state badges (PRs #247/#250/#252/#271).
+              aria-label="Update available"
               className="rounded bg-status-amber/20 px-1.5 py-0.5 text-[10px] font-medium text-status-amber"
             >
               Update
