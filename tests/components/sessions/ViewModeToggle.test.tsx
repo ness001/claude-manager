@@ -47,11 +47,31 @@ describe("ViewModeToggle", () => {
     expect(useSessionStore.getState().viewMode).toBe("my");
   });
 
-  it("active tab carries aria-selected=true", () => {
+  it("active radio carries aria-checked=true", () => {
     useSessionStore.setState({ viewMode: "timeline" });
     render(<ViewModeToggle />);
-    expect(screen.getByTestId("view-mode-timeline").getAttribute("aria-selected")).toBe("true");
-    expect(screen.getByTestId("view-mode-my").getAttribute("aria-selected")).toBe("false");
+    expect(screen.getByTestId("view-mode-timeline").getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByTestId("view-mode-my").getAttribute("aria-checked")).toBe("false");
+  });
+
+  // WAI-ARIA Radio Group pattern (NOT Tabs): the toggle is a one-of-three
+  // filter selector with no associated tabpanel. Declaring role="tab" /
+  // role="tablist" is misuse — the Tabs pattern requires each tab to control
+  // a sibling tabpanel via aria-controls, and SR users hearing "tab, 1 of 3"
+  // expect a panel that doesn't exist. Radio Group is the correct pattern:
+  // announces "radio button, checked / not checked" and arrow-key roving is
+  // part of the spec.
+  it("uses the radiogroup ARIA pattern (radiogroup + radio, not tablist + tab)", () => {
+    render(<ViewModeToggle />);
+    const group = screen.getByRole("radiogroup", { name: "Session view mode" });
+    expect(group).toBeInTheDocument();
+    for (const mode of ["my", "project", "timeline"] as const) {
+      const btn = screen.getByTestId(`view-mode-${mode}`);
+      expect(btn.getAttribute("role")).toBe("radio");
+    }
+    // Negative assertion — no stray tablist/tab roles left over.
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(screen.queryAllByRole("tab")).toHaveLength(0);
   });
 
   // WCAG 2.4.7 Focus Visible: keyboard users tabbing through the three view-mode
@@ -67,11 +87,12 @@ describe("ViewModeToggle", () => {
     }
   });
 
-  // WAI-ARIA Tabs pattern: when the role="tab" semantics are announced to AT,
-  // the keyboard model must follow — only the active tab is in the focus
-  // order (tabIndex=0); the others are tabIndex=-1 (roving tabindex). This
-  // means Tab moves focus into the tablist once, then arrows move within.
-  it("only the active tab has tabIndex=0; others are -1 (roving tabindex)", () => {
+  // WAI-ARIA Radio Group pattern: when the role="radio" semantics are
+  // announced to AT, the keyboard model must follow — only the checked
+  // radio is in the focus order (tabIndex=0); the others are tabIndex=-1
+  // (roving tabindex). This means Tab moves focus into the group once,
+  // then arrows move within.
+  it("only the active radio has tabIndex=0; others are -1 (roving tabindex)", () => {
     useSessionStore.setState({ viewMode: "project" });
     render(<ViewModeToggle />);
     expect(screen.getByTestId("view-mode-my").tabIndex).toBe(-1);
