@@ -217,6 +217,60 @@ describe("SessionInfoBar", () => {
     expect(input.getAttribute("aria-label")).toMatch(/session-scoped/i);
   });
 
+  // Inline-edit pattern parity (matches TurnInput in ConversationViewer.tsx,
+  // McpPanel search Esc-clear, PluginListView search Esc-clear). A user
+  // mid-edit who decides to bail out has no other escape route — clicking
+  // elsewhere fires onBlur which commits the draft. Esc must (a) revert
+  // the draft to the canonical store value and (b) suppress the
+  // immediately-following onBlur commit (the Esc handler calls blur() to
+  // drop focus, which fires onBlur synchronously before React applies the
+  // setName(canonical) update).
+  it("Esc reverts the in-progress name draft to the canonical value", () => {
+    const session = makeSession({ sessionId: "esc-me", displayName: "Original" });
+    useSessionStore.setState({ sessions: [session] });
+    render(<SessionInfoBar session={session} />);
+
+    const input = screen.getByTestId(
+      "session-name-input",
+    ) as HTMLInputElement;
+    expect(input.value).toBe("Original");
+
+    fireEvent.change(input, { target: { value: "Half-typed gar" } });
+    expect(input.value).toBe("Half-typed gar");
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    // Draft reverted to canonical.
+    expect(input.value).toBe("Original");
+    // Store untouched — no commit happened.
+    const updated = useSessionStore
+      .getState()
+      .sessions.find((s) => s.sessionId === "esc-me");
+    expect(updated?.displayName).toBe("Original");
+  });
+
+  it("Esc suppresses the immediately-following onBlur commit", () => {
+    // Real browsers fire blur() synchronously when the Esc handler calls
+    // blur() to drop focus. Without the skip-next-blur guard, that onBlur
+    // reads the stale `name` (React hasn't applied setName(canonical) yet)
+    // and re-commits the draft — defeating Esc-to-revert.
+    const session = makeSession({ sessionId: "esc-blur", displayName: "Keep" });
+    useSessionStore.setState({ sessions: [session] });
+    render(<SessionInfoBar session={session} />);
+
+    const input = screen.getByTestId(
+      "session-name-input",
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Throwaway" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+    // Simulate the blur fired by the Esc handler's blur() call.
+    fireEvent.blur(input);
+
+    const updated = useSessionStore
+      .getState()
+      .sessions.find((s) => s.sessionId === "esc-blur");
+    expect(updated?.displayName).toBe("Keep");
+  });
+
   it("renders state pill, model badge, message count, entrypoint badge", () => {
     render(
       <SessionInfoBar
