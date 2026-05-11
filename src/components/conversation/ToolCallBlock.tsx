@@ -80,7 +80,14 @@ export function ToolCallBlock({
             data-testid="tool-call-error-badge"
             role="img"
             aria-label="Tool call failed"
-            className="ml-auto rounded bg-status-red/15 px-1.5 py-0.5 text-[10px] font-medium text-status-red"
+            // WCAG 1.4.3 (Contrast Minimum): the badge is 10px text — small
+            // text floor is 4.5:1. Stripe red (#dc2626) on the bg-status-red/15
+            // blend over bg-bg-secondary (~#f7d6d6 in light theme) gives only
+            // ~4.4:1 → fail. Use the darker --color-status-red-text token
+            // (#b91c1c light, #f38ba8 dark) which lands at ~5.6:1 light and
+            // ~6.5:1 dark. Mirrors PR #289 (yellow-text token, corruption
+            // warning).
+            className="ml-auto rounded bg-status-red/15 px-1.5 py-0.5 text-[10px] font-medium text-status-red-text"
           >
             Error
           </span>
