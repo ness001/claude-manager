@@ -67,6 +67,31 @@ describe("ActivityChart", () => {
     expect(chart.getAttribute("aria-live")).toBe("polite");
   });
 
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — the dashboard's other section cards
+  // (SystemHealth, ModelDonut, PluginListView, McpPanel, SkillsListView,
+  // PluginDetailView) all promote their card root to a labelled <section>
+  // bound to the visible <h3>/<h1>/<h2> via aria-labelledby so the SR
+  // landmark rotor surfaces them by name. ActivityChart was the lone
+  // dashboard holdout still rendering as a bare <div>. Pin the contract
+  // for both render branches (empty + populated).
+  it.each([
+    { label: "empty branch", data: [] as DailyActivityEntry[] },
+    { label: "populated branch", data: makeData(7) },
+  ])(
+    "card root is a labelled <section> bound to the visible <h3> ($label)",
+    ({ data }) => {
+      render(<ActivityChart data={data} />);
+      const root = screen.getByTestId("activity-chart");
+      expect(root.tagName).toBe("SECTION");
+      const labelledBy = root.getAttribute("aria-labelledby");
+      expect(labelledBy).not.toBeNull();
+      const heading = document.getElementById(labelledBy!);
+      expect(heading).not.toBeNull();
+      expect(heading!.tagName).toBe("H3");
+      expect(heading!.textContent).toBe("Activity");
+    },
+  );
+
   // WCAG 1.1.1 (Non-text Content): the chart canvas is an SVG data graphic.
   // Without role="img" + a descriptive aria-label, the entire chart is
   // invisible to screen readers. The label must summarize the visible data
