@@ -51,6 +51,14 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
         {model && (
           <span
             data-testid="assistant-model-badge"
+            // WCAG 4.1.2 (Name, Role, Value): the visible text is a bare
+            // model identifier ("claude-opus-4.6") — SR users hear it as
+            // an opaque string with no semantic context. Sighted users
+            // infer "model" from the visual badge layout next to the
+            // "Claude" label; mirror that into the accessible name with
+            // a "Model: …" prefix. Same pattern as PR #246-era fix on
+            // SessionInfoBar's model-badge.
+            aria-label={`Model: ${model}`}
             className="rounded bg-bg-tertiary px-1.5 py-0.5 text-[10px] text-text-secondary"
           >
             {model}
