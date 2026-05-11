@@ -19,7 +19,20 @@ const STATUS_COLOR: Record<PluginState, string> = {
   active: "bg-status-green",
   disabled: "bg-text-muted",
   broken: "bg-status-red",
-  orphaned: "bg-status-yellow",
+  // WCAG 1.4.11 (Non-text Contrast): the status dot is a 2x2 (8px)
+  // circle. The original `bg-status-yellow` (#eab308) on the white
+  // card-bg in light mode gives only ~1.6:1 contrast — well below the
+  // 3:1 floor for graphical UI components. Sighted users in light mode
+  // saw what was effectively an invisible dot for the only visual cue
+  // distinguishing an orphaned plugin from a disabled one. SR users
+  // get the info via the dot's own aria-label ("Orphaned"), but the
+  // visible signal is gone. Swap to `bg-status-amber` (#d97706 light
+  // / #fab387 dark) — already this codebase's "warning" semantic
+  // color, used by the sibling `update-available` state below and by
+  // PRs #293 (ActivityChart staleness banner), #294 (SystemHealth
+  // warn dot), and #295 (SessionCard orphaned dot). On white that
+  // gives ~3.36:1, comfortably above the 3:1 floor.
+  orphaned: "bg-status-amber",
   "update-available": "bg-status-amber",
 };
 
