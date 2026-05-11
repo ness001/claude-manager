@@ -261,4 +261,26 @@ describe("ModelDonut", () => {
       "claude-haiku-4-5: <0.1% — 1 tokens",
     );
   });
+
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — the dashboard's 2x2 grid of cards
+  // should each be a navigable landmark. Promote the donut card to a
+  // labelled <section> bound to its visible <h3> via aria-labelledby so
+  // it appears in the SR rotor's landmarks list as "Model Usage". Mirrors
+  // PRs #245 / #256 / #261.
+  it("card root is a labelled <section> region bound to the visible <h3> heading", () => {
+    render(
+      <ModelDonut
+        data={[{ model: "claude-opus-4-5", tokens: 100 }]}
+      />,
+    );
+    const root = screen.getByTestId("model-donut");
+    expect(root.tagName).toBe("SECTION");
+    const labelledBy = root.getAttribute("aria-labelledby");
+    expect(labelledBy).not.toBeNull();
+    // The id must resolve to the visible <h3>.
+    const heading = document.getElementById(labelledBy!);
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H3");
+    expect(heading!.textContent).toBe("Model Usage");
+  });
 });
