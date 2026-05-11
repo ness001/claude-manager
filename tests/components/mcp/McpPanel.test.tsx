@@ -148,6 +148,27 @@ describe("McpPanel", () => {
     expect(pulses.length).toBe(6);
   });
 
+  // WCAG 4.1.3 (Status Messages): the loading skeleton's pulsing rectangles
+  // convey "loading in progress" purely visually. Without aria-busy + a
+  // polite status announcement, SR users get no indication that loading
+  // is happening — content appears suddenly with no signal.
+  it("loading skeleton exposes aria-busy + polite status to AT (WCAG 4.1.3)", () => {
+    useMcpStore.setState({ isLoading: true, servers: [] });
+    render(<McpPanel />);
+    const sk = screen.getByTestId("loading-skeleton");
+    expect(sk.getAttribute("aria-busy")).toBe("true");
+    const status = sk.querySelector("[role='status']");
+    expect(status).not.toBeNull();
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+    expect(status?.textContent).toContain("Loading MCP servers");
+    // Each pulsing rectangle must be aria-hidden so SR users don't hear
+    // empty graphics in addition to the polite status line.
+    const pulses = sk.querySelectorAll(".animate-pulse");
+    pulses.forEach((p) => {
+      expect(p.getAttribute("aria-hidden")).toBe("true");
+    });
+  });
+
   it("empty state per spec §17.6 with [+ Add Server]", () => {
     render(<McpPanel />);
     const empty = screen.getByTestId("empty-state");
