@@ -322,4 +322,24 @@ describe("PluginCard", () => {
       screen.getByTestId("version-pill").getAttribute("aria-label"),
     ).toBe("Version: 2.4.1");
   });
+
+  // a11y: WCAG 4.1.2 (Name, Role, Value) — visual selection state was
+  // conveyed only by accent border + sidebar-active background. SR users
+  // had no programmatic signal of which card was active. Mirror SessionCard
+  // (line 78) by exposing aria-current="true" on the body button when
+  // selected, undefined when not. The latter avoids cluttering N-1
+  // unselected cards with a "false" announcement.
+  it("body button exposes aria-current='true' when selected", () => {
+    render(<PluginCard plugin={makePlugin()} selected={true} />);
+    expect(
+      screen.getByTestId("plugin-card-body").getAttribute("aria-current"),
+    ).toBe("true");
+  });
+
+  it("body button omits aria-current when not selected", () => {
+    render(<PluginCard plugin={makePlugin()} selected={false} />);
+    expect(
+      screen.getByTestId("plugin-card-body").getAttribute("aria-current"),
+    ).toBeNull();
+  });
 });

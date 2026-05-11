@@ -72,6 +72,17 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
       <button
         type="button"
         data-testid="plugin-card-body"
+        // WCAG 4.1.2 (Name, Role, Value): the visual selection state is
+        // conveyed only by accent border + sidebar-active background.
+        // SR users navigating the plugin list have no way to tell which
+        // card is currently selected — they hear the same name/version
+        // sequence for every card. Mirror SessionCard (line 78) by
+        // exposing `aria-current="true"` when selected so AT announces
+        // "current item" and the rotor's per-card iteration surfaces
+        // the active selection. `undefined` (not "false") matches the
+        // SessionCard convention and avoids cluttering the SR
+        // announcement on the N-1 unselected cards.
+        aria-current={selected ? "true" : undefined}
         onClick={() => {
           void selectPlugin(plugin);
         }}
