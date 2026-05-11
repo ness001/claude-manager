@@ -191,4 +191,27 @@ describe("PluginsSection", () => {
       document.documentElement.classList.remove("dark");
     }
   });
+
+  // WCAG 1.3.1 (Info and Relationships) + 2.4.6 (Headings and Labels): the
+  // outer <section data-testid="plugins-section"> contributes a region
+  // landmark only when it carries an accessible name. Mirrors the
+  // McpSection / SkillsSection convention. Both code paths (list view and
+  // detail view) must expose the same aria-label so SR users can locate
+  // "Plugins" by landmark navigation regardless of which sub-view is open.
+  it("outer <section> exposes aria-label='Plugins' in list view", () => {
+    render(<PluginsSection />);
+    expect(
+      screen.getByTestId("plugins-section").getAttribute("aria-label"),
+    ).toBe("Plugins");
+  });
+
+  it("outer <section> exposes aria-label='Plugins' in detail view", () => {
+    usePluginStore.setState({
+      selectedPlugin: makeDetail({ name: "alpha" }),
+    });
+    render(<PluginsSection />);
+    expect(
+      screen.getByTestId("plugins-section").getAttribute("aria-label"),
+    ).toBe("Plugins");
+  });
 });

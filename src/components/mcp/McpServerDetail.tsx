@@ -35,7 +35,11 @@ export function McpServerDetail({ server }: McpServerDetailProps) {
           </Row>
           {server.headers && Object.keys(server.headers).length > 0 && (
             <Row label="Headers">
-              <KeyValueList entries={server.headers} testidPrefix="header" />
+              <KeyValueList
+                entries={server.headers}
+                testidPrefix="header"
+                listAriaLabel={`HTTP headers for ${server.name}`}
+              />
             </Row>
           )}
         </>
@@ -46,12 +50,24 @@ export function McpServerDetail({ server }: McpServerDetailProps) {
           entries={server.env}
           testidPrefix="env"
           masked
+          listAriaLabel={`Environment variables for ${server.name}`}
         />
       </Row>
 
       {server.tools && server.tools.length > 0 && (
         <Row label="Tools">
-          <ul data-testid="detail-tools" className="list-inside list-disc">
+          {/* WAI-ARIA APG + WCAG 1.3.1: an unlabeled <ul> exposes role+count
+              but not purpose. Multiple expanded MCP cards on the same panel
+              produce several "list with N items" entries in the SR rotor with
+              no way to tell them apart. `aria-label` scopes the list to the
+              owning server name so SR users can route to the correct one.
+              Mirrors the labeled-collection sweep (#235/#236/#237/#254/#255/
+              #257/#259). */}
+          <ul
+            data-testid="detail-tools"
+            aria-label={`Tools exposed by ${server.name}`}
+            className="list-inside list-disc"
+          >
             {server.tools.map((t) => (
               <li key={t}>{t}</li>
             ))}
@@ -83,17 +99,25 @@ function KeyValueList({
   entries,
   testidPrefix,
   masked = false,
+  listAriaLabel,
 }: {
   entries: Record<string, string>;
   testidPrefix: string;
   masked?: boolean;
+  /** Required-in-practice scoping label for the <ul>. Without it, multiple
+   *  expanded MCP cards each render two unlabeled lists (Headers + Env) and
+   *  the SR rotor surfaces them as indistinguishable "list, N items" entries.
+   *  Passed by the caller because KeyValueList itself doesn't know the
+   *  owning server name. Mirrors the labeled-collection sweep applied to the
+   *  Tools <ul> above (lines 60-69) and PRs #235/#236/#237/#254/#255/#257/#259. */
+  listAriaLabel?: string;
 }) {
   const keys = Object.keys(entries);
   if (keys.length === 0) {
     return <span className="text-text-muted">—</span>;
   }
   return (
-    <ul className="flex flex-col gap-1">
+    <ul aria-label={listAriaLabel} className="flex flex-col gap-1">
       {keys.map((k) => (
         <li
           key={k}

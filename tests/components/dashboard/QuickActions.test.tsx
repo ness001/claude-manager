@@ -111,4 +111,19 @@ describe("QuickActions", () => {
       expect(li.querySelector("button")).not.toBeNull();
     });
   });
+
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — promote the card root to a labelled
+  // <section> bound to the visible <h3> via aria-labelledby so it appears
+  // in the SR rotor's landmarks list. Mirrors PRs #262 (ModelDonut),
+  // #263 (SystemHealth), and the broader region-landmark sweep.
+  it("card root is a labelled <section> region bound to the visible <h3> heading", () => {
+    render(<QuickActions />);
+    const root = screen.getByTestId("quick-actions");
+    expect(root.tagName).toBe("SECTION");
+    expect(root.getAttribute("aria-labelledby")).toBe("quick-actions-heading");
+    const heading = document.getElementById("quick-actions-heading");
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H3");
+    expect(heading!.textContent).toBe("Quick Actions");
+  });
 });

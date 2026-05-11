@@ -127,6 +127,25 @@ describe("SessionCard", () => {
     );
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): bare tag tokens ("urgent", "spike")
+  // are opaque to SR users — could plausibly be a status, a category, an
+  // author. Mirror the visual pill cue into the accessible name with a
+  // "Tag: …" prefix. Same opaque-badge pattern as message-count, version-
+  // pill, state/model/messages/entrypoint badges.
+  it("each tag-pill announces 'Tag: <tag>' to assistive tech", () => {
+    render(
+      <SessionCard
+        session={makeSession({ tags: ["urgent", "spike"] })}
+        selected={false}
+      />,
+    );
+    const pills = screen.getAllByTestId("tag-pill");
+    expect(pills.map((p) => p.getAttribute("aria-label"))).toEqual([
+      "Tag: urgent",
+      "Tag: spike",
+    ]);
+  });
+
   // Pluralization: "1 msg" (singular) vs "N msgs" / "0 msgs" (plural).
   // Regression — previously hardcoded to "msgs" so a session with one
   // message rendered the ungrammatical "1 msgs".
@@ -278,5 +297,20 @@ describe("SessionCard", () => {
       />,
     );
     expect(screen.getByTestId("time-ago").textContent).toBe("—");
+  });
+
+  // WCAG 4.1.2 — bare "5 msgs" is opaque to SR users; mirror the visual
+  // "messages" cue into the accessible name. Same pattern as
+  // SessionInfoBar's message-count-badge.
+  it("message-count announces 'Messages: <n>' to assistive tech", () => {
+    render(
+      <SessionCard
+        session={makeSession({ messageCount: 47 })}
+        selected={false}
+      />,
+    );
+    expect(
+      screen.getByTestId("message-count").getAttribute("aria-label"),
+    ).toBe("Messages: 47");
   });
 });

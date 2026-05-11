@@ -32,7 +32,23 @@ export function TitleBar() {
       >
         Claude Manager
       </div>
-      <div className="flex h-full">
+      {/* WAI-ARIA Toolbar pattern: the Minimize / Maximize / Close trio is a
+        * related control group operating on the same target (the application
+        * window). Without role="toolbar" + an accessible name, screen-reader
+        * users navigating button-by-button hear three orphan controls with
+        * no grouping context — and because the title bar replaces the OS
+        * native chrome (decorations: false), AT cannot fall back to OS-
+        * provided window-control semantics. role="toolbar" with
+        * aria-label="Window controls" gives the cluster a discoverable
+        * landmark name. Mirrors PR #246 (SessionInfoBar actions),
+        * PR #248 (McpServerCard actions), PR #249 (PluginCard recovery
+        * actions), PR #258 (PluginDetailView actions). */}
+      <div
+        role="toolbar"
+        aria-label="Window controls"
+        data-testid="window-controls-toolbar"
+        className="flex h-full"
+      >
         <button
           type="button"
           aria-label="Minimize"

@@ -81,4 +81,25 @@ describe("TitleBar", () => {
       expect(cls).toContain("focus-visible:ring-inset");
     }
   });
+
+  // WAI-ARIA Toolbar pattern: the Minimize/Maximize/Close cluster is a
+  // related control group operating on the same window. Without
+  // role="toolbar" + a group label, SR users hear three orphan buttons with
+  // no grouping context (and the OS native chrome is disabled, so AT can't
+  // recover that context elsewhere). Mirrors the toolbar-grouping family
+  // (#246/#248/#249/#258).
+  it("window controls are wrapped in a labelled toolbar", async () => {
+    render(<TitleBar />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Maximize" }),
+      ).toBeInTheDocument();
+    });
+    const toolbar = screen.getByRole("toolbar", { name: "Window controls" });
+    expect(toolbar).toBeInTheDocument();
+    // All three control buttons live inside it
+    for (const name of ["Minimize", "Maximize", "Close"]) {
+      expect(toolbar.contains(screen.getByRole("button", { name }))).toBe(true);
+    }
+  });
 });

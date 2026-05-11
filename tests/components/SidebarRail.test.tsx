@@ -95,6 +95,46 @@ describe("SidebarRail", () => {
     }
   });
 
+  // WAI-ARIA `aria-keyshortcuts`: the shortcut info is currently only on the
+  // visible `title` tooltip, which is sighted-hover-only. SR users (NVDA /
+  // JAWS / VoiceOver) need the shortcut announced on focus through the
+  // dedicated `aria-keyshortcuts` attribute, not by polluting the
+  // accessible name.
+  it("each nav button exposes its shortcut via aria-keyshortcuts", () => {
+    render(<SidebarRail />);
+    const pairs: Array<[string, string]> = [
+      ["Dashboard", "Ctrl+1"],
+      ["Sessions", "Ctrl+2"],
+      ["Plugins", "Ctrl+3"],
+      ["Skills", "Ctrl+4"],
+      ["MCP Servers", "Ctrl+5"],
+    ];
+    for (const [label, shortcut] of pairs) {
+      expect(
+        screen.getByRole("button", { name: label }),
+      ).toHaveAttribute("aria-keyshortcuts", shortcut);
+    }
+  });
+
+  // Settings has both the primary Ctrl+6 and the conventional Ctrl+,
+  // alternative wired in App.tsx (see SHORTCUTS map). Both must be
+  // discoverable to AT users via aria-keyshortcuts (space-separated combos
+  // per ARIA 1.2). The visible tooltip stays "Settings (Ctrl+6)" — the
+  // secondary is AT-only to avoid tooltip clutter.
+  it("Settings exposes both Ctrl+6 and Ctrl+, via aria-keyshortcuts", () => {
+    render(<SidebarRail />);
+    expect(
+      screen.getByRole("button", { name: "Settings" }),
+    ).toHaveAttribute("aria-keyshortcuts", "Ctrl+6 Ctrl+,");
+  });
+
+  it("Settings tooltip stays on the primary Ctrl+6 only", () => {
+    render(<SidebarRail />);
+    expect(
+      screen.getByRole("button", { name: "Settings" }),
+    ).toHaveAttribute("title", "Settings (Ctrl+6)");
+  });
+
   it("buttons have a focus-visible ring class for keyboard navigation", () => {
     render(<SidebarRail />);
     const btn = screen.getByRole("button", { name: "Dashboard" });

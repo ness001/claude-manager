@@ -72,6 +72,17 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
       <button
         type="button"
         data-testid="plugin-card-body"
+        // WCAG 4.1.2 (Name, Role, Value): the visual selection state is
+        // conveyed only by accent border + sidebar-active background.
+        // SR users navigating the plugin list have no way to tell which
+        // card is currently selected — they hear the same name/version
+        // sequence for every card. Mirror SessionCard (line 78) by
+        // exposing `aria-current="true"` when selected so AT announces
+        // "current item" and the rotor's per-card iteration surfaces
+        // the active selection. `undefined` (not "false") matches the
+        // SessionCard convention and avoids cluttering the SR
+        // announcement on the N-1 unselected cards.
+        aria-current={selected ? "true" : undefined}
         onClick={() => {
           void selectPlugin(plugin);
         }}
@@ -92,6 +103,15 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           </span>
           <span
             data-testid="version-pill"
+            // WCAG 4.1.2 (Name, Role, Value): the visible text is a bare
+            // version string ("1.2.3") — SR users hear it as an opaque
+            // token with no semantic context (build number? patch level?
+            // protocol version?). Sighted users infer "version" from the
+            // pill's right-aligned position next to the plugin name.
+            // Mirror that into the accessible name with a "Version: …"
+            // prefix. Same pattern as PR #246/#247 model badges and PR
+            // #250 message-count badge.
+            aria-label={`Version: ${plugin.version}`}
             className="ml-auto rounded bg-bg-tertiary px-1.5 py-0.5 text-[10px] text-text-secondary"
           >
             {plugin.version}
@@ -99,6 +119,15 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           {isUpdateAvailable && (
             <span
               data-testid="update-pill"
+              // WCAG 4.1.2 (Name, Role, Value): the visible text is just
+              // "Update" — SR users hear an opaque token that could
+              // plausibly be a button command, a section label, or a
+              // count. Sighted users infer "update available" from the
+              // amber pill placement next to the version. Mirror that
+              // into the accessible name. Same pattern as the
+              // version-pill above (line 114) and the model / messages /
+              // entrypoint / state badges (PRs #247/#250/#252/#271).
+              aria-label="Update available"
               className="rounded bg-status-amber/20 px-1.5 py-0.5 text-[10px] font-medium text-status-amber"
             >
               Update
@@ -106,7 +135,22 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           )}
         </div>
 
-        <div className="text-[11px] text-text-muted">{plugin.marketplace}</div>
+        {/* WCAG 4.1.2 (Name, Role, Value): the visible text is a bare
+          * marketplace identifier ("official", "community", a vendor slug)
+          * — SR users hear it as an opaque token between the plugin name
+          * and the description, with no clue what dimension it describes
+          * (could plausibly be a tag, an author, a category). Sighted
+          * users infer "marketplace" from layout convention. Mirror that
+          * into the accessible name with a "Marketplace: …" prefix. Same
+          * pattern as the version-pill above (line 114) and the model /
+          * messages / entrypoint / state badges (PRs #247/#250/#252/#271). */}
+        <div
+          data-testid="marketplace-label"
+          aria-label={`Marketplace: ${plugin.marketplace}`}
+          className="text-[11px] text-text-muted"
+        >
+          {plugin.marketplace}
+        </div>
 
         <p className="line-clamp-2 text-xs text-text-secondary">
           {truncate(plugin.description, 120)}
@@ -133,7 +177,20 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           <div className="text-[11px] text-status-red">
             Files missing at install path. Reinstall or remove this plugin.
           </div>
-          <div className="flex gap-2">
+          {/* WAI-ARIA Toolbar pattern: the Reinstall + Remove pair is a
+            * related control group operating on the same broken plugin.
+            * Without role="toolbar" + a plugin-scoped accessible name, SR
+            * users navigating a list of broken plugins hear identical
+            * "Reinstall, button … Remove, button" pairs with no way to
+            * tell which plugin each belongs to. Embedding plugin.name in
+            * the toolbar label gives unique landmark names per card.
+            * Mirrors PR #246 (SessionInfoBar) and PR #248 (McpServerCard). */}
+          <div
+            role="toolbar"
+            aria-label={`Recovery actions for ${plugin.name}`}
+            data-testid="plugin-broken-actions-toolbar"
+            className="flex gap-2"
+          >
             {/* TODO(ui-defect-sweep#L293): wire Reinstall to a `claude plugins
               * install <name>` IPC. Tracked in
               * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md (the

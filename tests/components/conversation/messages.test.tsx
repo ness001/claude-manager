@@ -297,6 +297,48 @@ describe("ToolCallBlock", () => {
     expect(badge.textContent).toBe("Error");
   });
 
+  // WCAG 1.3.1 / 4.1.2: the bordered tool-call bubble was a non-semantic
+  // <div> — landmark/region rotors (NVDA "D", JAWS region nav, VoiceOver
+  // rotor → Landmarks) skipped right past it, so SR users in a long
+  // conversation got a flat sequence of ungrouped buttons + prose with
+  // no way to jump call-by-call. Promote the outer container to a
+  // <section> with role-derived "region" + an aria-label scoped to the
+  // tool name (folding in the error state when isError so users can
+  // jump to the next failed call). Mirrors UserMessage (line 23-28)
+  // and SummaryBanner.
+  it("outer block is a named region landmark scoped to the tool name", () => {
+    const { unmount } = render(
+      <ToolCallBlock toolName="Bash" toolInput={{ cmd: "ls" }} />,
+    );
+    const block = screen.getByTestId("tool-call-block");
+    expect(block.tagName).toBe("SECTION");
+    expect(block.getAttribute("aria-label")).toBe("Tool call: Bash");
+    unmount();
+
+    // Error state folds into the label so SR users can jump to the next
+    // failed call without expanding bodies one by one.
+    render(
+      <ToolCallBlock
+        toolName="Read"
+        toolInput={{}}
+        toolOutput="permission denied"
+        isError
+      />,
+    );
+    expect(
+      screen.getByTestId("tool-call-block").getAttribute("aria-label"),
+    ).toBe("Tool call failed: Read");
+  });
+
+  // Defensive: when toolName is empty (malformed JSONL entry), the label
+  // falls back to "tool" rather than rendering an empty / dangling colon.
+  it("region label falls back to 'tool' when toolName is empty", () => {
+    render(<ToolCallBlock toolName="" toolInput={{}} />);
+    expect(
+      screen.getByTestId("tool-call-block").getAttribute("aria-label"),
+    ).toBe("Tool call: tool");
+  });
+
   // Negative case: when isError is false (or undefined), no badge renders.
   // Guards against the bug where a stray badge with a "Tool call failed"
   // label could leak into successful tool calls.

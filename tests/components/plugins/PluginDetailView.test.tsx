@@ -59,6 +59,19 @@ describe("PluginDetailView", () => {
     }
   });
 
+  // a11y: WAI-ARIA Toolbar pattern — Open in File Browser + Open in VS
+  // Code form a related action group scoped to this plugin. Mirrors PRs
+  // #246/#248/#249/#253.
+  it("action row is a named toolbar landmark scoped to plugin name", () => {
+    render(<PluginDetailView plugin={makeDetail({ name: "alpha" })} />);
+    const toolbar = screen.getByTestId("plugin-detail-actions-toolbar");
+    expect(toolbar.getAttribute("role")).toBe("toolbar");
+    expect(toolbar.getAttribute("aria-label")).toBe("Actions for alpha");
+    // The two action buttons live inside the toolbar.
+    expect(toolbar.contains(screen.getByTestId("open-folder-btn"))).toBe(true);
+    expect(toolbar.contains(screen.getByTestId("open-vscode-btn"))).toBe(true);
+  });
+
   it("default tab is Skills", () => {
     render(<PluginDetailView plugin={makeDetail()} />);
     expect(screen.getByTestId("skills-list")).toBeInTheDocument();
@@ -189,6 +202,44 @@ describe("PluginDetailView", () => {
       expect(btn.className).toContain("focus-visible:ring-2");
       expect(btn.className).toContain("focus-visible:ring-accent");
     }
+  });
+
+  // WCAG 4.1.2 (Name, Role, Value): the metadata sub-line under the
+  // plugin name renders three opaque values joined by middots
+  // ("official · v1.0.0 · active"). SR users hear them as a flat token
+  // stream with no role context. Each value should expose its dimension
+  // via aria-label (Marketplace / Version / State) and the decorative
+  // middots should be aria-hidden so SR users don't hear "middle dot"
+  // noise. Mirrors the opaque-badge sweep on PluginCard (PRs #246/#247/
+  // #279) and SessionInfoBar (#250/#252/#271).
+  it("metadata line splits into labeled spans (Marketplace/Version/State) with hidden middots", () => {
+    render(
+      <PluginDetailView
+        plugin={makeDetail({
+          marketplace: "community",
+          version: "2.4.1",
+          state: "update-available",
+        })}
+      />,
+    );
+    expect(
+      screen.getByTestId("plugin-detail-marketplace").getAttribute("aria-label"),
+    ).toBe("Marketplace: community");
+    expect(
+      screen.getByTestId("plugin-detail-version").getAttribute("aria-label"),
+    ).toBe("Version: 2.4.1");
+    expect(
+      screen.getByTestId("plugin-detail-state").getAttribute("aria-label"),
+    ).toBe("State: update-available");
+    // Visible text is unchanged: "v" prefix on version, the lowercase
+    // values otherwise — the metadata div's textContent reads as the
+    // original "<marketplace> · v<version> · <state>" cadence.
+    expect(
+      screen
+        .getByTestId("plugin-detail-marketplace")
+        .parentElement?.textContent?.trim()
+        .replace(/\s+/g, " "),
+    ).toBe("community · v2.4.1 · update-available");
   });
 
   // WAI-ARIA APG "Tabs" pattern (automatic activation): the tablist needs
@@ -335,5 +386,26 @@ describe("PluginDetailView", () => {
     // actually engages — without it, the column is sized to the intrinsic
     // name width and the action buttons get pushed off the row.
     expect(h2.parentElement?.className).toContain("min-w-0");
+  });
+
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — the detail-view <section> must be a
+  // labelled landmark bound to the visible plugin-name <h2> so SR rotor
+  // users routing by landmarks (NVDA D, JAWS R, VoiceOver rotor →
+  // Landmarks) jump to a region named after the currently-shown plugin
+  // instead of an anonymous "section". Mirrors PRs #266 (PluginListView),
+  // #267 (SkillsListView), #268 (McpPanel), and the dashboard
+  // region-landmark sweep (#262/#263/#264/#265).
+  it("root <section> is a labelled region bound to the visible plugin-name <h2>", () => {
+    const plugin = makeDetail({ name: "my-plugin" });
+    render(<PluginDetailView plugin={plugin} />);
+    const root = screen.getByTestId("plugin-detail-view");
+    expect(root.tagName).toBe("SECTION");
+    const labelledBy = root.getAttribute("aria-labelledby");
+    expect(labelledBy).not.toBeNull();
+    const heading = document.getElementById(labelledBy!);
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H2");
+    expect(heading!.getAttribute("data-testid")).toBe("plugin-detail-name");
+    expect(heading!.textContent).toBe("my-plugin");
   });
 });

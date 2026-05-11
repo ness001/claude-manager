@@ -98,8 +98,19 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
   };
 
   return (
+    // WCAG 1.3.1 + WAI-ARIA APG: the detail-view <section> already wrapped
+    // the panel but was unlabeled — the SR landmarks rotor surfaced an
+    // anonymous "section" entry with no name. Bind aria-labelledby to the
+    // visible <h2> (the plugin name) so users routing by landmarks
+    // (NVDA D, JAWS R, VoiceOver rotor → Landmarks) jump to a region named
+    // after the currently-shown plugin. Using `${idBase}-name` keeps the
+    // id stable across re-renders and unique even if the layout ever
+    // mounts more than one detail view. Mirrors PRs #266/#267/#268
+    // (page-level region landmarks) and the dashboard sweep
+    // (#262/#263/#264/#265).
     <section
       data-testid="plugin-detail-view"
+      aria-labelledby={`${idBase}-name`}
       className="flex h-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2 border-b border-border pb-3">
@@ -115,17 +126,62 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
               (#167/#170/#171/#175 + PluginCard). */}
           <div className="flex min-w-0 flex-col">
             <h2
+              id={`${idBase}-name`}
               data-testid="plugin-detail-name"
               title={plugin.name}
               className="truncate text-xl font-semibold text-text-primary"
             >
               {plugin.name}
             </h2>
+            {/* WCAG 4.1.2 (Name, Role, Value): the metadata sub-line is
+              * three values joined by visible middots (e.g. "official · v1.0.0
+              * · active"). SR users hear them as one bare token stream with
+              * no role context — each piece is opaque the same way standalone
+              * marketplace / version / state badges were on PluginCard
+              * (PRs #246/#247/#279). Sighted users infer the dimensions from
+              * the layout convention (the "v" prefix on the middle, the
+              * lowercase status on the right). Wrap each value in a span
+              * carrying an aria-label that names its dimension; keep the
+              * decorative middot separators aria-hidden so SR users don't
+              * hear "middle dot" noise between values. The visible text and
+              * layout are unchanged. */}
             <div className="text-xs text-text-muted">
-              {plugin.marketplace} · v{plugin.version} · {plugin.state}
+              <span
+                data-testid="plugin-detail-marketplace"
+                aria-label={`Marketplace: ${plugin.marketplace}`}
+              >
+                {plugin.marketplace}
+              </span>
+              <span aria-hidden="true"> · </span>
+              <span
+                data-testid="plugin-detail-version"
+                aria-label={`Version: ${plugin.version}`}
+              >
+                v{plugin.version}
+              </span>
+              <span aria-hidden="true"> · </span>
+              <span
+                data-testid="plugin-detail-state"
+                aria-label={`State: ${plugin.state}`}
+              >
+                {plugin.state}
+              </span>
             </div>
           </div>
-          <div className="flex gap-2">
+          {/* WAI-ARIA Toolbar pattern: Open in File Browser + Open in VS
+              Code form a related action group scoped to this plugin.
+              `role="toolbar"` + `aria-label` lets SR users land on the
+              group as a single landmark and arrow-key through the actions
+              instead of tabbing one button at a time. The label is scoped
+              by plugin name so multiple detail views can be navigated
+              unambiguously via the SR rotor. Mirrors PR #246 (SessionInfoBar),
+              #248 (McpServerCard), #249 (PluginCard), #253 (SkillCard). */}
+          <div
+            role="toolbar"
+            aria-label={`Actions for ${plugin.name}`}
+            data-testid="plugin-detail-actions-toolbar"
+            className="flex gap-2"
+          >
             <button
               type="button"
               data-testid="open-folder-btn"
@@ -163,10 +219,18 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
         </p>
       )}
 
+      {/* WAI-ARIA Tabs Pattern: a tablist with multiple instances on a
+          page (Plugins / Skills / MCP / Settings each have their own tab
+          UIs) needs `aria-label` so the SR rotor can disambiguate them.
+          Without it NVDA/VoiceOver announce three undifferentiated
+          "tablist with 3 tabs" entries. The label is scoped by plugin
+          name so multiple plugin detail views stay unambiguous. Mirrors
+          the labeled-collection sweep (#235/#236/#237/#238/#239/#240/#254/#255/#257). */}
       <nav
         data-testid="tab-bar"
         className="flex gap-2 border-b border-border"
         role="tablist"
+        aria-label={`${plugin.name} sections`}
       >
         {TABS.map((t, i) => (
           <button

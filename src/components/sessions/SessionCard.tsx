@@ -112,6 +112,17 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
             <span
               key={tag}
               data-testid="tag-pill"
+              // WCAG 4.1.2 (Name, Role, Value): the visible text is a bare
+              // tag token (e.g. "urgent", "spike", a free-form user label)
+              // — SR users walking the card hear it with no clue what
+              // dimension it describes (could plausibly be a status, a
+              // category, an author, a project). Sighted users infer "tag"
+              // from the pill shape + the row's pl-4 indent under the name.
+              // Mirror that into the accessible name with a "Tag: …"
+              // prefix. Same opaque-badge pattern as message-count below
+              // (line 144), version-pill (PluginCard), state-pill / model
+              // / messages / entrypoint badges (PRs #247/#250/#252/#271/#279).
+              aria-label={`Tag: ${tag}`}
               className="text-[10px] px-1.5 py-0.5 rounded bg-bg-tertiary text-text-secondary"
             >
               {tag}
@@ -131,7 +142,18 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
             "omits title when startedAt is empty" test) — there's no
             absolute timestamp to surface. */}
         <span data-testid="time-ago" title={startedAtAbsolute}>{timeLabel === "" ? "—" : timeLabel}</span>
-        <span data-testid="message-count">
+        <span
+          data-testid="message-count"
+          // WCAG 4.1.2 (Name, Role, Value): the visible text "5 msgs"
+          // is a bare count — SR users hear it as an opaque string with
+          // no semantic context (could be unread-count, queued-count,
+          // tag-count, …). Sighted users infer "messages" from the card
+          // layout. Mirror that into the accessible name with a
+          // "Messages: …" prefix so the badge announces self-contained.
+          // Same pattern as SessionInfoBar message-count-badge (PR #228)
+          // and AssistantMessage model-badge (PR #247).
+          aria-label={`Messages: ${session.messageCount}`}
+        >
           {session.messageCount} {session.messageCount === 1 ? "msg" : "msgs"}
         </span>
       </div>

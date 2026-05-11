@@ -16,8 +16,18 @@ export function RecentSessions({ data }: RecentSessionsProps) {
   const navigateTo = useNavigationStore((s) => s.navigateTo);
 
   return (
-    <div
+    // WCAG 1.3.1 + WAI-ARIA APG: dashboard cards each have a visible <h3>
+    // header but render as bare <div>s — the SR landmarks rotor cannot
+    // surface them by name. Promote the card to a labelled <section>
+    // bound to its <h3> via aria-labelledby so users can route to "Recent
+    // Sessions" directly. The inner <ul> already references the same id;
+    // both pointers are valid AT relationships and the visible layout is
+    // unchanged. Mirrors PRs #262 (ModelDonut), #263 (SystemHealth),
+    // #264 (QuickActions), and the broader region-landmark sweep
+    // (#245 / #256 / #261).
+    <section
       data-testid="recent-sessions"
+      aria-labelledby="recent-sessions-heading"
       className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
       <div className="flex items-center justify-between">
@@ -122,6 +132,17 @@ export function RecentSessions({ data }: RecentSessionsProps) {
               </span>
               <span
                 data-testid="recent-session-msg-count"
+                // WCAG 4.1.2 (Name, Role, Value): bare "5 msgs" is opaque to
+                // SR users — could be unread/queued/tag count. Mirror the
+                // visible "messages" cue into the accessible name. Same
+                // pattern as SessionCard message-count (PR #250),
+                // SessionInfoBar message-count-badge (PR #228), and
+                // AssistantMessage model-badge (PR #247). Note: the parent
+                // <li> already exposes a composite aria-label including the
+                // message count, but the per-span name lets users navigating
+                // by smaller landmarks (e.g. arrow-key cell-step in some SR
+                // modes) still hear the field's role rather than a bare int.
+                aria-label={`Messages: ${s.messageCount}`}
                 className="text-[11px] text-text-muted tabular-nums shrink-0"
               >
                 {s.messageCount} {s.messageCount === 1 ? "msg" : "msgs"}
@@ -131,6 +152,6 @@ export function RecentSessions({ data }: RecentSessionsProps) {
           })}
         </ul>
       )}
-    </div>
+    </section>
   );
 }

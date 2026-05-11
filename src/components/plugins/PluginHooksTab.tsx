@@ -20,7 +20,15 @@ export function PluginHooksTab({ hooks }: PluginHooksTabProps) {
     );
   }
   return (
-    <ul data-testid="hooks-list" className="flex flex-col gap-2">
+    // WCAG 2.4.6 / 1.3.1: bare <ul> is "list, N items" in the SR rotor
+    // with no collection name. aria-label promotes it to a named
+    // landmark. Mirrors the PluginAgentsTab / PluginSkillsTab fix in
+    // this PR plus the broader semantic-list family.
+    <ul
+      data-testid="hooks-list"
+      aria-label="Bundled hooks"
+      className="flex flex-col gap-2"
+    >
       {hooks.map((h, i) => (
         <li
           key={`${h.event}:${i}`}

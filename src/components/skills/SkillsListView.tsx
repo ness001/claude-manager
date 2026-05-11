@@ -51,13 +51,24 @@ export function SkillsListView() {
   };
 
   return (
+    // WCAG 1.3.1 + WAI-ARIA APG: the page-level <section> already wrapped
+    // the view but was unlabeled — the SR landmarks rotor surfaced an
+    // anonymous "section" entry with no name. Bind aria-labelledby to the
+    // visible <h1> "Custom Skills" so users routing by landmarks (NVDA D,
+    // JAWS R, VoiceOver rotor → Landmarks) jump to a named region. Mirrors
+    // PR #266 (PluginListView) and the dashboard region-landmark sweep
+    // (#262/#263/#264/#265).
     <section
       data-testid="skill-list-view"
+      aria-labelledby="skill-list-view-heading"
       className="flex h-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-text-primary">
+          <h1
+            id="skill-list-view-heading"
+            className="text-2xl font-semibold text-text-primary"
+          >
             Custom Skills
           </h1>
           <button
@@ -72,20 +83,39 @@ export function SkillsListView() {
             Create Skill
           </button>
         </div>
-        <div className="flex gap-3 text-xs text-text-muted">
+        {/* WCAG 1.3.1 / 4.1.2: the count + path pair was rendered as flat
+            sibling spans inside a non-semantic <div> — invisible to SR
+            list-rotor (NVDA "L", JAWS "L", VoiceOver rotor → Lists) and
+            each value was opaque ("5 skills" / a bare path with no role
+            cue). Promote to <ul aria-label="Skill counts"> with one <li>
+            per stat plus per-<li> aria-labels so the rotor surfaces
+            "list, 2 items, Skill counts" and each item self-describes
+            ("Skills: 5", "Skills directory: …"). Visible flex layout
+            unchanged. Mirrors PR #254 (PluginListView stats), PR #235
+            (SkillsListView grid → labeled <ul>), PR #230 (SystemHealth). */}
+        <ul
+          data-testid="skills-stats-list"
+          aria-label="Skill counts"
+          className="flex gap-3 text-xs text-text-muted"
+        >
           {/* Pluralize so SR + sighted users don't see "1 skills". Mirrors
             * PR #87 (SessionCard), PR #90 (SystemHealth), PR #133
             * (RecentSessions), PR #219 (PluginCard counts). */}
-          <span data-testid="stat-skill-count">
-            {skills.length} {skills.length === 1 ? "skill" : "skills"}
-          </span>
-          <code
-            data-testid="stat-skills-path"
-            className="rounded bg-bg-tertiary px-1.5 py-0.5"
+          <li
+            data-testid="stat-skill-count"
+            aria-label={`Skills: ${skills.length}`}
           >
-            {SKILLS_PATH}
-          </code>
-        </div>
+            {skills.length} {skills.length === 1 ? "skill" : "skills"}
+          </li>
+          <li aria-label={`Skills directory: ${SKILLS_PATH}`}>
+            <code
+              data-testid="stat-skills-path"
+              className="rounded bg-bg-tertiary px-1.5 py-0.5"
+            >
+              {SKILLS_PATH}
+            </code>
+          </li>
+        </ul>
         {createError !== null && (
           <p
             data-testid="skill-create-error"

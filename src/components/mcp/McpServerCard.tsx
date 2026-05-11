@@ -150,7 +150,20 @@ export function McpServerCard({
           {server.scope}
         </Pill>
         {dimmed && server.overriddenBy && (
-          <Pill testid="overridden-badge" tone="warning">
+          // WCAG 4.1.2 (Name, Role, Value): the visible text "Overridden by
+          // <scope>" reads as a flat phrase to SR users — they hear it as
+          // narrative content rather than a discrete state badge. Sighted
+          // users get the warning-amber pill cue identifying it as a state
+          // marker. Mirror that role into the accessible name with an
+          // "Overridden:" prefix so AT users hear "Overridden: project"
+          // (state + value pair). Same pattern as the type-pill / scope-pill
+          // above (lines 146/149) and the badge family in PRs
+          // #247/#250/#252/#271/#272.
+          <Pill
+            testid="overridden-badge"
+            tone="warning"
+            ariaLabel={`Overridden: ${server.overriddenBy}`}
+          >
             Overridden by {server.overriddenBy}
           </Pill>
         )}
@@ -162,7 +175,21 @@ export function McpServerCard({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      {/* WAI-ARIA Toolbar pattern: this row is a group of related action
+        * buttons (View Tools / View Logs / Retry / Cancel / Edit / Remove)
+        * operating on the same MCP server. Without role="toolbar" + an
+        * accessible name, SR users hear them as a flat sequence of
+        * unrelated controls indistinguishable from any other button strip.
+        * role="toolbar" is the correct ARIA primitive for a button group.
+        * Mirrors SessionInfoBar action row (PR #246). The aria-label
+        * embeds the server name so the toolbar is uniquely identifiable
+        * when several cards are rendered in the same scope group. */}
+      <div
+        role="toolbar"
+        aria-label={`Actions for ${server.name}`}
+        data-testid="mcp-actions-toolbar"
+        className="flex flex-wrap gap-2"
+      >
         {server.status === "connected" && (
           <>
             <ActionButton

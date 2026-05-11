@@ -102,11 +102,45 @@ export function PluginListView() {
             </button>
           </div>
         </div>
-        <div className="flex gap-3 text-xs text-text-muted">
-          <span data-testid="stat-installed">{installedCount} installed</span>
-          <span data-testid="stat-active">{activeCount} active</span>
-          <span data-testid="stat-disabled">{disabledCount} disabled</span>
-        </div>
+        {/* WCAG 1.3.1 (Info and Relationships) / 4.1.2 (Name, Role, Value):
+            the three count spans rendered as flat siblings inside a non-
+            semantic <div> give SR users zero collection structure — the
+            rotor list view (NVDA "L", JAWS "L", VoiceOver rotor → Lists)
+            doesn't surface them, and each bare span ("5 installed") is an
+            opaque integer-with-unit string with no programmatic grouping.
+            Promote to <ul aria-label="Plugin counts"> with one <li> per
+            stat so the rotor announces "list, 3 items, Plugin counts"
+            and each <li> gains an aria-label like "Installed: 5" so users
+            navigating by smaller landmarks hear the dimension's role
+            even when stepping past the parent context. Mirrors PR #235
+            (SkillsListView), PR #236 (PluginListView grid promotion),
+            PR #230 (SystemHealth indicators), and the opaque-badge
+            sweep (#228/#247/#250/#252). CSS flex is element-agnostic —
+            <ul>/<li> with `display: flex` lay out identically. */}
+        <ul
+          data-testid="plugin-stats-list"
+          aria-label="Plugin counts"
+          className="flex gap-3 text-xs text-text-muted"
+        >
+          <li
+            data-testid="stat-installed"
+            aria-label={`Installed: ${installedCount}`}
+          >
+            {installedCount} installed
+          </li>
+          <li
+            data-testid="stat-active"
+            aria-label={`Active: ${activeCount}`}
+          >
+            {activeCount} active
+          </li>
+          <li
+            data-testid="stat-disabled"
+            aria-label={`Disabled: ${disabledCount}`}
+          >
+            {disabledCount} disabled
+          </li>
+        </ul>
         {updateError && (
           <p
             data-testid="check-updates-error"

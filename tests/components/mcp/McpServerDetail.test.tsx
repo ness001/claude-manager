@@ -155,4 +155,52 @@ describe("McpServerDetail", () => {
     expect(commandDd?.tagName).toBe("DD");
     expect(commandDd?.querySelector("[data-testid=detail-command]")).not.toBeNull();
   });
+
+  // a11y: WAI-ARIA APG + WCAG 1.3.1 — the Tools <ul> must carry an
+  // aria-label scoped to the owning server so multiple expanded MCP cards
+  // on the same panel produce SR-distinguishable lists. Mirrors the
+  // labeled-collection sweep (#235/#236/#237/#254/#255/#257/#259).
+  it("Tools <ul> carries an aria-label scoped to the server name", () => {
+    const withTools = {
+      ...FIX_CONNECTED,
+      tools: ["read_file", "write_file"],
+    };
+    render(<McpServerDetail server={withTools} />);
+    const list = screen.getByTestId("detail-tools");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe(
+      `Tools exposed by ${FIX_CONNECTED.name}`,
+    );
+    expect(list.querySelectorAll("li")).toHaveLength(2);
+  });
+
+  // a11y: WAI-ARIA APG + WCAG 1.3.1 — the Env-var <ul> rendered by
+  // KeyValueList must carry a server-scoped aria-label so multiple
+  // expanded cards each contribute a distinguishable list to the SR
+  // rotor. Without scoping, "list, 1 item" announces twice (Headers + Env)
+  // per card with no way to tell them apart.
+  it("Env <ul> carries a 'Environment variables for <name>' aria-label", () => {
+    render(<McpServerDetail server={FIX_CONNECTED} />);
+    // FIX_CONNECTED.env = { TOKEN: "secret-value" } → exactly one env-row.
+    const envRow = screen.getByTestId("env-row");
+    const list = envRow.parentElement;
+    expect(list?.tagName).toBe("UL");
+    expect(list?.getAttribute("aria-label")).toBe(
+      `Environment variables for ${FIX_CONNECTED.name}`,
+    );
+  });
+
+  // a11y companion to the Env case above: the Headers <ul> on http/sse
+  // servers must also be server-scoped so an HTTP card with both Headers
+  // and Env populated doesn't surface two indistinguishable lists.
+  it("Headers <ul> carries an 'HTTP headers for <name>' aria-label", () => {
+    render(<McpServerDetail server={FIX_HTTP} />);
+    // FIX_HTTP.headers = { Authorization: "..." } → exactly one header-row.
+    const headerRow = screen.getByTestId("header-row");
+    const list = headerRow.parentElement;
+    expect(list?.tagName).toBe("UL");
+    expect(list?.getAttribute("aria-label")).toBe(
+      `HTTP headers for ${FIX_HTTP.name}`,
+    );
+  });
 });

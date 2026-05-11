@@ -20,7 +20,21 @@ export function PluginAgentsTab({ agents }: PluginAgentsTabProps) {
     );
   }
   return (
-    <ul data-testid="agents-list" className="flex flex-col gap-2">
+    // WCAG 2.4.6 (Headings and Labels) / 1.3.1 (Info and Relationships):
+    // the bare <ul> exposes "list, N items" in the SR rotor with no
+    // collection name. Sighted users see the active "Agents" tab above
+    // and infer context — SR users jumping by lists/landmarks bypass
+    // the tab and land in an anonymous list. aria-label promotes it to
+    // a recognizably named landmark in the rotor / elements list.
+    // Mirrors PR #235 (SkillsListView grid → "Skills"), PR #236
+    // (PluginListView grid → "Plugins"), PR #237 (McpPanel scope groups),
+    // PR #254 (PluginListView stats → "Plugin counts"), and PR #255
+    // (SkillsListView stats → "Skill counts").
+    <ul
+      data-testid="agents-list"
+      aria-label="Bundled agents"
+      className="flex flex-col gap-2"
+    >
       {agents.map((a) => (
         <li
           key={a.name}
