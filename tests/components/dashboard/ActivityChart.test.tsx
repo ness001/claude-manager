@@ -54,6 +54,19 @@ describe("ActivityChart", () => {
     expect(chart.textContent).toContain("No activity yet");
   });
 
+  // a11y: the "No activity yet" copy appears asynchronously after the
+  // dashboard's stats-cache resolves to an empty/missing payload. Without
+  // role="status" + aria-live="polite", screen-reader users get silence
+  // and can't tell whether the load is still pending, errored, or
+  // resolved-with-zero-data. Mirrors PRs #154 (PluginListView), #155
+  // (McpPanel), #207 (SkillsListView), #212 (SessionDetailPanel).
+  it("empty state is a polite live region (a11y: zero-activity announce)", () => {
+    render(<ActivityChart data={[]} />);
+    const chart = screen.getByTestId("activity-chart");
+    expect(chart.getAttribute("role")).toBe("status");
+    expect(chart.getAttribute("aria-live")).toBe("polite");
+  });
+
   // WCAG 1.1.1 (Non-text Content): the chart canvas is an SVG data graphic.
   // Without role="img" + a descriptive aria-label, the entire chart is
   // invisible to screen readers. The label must summarize the visible data
