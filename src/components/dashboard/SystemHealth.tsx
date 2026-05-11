@@ -111,7 +111,15 @@ export function SystemHealth({
       <h3 className="text-xs uppercase tracking-wide text-text-muted">
         System Health
       </h3>
-      <ul className="flex flex-col gap-1.5 text-xs">
+      {/* WCAG 2.4.6 (Headings and Labels) / 1.3.1 (Info and Relationships):
+          screen-reader users navigating by lists (NVDA "L", JAWS "L") would
+          hear "list, 4 items" with no clue this is the system-health
+          breakdown — the visual context (the "System Health" h3 above) is
+          not exposed to AT for the list itself. aria-label promotes the
+          list to a recognizably named landmark in the rotor / elements
+          list. Mirrors the labeled-list pattern in ModelDonut
+          (donut-legend, lines 114-124). */}
+      <ul aria-label="System health indicators" className="flex flex-col gap-1.5 text-xs">
         <Indicator
           label="MCP"
           status={mcpStatus}
