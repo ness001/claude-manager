@@ -109,27 +109,48 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
             // killing the conversation view with no back button. Also adds
             // a visible affordance (underline + accent color) so links are
             // distinguishable by more than color alone (WCAG 1.4.1).
-            a: ({ href, children, ...rest }) => (
-              <a
-                {...rest}
-                href={href}
-                data-testid="assistant-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setOpenError(null);
-                  if (href) {
-                    void openShell(href).catch((err) => {
-                      setOpenError(
-                        err instanceof Error ? err.message : String(err),
-                      );
-                    });
-                  }
-                }}
-                className="text-accent underline underline-offset-2 hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
-              >
-                {children}
-              </a>
-            ),
+            //
+            // onClick covers left-click. Middle-click (mouse button 1) and
+            // Ctrl/Cmd+click do NOT fire onClick — they fire onAuxClick (or
+            // bypass it entirely depending on browser). In a single-window
+            // Tauri WebView there is no "open in new tab" affordance, so
+            // any middle-click on an assistant-rendered link in the prior
+            // implementation either silently no-op'd OR navigated the whole
+            // WebView away (depending on WebView2 build) — the same death-
+            // by-navigation the onClick handler exists to prevent. Mirror
+            // the same shell hand-off on auxClick + treat Ctrl/Cmd+click
+            // on the primary button as the same intent.
+            a: ({ href, children, ...rest }) => {
+              const handleOpen = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                e.preventDefault();
+                setOpenError(null);
+                if (href) {
+                  void openShell(href).catch((err) => {
+                    setOpenError(
+                      err instanceof Error ? err.message : String(err),
+                    );
+                  });
+                }
+              };
+              return (
+                <a
+                  {...rest}
+                  href={href}
+                  data-testid="assistant-link"
+                  onClick={handleOpen}
+                  onAuxClick={(e) => {
+                    // Only the middle mouse button (button 1) — let the
+                    // browser's right-click context menu (button 2, fired as
+                    // contextmenu, not auxClick) keep its default behavior
+                    // so users can still "Copy Link Address".
+                    if (e.button === 1) handleOpen(e);
+                  }}
+                  className="text-accent underline underline-offset-2 hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
+                >
+                  {children}
+                </a>
+              );
+            },
           }}
         >
           {text}
