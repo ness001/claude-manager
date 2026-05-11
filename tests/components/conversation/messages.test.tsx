@@ -139,6 +139,16 @@ describe("AssistantMessage", () => {
     );
   });
 
+  // WCAG 4.1.2 — bare model identifier is opaque to SR users; mirror
+  // the visual "model" cue into the accessible name. Same pattern as
+  // SessionInfoBar's model-badge.
+  it("model badge announces 'Model: <id>' to assistive tech", () => {
+    render(<AssistantMessage text="x" model="claude-opus-4.6" />);
+    expect(
+      screen.getByTestId("assistant-model-badge").getAttribute("aria-label"),
+    ).toBe("Model: claude-opus-4.6");
+  });
+
   it("hides the model badge when missing", () => {
     render(<AssistantMessage text="x" />);
     expect(screen.queryByTestId("assistant-model-badge")).not.toBeInTheDocument();
