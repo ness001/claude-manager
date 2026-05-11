@@ -221,6 +221,16 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
         <span
           data-testid="state-pill"
           data-state={session.state}
+          // WCAG 4.1.2 (Name, Role, Value): the visible label is a bare
+          // status word ("ALIVE" / "ENDED" / "ORPHANED") — SR users hear
+          // it as an opaque token with no semantic context. Sighted users
+          // infer "session state" from the pill's leading colored dot
+          // and its position in the badge row. Mirror that into the
+          // accessible name with a "Session state: …" prefix. Same
+          // pattern as model-badge / message-count-badge / entrypoint-
+          // badge below (PRs #247/#250/#252) and SessionCard's status-dot
+          // (line 94).
+          aria-label={`Session state: ${pill.label}`}
           className="flex items-center gap-1.5 rounded-full bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary"
         >
           <span
