@@ -228,7 +228,19 @@ export function SessionListPanel() {
         <div
           ref={scrollRef}
           data-testid="virtual-scroller"
-          className="flex-1 overflow-auto"
+          // WCAG 2.1.1 (Keyboard) + WAI-ARIA APG: a scrollable region must
+          // be keyboard-focusable, otherwise keyboard-only users with > 50
+          // sessions cannot scroll the list — only mouse/trackpad users
+          // can. Tabbing into individual cards relies on the browser
+          // scrolling them into view, which works for moving forward one
+          // card at a time but not for skimming. Mirrors ConversationViewer
+          // (lines 354-369) which fixed the same defect class.
+          // role="region" + aria-label promotes the focusable scroller to
+          // a named landmark surfaced in the AT landmarks rotor.
+          tabIndex={0}
+          role="region"
+          aria-label="Sessions (scrollable)"
+          className="flex-1 overflow-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <div
             style={{
