@@ -122,6 +122,17 @@ export function RecentSessions({ data }: RecentSessionsProps) {
               </span>
               <span
                 data-testid="recent-session-msg-count"
+                // WCAG 4.1.2 (Name, Role, Value): bare "5 msgs" is opaque to
+                // SR users — could be unread/queued/tag count. Mirror the
+                // visible "messages" cue into the accessible name. Same
+                // pattern as SessionCard message-count (PR #250),
+                // SessionInfoBar message-count-badge (PR #228), and
+                // AssistantMessage model-badge (PR #247). Note: the parent
+                // <li> already exposes a composite aria-label including the
+                // message count, but the per-span name lets users navigating
+                // by smaller landmarks (e.g. arrow-key cell-step in some SR
+                // modes) still hear the field's role rather than a bare int.
+                aria-label={`Messages: ${s.messageCount}`}
                 className="text-[11px] text-text-muted tabular-nums shrink-0"
               >
                 {s.messageCount} {s.messageCount === 1 ? "msg" : "msgs"}
