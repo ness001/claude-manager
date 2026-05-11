@@ -166,8 +166,24 @@ export function McpServerForm({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
       onClick={onClose}
     >
-      <div
+      <form
         data-testid="mcp-form"
+        // Wrapping the field stack in a real <form> + Enter-key default-submit
+        // gives keyboard users the universally-expected "type, press Enter to
+        // save" behavior — the previous <div> swallowed Enter silently and
+        // forced everyone to mouse over to the Save button. The arg input
+        // (line ~262) already calls e.preventDefault() inside its own
+        // onKeyDown when adding an arg, which by browser default also
+        // prevents the implicit form submission — so adding an arg with
+        // Enter still does NOT save the form. Browsers also natively skip
+        // implicit submission while an IME composition is active (CJK input
+        // method commit-Enter), so no extra isComposing guard is needed.
+        // Mirrors PR #288 (session-name Esc-to-revert), the dialog's
+        // existing Esc-to-close handler (line 61), and standard form UX.
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (canSubmit && !submitting) void handleSubmit();
+        }}
         className="flex max-h-[90vh] w-[500px] flex-col gap-3 overflow-auto rounded-md border border-border bg-card-bg p-4"
         onClick={(e) => e.stopPropagation()}
       >
@@ -323,18 +339,15 @@ export function McpServerForm({
             Cancel
           </button>
           <button
-            type="button"
+            type="submit"
             data-testid="form-save"
             disabled={!canSubmit}
-            onClick={() => {
-              void handleSubmit();
-            }}
             className="rounded bg-accent px-3 py-1 text-sm text-white hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary disabled:opacity-50"
           >
             Save
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
