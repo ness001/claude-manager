@@ -78,7 +78,21 @@ export function SkillCard({ skill }: SkillCardProps) {
       >
         {skill.skillMdPath}
       </code>
-      <div className="flex gap-2">
+      {/* WAI-ARIA Toolbar pattern: the Open-in-VS-Code + Open-in-File-Browser
+        * pair is a related control group operating on the same skill. Without
+        * role="toolbar" + a skill-scoped accessible name, SR users navigating
+        * a list of skills hear identical "Open in VS Code, button … Open in
+        * File Browser, button" pairs with no way to tell which skill each
+        * pair belongs to. Embedding skill.name in the toolbar label gives
+        * unique landmark names per card. Mirrors PR #246 (SessionInfoBar),
+        * PR #248 (McpServerCard), and PR #249 (PluginCard broken-state
+        * recovery actions). */}
+      <div
+        role="toolbar"
+        aria-label={`Actions for ${skill.name}`}
+        data-testid="skill-actions-toolbar"
+        className="flex gap-2"
+      >
         <button
           type="button"
           data-testid="open-vscode-btn"
