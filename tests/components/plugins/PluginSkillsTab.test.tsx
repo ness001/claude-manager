@@ -54,4 +54,23 @@ describe("PluginSkillsTab", () => {
     expect(empty.getAttribute("role")).toBe("status");
     expect(empty.getAttribute("aria-live")).toBe("polite");
   });
+
+  // Layout + UX truncation recovery: long bundled-skill names regularly
+  // run 60+ chars and used to wrap onto multiple lines, breaking the
+  // skill-row card layout. `truncate` keeps the row to one line; the
+  // matching `title` lets sighted users hover to read the hidden tail.
+  // Same family as PR #225 (PluginAgentsTab name) and the broader
+  // truncation-recovery sweep (#167/#170/#171/#175/#223/#224 + PluginCard
+  // + SkillCard name).
+  it("skill name span has truncate + title for layout/UX recovery", () => {
+    const longName =
+      "anthropic-experimental-conversational-memory-with-vector-embeddings-skill";
+    render(
+      <PluginSkillsTab skills={[{ name: longName, description: "x" }]} />,
+    );
+    const span = screen.getByTestId("skill-name");
+    expect(span.className).toContain("truncate");
+    expect(span.getAttribute("title")).toBe(longName);
+    expect(span.textContent).toBe(longName);
+  });
 });
