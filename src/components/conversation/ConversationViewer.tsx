@@ -416,6 +416,15 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
       {totalTurns > 0 && (
         <div
           data-testid="turn-nav"
+          // WCAG 1.3.1 / 4.1.2: the floating turn navigator is a single
+          // logical control composed of "Turn", an editable spin-button,
+          // and "/ <total>". Without a wrapping role + name, SR users
+          // hear three disconnected fragments and the widget never
+          // appears as a discoverable group. role="group" + aria-label
+          // exposes it as one named unit (matches the pattern used by
+          // StatCard).
+          role="group"
+          aria-label="Turn navigation"
           className="absolute bottom-2 right-3 flex items-center gap-1 rounded-md border border-border bg-bg-secondary px-2 py-1 text-xs text-text-secondary shadow"
         >
           <span>Turn</span>
