@@ -311,6 +311,8 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
     return (
       <div
         data-testid="conversation-viewer-loading"
+        role="status"
+        aria-live="polite"
         className={`flex flex-1 items-center justify-center text-sm text-text-muted ${className ?? ""}`}
       >
         Loading conversation…
