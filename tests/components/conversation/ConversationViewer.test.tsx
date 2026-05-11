@@ -96,6 +96,28 @@ describe("ConversationViewer", () => {
     });
   });
 
+  // a11y: the "Loading conversation…" message appears asynchronously while
+  // the JSONL IPC is in flight. Without role="status" + aria-live="polite"
+  // screen-reader users get silence — they can't tell whether the click
+  // registered, the load is still pending, or the panel is broken. The
+  // sibling error branch right below it already declares role="alert"
+  // (see "error banner has role='alert'" test); the loading branch was the
+  // remaining outlier between the two transient-status surfaces. Mirrors
+  // PR #193 (SkillsListView empty-state ↔ no-matches parity) and PR #44
+  // (corruption-warning banner role="alert").
+  it("loading banner is a polite live region (a11y: load-in-flight announce)", async () => {
+    let resolve: (v: string[]) => void = () => {};
+    invokeMock.mockReturnValue(new Promise<string[]>((r) => (resolve = r)));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    const loading = screen.getByTestId("conversation-viewer-loading");
+    expect(loading.getAttribute("role")).toBe("status");
+    expect(loading.getAttribute("aria-live")).toBe("polite");
+    await act(async () => {
+      resolve([]);
+      await Promise.resolve();
+    });
+  });
+
   it("renders user, assistant, tool-call (with paired result), system divider, and summary", async () => {
     invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
     render(<ConversationViewer path="/fake.jsonl" />);
