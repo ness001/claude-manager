@@ -57,13 +57,24 @@ export function McpPanel() {
   };
 
   return (
+    // WCAG 1.3.1 + WAI-ARIA APG: the page-level <section> already wrapped
+    // the panel but was unlabeled — the SR landmarks rotor surfaced an
+    // anonymous "section" entry with no name. Bind aria-labelledby to the
+    // visible <h1> "MCP Servers" so users routing by landmarks (NVDA D,
+    // JAWS R, VoiceOver rotor → Landmarks) jump to a named region. Mirrors
+    // PRs #266 (PluginListView), #267 (SkillsListView), and the dashboard
+    // region-landmark sweep (#262/#263/#264/#265).
     <section
       data-testid="mcp-panel"
+      aria-labelledby="mcp-panel-heading"
       className="flex h-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-text-primary">
+          <h1
+            id="mcp-panel-heading"
+            className="text-2xl font-semibold text-text-primary"
+          >
             MCP Servers
           </h1>
           <div className="flex gap-2">
