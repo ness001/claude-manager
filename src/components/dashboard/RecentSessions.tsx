@@ -21,7 +21,10 @@ export function RecentSessions({ data }: RecentSessionsProps) {
       className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-xs uppercase tracking-wide text-text-muted">
+        <h3
+          id="recent-sessions-heading"
+          className="text-xs uppercase tracking-wide text-text-muted"
+        >
           Recent Sessions
         </h3>
         <button
@@ -39,7 +42,11 @@ export function RecentSessions({ data }: RecentSessionsProps) {
           No recent sessions
         </div>
       ) : (
-        <ul className="flex-1 flex flex-col gap-1 overflow-auto">
+        <ul
+          data-testid="recent-sessions-list"
+          aria-labelledby="recent-sessions-heading"
+          className="flex-1 flex flex-col gap-1 overflow-auto"
+        >
           {data.map((s) => {
             const name = s.displayName || "(untitled)";
             const msgPart = `${s.messageCount} ${s.messageCount === 1 ? "msg" : "msgs"}`;
