@@ -248,6 +248,26 @@ describe("ActivityChart", () => {
       expect(banner.textContent).toContain("v2.1.105");
     });
 
+    it("uses the theme-aware status-amber token, not the bare yellow-500 palette (WCAG 1.4.11)", () => {
+      // The original implementation used Tailwind's bare `yellow-500`
+      // (#eab308) for border, background, and the AlertTriangle icon —
+      // failing the 3:1 non-text contrast floor on light card-bg and
+      // bypassing the codebase's theme-token convention. Pin both the
+      // positive (status-amber present) and negative (no bare yellow-500)
+      // so a future refactor can't silently regress.
+      render(
+        <ActivityChart data={makeData(7)} nowMs={TODAY_2026_01_31} />,
+      );
+      const banner = screen.getByTestId("activity-stale-banner");
+      expect(banner.className).toContain("border-status-amber/40");
+      expect(banner.className).toContain("bg-status-amber/10");
+      expect(banner.className).not.toMatch(/yellow-500/);
+      const icon = banner.querySelector("svg");
+      expect(icon).not.toBeNull();
+      expect(icon!.getAttribute("class")).toContain("text-status-amber");
+      expect(icon!.getAttribute("class")).not.toMatch(/yellow-500/);
+    });
+
     it("renders no banner when data is empty (handled by the empty state)", () => {
       render(<ActivityChart data={[]} nowMs={TODAY_2026_01_31} />);
       // Empty state is the "No activity yet" placeholder, not a banner.
