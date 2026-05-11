@@ -40,6 +40,17 @@ export function McpServerForm({
 }: McpServerFormProps) {
   const isEdit = initial !== null && initial !== undefined;
   const titleId = useId();
+  // Per-field input ids so the visible <label> can wire `htmlFor` to the
+  // corresponding <input id={…}>. Without this, clicking the visible "Name"
+  // / "Command" / "URL" label text did nothing — sighted users lost the
+  // standard click-the-label-to-focus-the-input behavior, and accessibility
+  // linters flag the orphan <label> (no `for`, no implicit wrap) as a
+  // missing label association. The inputs already carry an explicit
+  // aria-label so SR users had the right accessible name; this fixes the
+  // sighted-user click affordance and removes the orphan-label warning.
+  const nameInputId = useId();
+  const commandInputId = useId();
+  const urlInputId = useId();
   const [name, setName] = useState(initial?.name ?? "");
   const [scope, setScope] = useState<McpScope>(
     initial?.scope === "local" ? "local" : "user",
@@ -191,9 +202,10 @@ export function McpServerForm({
           {isEdit ? "Edit MCP Server" : "Add MCP Server"}
         </h2>
 
-        <Field label="Name" error={nameError}>
+        <Field label="Name" htmlFor={nameInputId} error={nameError}>
           <input
             data-testid="form-name"
+            id={nameInputId}
             type="text"
             ref={nameRef}
             aria-label="Server name"
@@ -250,9 +262,10 @@ export function McpServerForm({
 
         {type === "stdio" ? (
           <>
-            <Field label="Command" error={commandError}>
+            <Field label="Command" htmlFor={commandInputId} error={commandError}>
               <input
                 data-testid="form-command"
+                id={commandInputId}
                 type="text"
                 aria-label="Command"
                 value={command}
@@ -300,9 +313,10 @@ export function McpServerForm({
           </>
         ) : (
           <>
-            <Field label="URL" error={urlError}>
+            <Field label="URL" htmlFor={urlInputId} error={urlError}>
               <input
                 data-testid="form-url"
+                id={urlInputId}
                 type="text"
                 aria-label="URL"
                 value={url}
@@ -365,16 +379,21 @@ export function McpServerForm({
 
 function Field({
   label,
+  htmlFor,
   error,
   children,
 }: {
   label: string;
+  htmlFor?: string;
   error?: string | null;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs uppercase tracking-wide text-text-muted">
+      <label
+        htmlFor={htmlFor}
+        className="text-xs uppercase tracking-wide text-text-muted"
+      >
         {label}
       </label>
       {children}
