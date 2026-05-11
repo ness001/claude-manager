@@ -16,7 +16,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
 import { open as openShell } from "@tauri-apps/plugin-shell";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 interface AssistantMessageProps {
   text: string;
@@ -33,6 +33,16 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
   // the speaker label together with the body. Mirrors UserMessage (#165)
   // and SummaryBanner (#164).
   const labelId = useId();
+  // Surface link-open failures inline. `openShell` rejects when the OS
+  // has no handler for the URI scheme (e.g. `mailto:` with no mail
+  // client), the Tauri shell allowlist forbids the target, or the
+  // target is otherwise unreachable. The prior `.catch(() => {})`
+  // discarded these errors entirely — sighted users clicked an
+  // assistant-rendered link and got *nothing*, with no clue whether the
+  // app was broken or the link was bad. SR users got the same
+  // opaque silent failure. Mirrors SkillCard's open-error surfacing
+  // (lines 21-29) and the broader silent-failure family (PR #91).
+  const [openError, setOpenError] = useState<string | null>(null);
   return (
     <div
       data-testid="assistant-message"
@@ -106,7 +116,14 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
                 data-testid="assistant-link"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (href) void openShell(href).catch(() => {});
+                  setOpenError(null);
+                  if (href) {
+                    void openShell(href).catch((err) => {
+                      setOpenError(
+                        err instanceof Error ? err.message : String(err),
+                      );
+                    });
+                  }
                 }}
                 className="text-accent underline underline-offset-2 hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
               >
@@ -118,6 +135,15 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
           {text}
         </ReactMarkdown>
       </div>
+      {openError !== null && (
+        <p
+          data-testid="assistant-link-error"
+          role="alert"
+          className="text-[11px] text-status-red"
+        >
+          Couldn&apos;t open link: {openError}
+        </p>
+      )}
     </div>
   );
 }
