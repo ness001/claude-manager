@@ -95,6 +95,36 @@ describe("SkillsListView", () => {
     );
   });
 
+  // WCAG 1.3.1 / 4.1.2 — flat sibling stat spans wrapped in a non-semantic
+  // <div> are invisible to SR list-rotor and each bare value lacks a role
+  // cue ("5 skills" / a bare path). Promote to a labeled <ul> with per-<li>
+  // aria-labels. Mirrors PR #254 (PluginListView stats).
+  it("skills counts render as a labeled <ul> with per-stat aria-labels (WCAG 1.3.1)", () => {
+    useSkillStore.setState({
+      skills: [
+        makeSkill({ name: "a", dirPath: "/h/.claude/skills/a" }),
+        makeSkill({ name: "b", dirPath: "/h/.claude/skills/b" }),
+        makeSkill({ name: "c", dirPath: "/h/.claude/skills/c" }),
+      ],
+    });
+    render(<SkillsListView />);
+    const list = screen.getByTestId("skills-stats-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe("Skill counts");
+
+    const count = screen.getByTestId("stat-skill-count");
+    expect(count.tagName).toBe("LI");
+    expect(count.getAttribute("aria-label")).toBe("Skills: 3");
+
+    const path = screen.getByTestId("stat-skills-path");
+    // Path stays a <code> (visible chip styling); the <li> is its parent.
+    expect(path.tagName).toBe("CODE");
+    expect(path.parentElement?.tagName).toBe("LI");
+    expect(path.parentElement?.getAttribute("aria-label")).toBe(
+      "Skills directory: ~/.claude/skills/",
+    );
+  });
+
   // Defect: count rendered as "1 skills" — bare plural with no n=1 special-case.
   // Mirrors PR #87 (SessionCard), PR #90 (SystemHealth), PR #133 (RecentSessions),
   // PR #219 (PluginCard skill/agent/hook counts).
