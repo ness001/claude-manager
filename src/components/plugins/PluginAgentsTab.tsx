@@ -9,7 +9,12 @@ interface PluginAgentsTabProps {
 export function PluginAgentsTab({ agents }: PluginAgentsTabProps) {
   if (agents.length === 0) {
     return (
-      <div data-testid="agents-empty" className="text-sm text-text-muted">
+      <div
+        data-testid="agents-empty"
+        role="status"
+        aria-live="polite"
+        className="text-sm text-text-muted"
+      >
         No agents bundled.
       </div>
     );
