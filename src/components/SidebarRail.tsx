@@ -18,6 +18,8 @@ interface RailItemConfig {
   label: string;
   Icon: ComponentType<{ className?: string; size?: number }>;
   shortcut: string;
+  /** Optional secondary shortcut surfaced via aria-keyshortcuts only. */
+  extraKeyshortcut?: string;
 }
 
 const ITEMS: RailItemConfig[] = [
@@ -26,7 +28,16 @@ const ITEMS: RailItemConfig[] = [
   { section: "plugins", label: "Plugins", Icon: Puzzle, shortcut: "Ctrl+3" },
   { section: "skills", label: "Skills", Icon: BookOpen, shortcut: "Ctrl+4" },
   { section: "mcp", label: "MCP Servers", Icon: Plug, shortcut: "Ctrl+5" },
-  { section: "settings", label: "Settings", Icon: SettingsIcon, shortcut: "Ctrl+6" },
+  // Settings has a second conventional shortcut wired in App.tsx (Ctrl+,).
+  // Surface it via aria-keyshortcuts so SR users can discover the
+  // alternative without polluting the visible tooltip.
+  {
+    section: "settings",
+    label: "Settings",
+    Icon: SettingsIcon,
+    shortcut: "Ctrl+6",
+    extraKeyshortcut: "Ctrl+,",
+  },
 ];
 
 /**
@@ -84,12 +95,13 @@ export function SidebarRail() {
           the count is lost. Mirrors PRs #235/#236/#237/#238/#239/#240
           (collection containers). The flex column layout is element-agnostic. */}
       <ul className="flex flex-col">
-        {ITEMS.map(({ section, label, Icon, shortcut }, idx) => (
+        {ITEMS.map(({ section, label, Icon, shortcut, extraKeyshortcut }, idx) => (
           <li key={section}>
             <SidebarRailItem
               label={label}
               Icon={Icon}
               shortcut={shortcut}
+              extraKeyshortcut={extraKeyshortcut}
               active={activeSection === section}
               tabIndex={activeSection === section ? 0 : -1}
               onClick={() => navigateTo(section)}
