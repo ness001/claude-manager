@@ -96,4 +96,44 @@ describe("StatCard", () => {
     expect(sub.className).toContain("truncate");
     expect(sub.getAttribute("title")).toBe(longName);
   });
+
+  // WCAG 1.3.1 / 4.1.2 — the StatCard visually composes value + label
+  // (+ sublabel) into one tile, but the DOM is three separate divs with
+  // no programmatic linkage. AT users walking the dashboard heard
+  // "42 … Phase 2 work … Active Since" in DOM order — value first with
+  // no context, label LAST. Promote the root to `role="group"` with an
+  // `aria-label` that combines the parts in natural reading order so SR
+  // users get one coherent announcement per tile.
+  it("root has role='group' with an aria-label combining label + value (WCAG 1.3.1 / 4.1.2)", () => {
+    render(<StatCard value={42} label="Sessions" accent="green" />);
+    const card = screen.getByTestId("stat-card");
+    expect(card.getAttribute("role")).toBe("group");
+    expect(card.getAttribute("aria-label")).toBe("Sessions: 42");
+  });
+
+  it("aria-label appends the sublabel when present (Longest Session use case)", () => {
+    render(
+      <StatCard
+        value={89}
+        label="Longest Session"
+        accent="yellow"
+        sublabel="my-session"
+      />,
+    );
+    expect(
+      screen.getByTestId("stat-card").getAttribute("aria-label"),
+    ).toBe("Longest Session: 89 — my-session");
+  });
+
+  // Coercion: ReactNode value is forced to a string. The two non-numeric
+  // call sites pass formatted date strings ("Active Since"), so verify a
+  // string value flows through unchanged.
+  it("aria-label coerces a string value through verbatim (Active Since use case)", () => {
+    render(
+      <StatCard value={"3 days ago"} label="Active Since" accent="mauve" />,
+    );
+    expect(
+      screen.getByTestId("stat-card").getAttribute("aria-label"),
+    ).toBe("Active Since: 3 days ago");
+  });
 });
