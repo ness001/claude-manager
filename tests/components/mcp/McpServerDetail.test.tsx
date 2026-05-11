@@ -123,4 +123,36 @@ describe("McpServerDetail", () => {
     expect(toggle.className).toContain("focus-visible:ring-2");
     expect(toggle.className).toContain("focus-visible:ring-accent");
   });
+
+  // WCAG 1.3.1 (Info and Relationships): each detail row is a label/value
+  // pair (Command/<cmd>, Args/<args>, URL/<url>, Env/<list>, Tools/<list>).
+  // Previously rendered as flat <span>+<div> siblings with no programmatic
+  // relationship — SR users heard the label and value as two unrelated
+  // strings. <dl>/<dt>/<dd> exposes the term-description association so
+  // screen-readers can announce them as discrete pairs and navigate them
+  // via the rotor. Mirrors PR #199 (PluginHooksTab) and PR #200
+  // (PluginAgentsTab).
+  it("renders rows as <dl>/<dt>/<dd> term-description pairs (WCAG 1.3.1)", () => {
+    render(<McpServerDetail server={FIX_CONNECTED} />);
+    const root = screen.getByTestId("mcp-server-detail");
+    expect(root.tagName).toBe("DL");
+    // Every visible row label must be a <dt>; the corresponding value
+    // container must be a <dd>.
+    const dts = Array.from(root.querySelectorAll("dt")).map(
+      (e) => e.textContent,
+    );
+    expect(dts).toContain("Command");
+    expect(dts).toContain("Args");
+    expect(dts).toContain("Env");
+    // Each row's value sits inside a <dd> sibling — assert by walking from
+    // the Command <dt> to its sibling <dd> and checking the command code.
+    const root2 = screen.getByTestId("mcp-server-detail");
+    const commandDt = Array.from(root2.querySelectorAll("dt")).find(
+      (e) => e.textContent === "Command",
+    );
+    expect(commandDt).toBeDefined();
+    const commandDd = commandDt!.nextElementSibling;
+    expect(commandDd?.tagName).toBe("DD");
+    expect(commandDd?.querySelector("[data-testid=detail-command]")).not.toBeNull();
+  });
 });
