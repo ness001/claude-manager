@@ -297,6 +297,24 @@ describe("PluginCard", () => {
     expect(span.getAttribute("title")).toBe(longName);
   });
 
+  // Plugin descriptions are double-clipped (JS truncate(_, 120) then CSS
+  // line-clamp-2). Without `title`, the hidden tail is unrecoverable from
+  // the card. Mirrors the truncate+title family already applied to the
+  // plugin name above (PR #167 et al.). The full description (not the
+  // JS-truncated one) is what hover should reveal.
+  it("description <p> mirrors the *full* description into `title` (UX truncation recovery)", () => {
+    const longDesc =
+      "An extensively documented plugin that bundles many skills and agents and hooks for power users who want to extend Claude with custom workflows tailored to their environment, including but not limited to advanced refactoring, multi-repo orchestration, and inline code review.";
+    render(
+      <PluginCard plugin={makePlugin({ description: longDesc })} selected={false} />,
+    );
+    const p = screen.getByTestId("plugin-description");
+    expect(p.tagName).toBe("P");
+    expect(p.className).toContain("line-clamp-2");
+    // hover surfaces the COMPLETE description, not the JS-truncated one
+    expect(p.getAttribute("title")).toBe(longDesc);
+  });
+
   // Defect: counts rendered as "1 skills" / "1 agents" / "1 hooks" — bare
   // plurals with no n=1 special-case. Mirrors PR #87 (SessionCard message
   // count), PR #90 (SystemHealth MCP row), PR #133 (RecentSessions msg count).
