@@ -81,4 +81,28 @@ describe("SessionDetailPanel", () => {
     render(<SessionDetailPanel />);
     expect(screen.getByTestId("session-detail-empty")).toBeInTheDocument();
   });
+
+  // a11y: the empty-state copy ("Select a session to view its conversation")
+  // and the no-jsonl placeholder ("No conversation file available…") both
+  // appear/disappear based on user actions (selecting/deselecting a session,
+  // or selecting one with no JSONL). Without role="status" + aria-live="polite",
+  // screen-reader users get NO feedback that the right pane changed — they'd
+  // only discover the new copy by tab-hunting. Mirrors PRs #154 (PluginListView),
+  // #155 (McpPanel), #207 (SkillsListView).
+  it("empty state is a polite live region (a11y: pane-change announce)", () => {
+    render(<SessionDetailPanel />);
+    const empty = screen.getByTestId("session-detail-empty");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
+
+  it("no-jsonl placeholder is a polite live region (a11y: pane-change announce)", () => {
+    const s = makeSession({ sessionId: "selected", state: "ended" });
+    // jsonlPath omitted → triggers the placeholder branch.
+    useSessionStore.setState({ sessions: [s], selectedId: "selected" });
+    render(<SessionDetailPanel />);
+    const ph = screen.getByTestId("conversation-viewer-placeholder");
+    expect(ph.getAttribute("role")).toBe("status");
+    expect(ph.getAttribute("aria-live")).toBe("polite");
+  });
 });
