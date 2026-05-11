@@ -215,4 +215,50 @@ describe("ModelDonut", () => {
     expect(nameSpan!.textContent).toBe(longModel);
     expect(nameSpan!.getAttribute("title")).toBe(longModel);
   });
+
+  // WCAG 1.3.1 (Info and Relationships) / 4.1.2 (Name, Role, Value): the
+  // legend row visually composes color-swatch + model + share + tokens
+  // into one tile, but the DOM is four flat sibling spans (the swatch is
+  // already aria-hidden) with no programmatic linkage. SR users walking
+  // the list hear three disconnected fragments per item; rotor list view
+  // shows each <li> only by its first text node, dropping share + token
+  // count entirely. Promote each <li> with one self-contained
+  // announcement combining model + share + tokens. Mirrors PR #231
+  // (RecentSessions row) and #230 (SystemHealth indicator).
+  it("each <li> exposes a coherent model+share+tokens aria-label (WCAG 1.3.1 / 4.1.2)", () => {
+    render(
+      <ModelDonut
+        data={[
+          { model: "claude-opus-4-6", tokens: 75_000 },
+          { model: "claude-sonnet-4-6", tokens: 25_000 },
+        ]}
+      />,
+    );
+    const items = screen.getAllByTestId("donut-legend-item");
+    // Total = 100k → 75% + 25%. formatTokens(75_000) → "75.0k".
+    expect(items[0].getAttribute("aria-label")).toBe(
+      "claude-opus-4-6: 75.0% — 75.0k tokens",
+    );
+    expect(items[1].getAttribute("aria-label")).toBe(
+      "claude-sonnet-4-6: 25.0% — 25.0k tokens",
+    );
+  });
+
+  // Tiny non-zero slices must surface as "<0.1%" in the aria-label too —
+  // not "0.0%" — so SR users see the slice exists but is negligible
+  // (matches the visible formatShare logic).
+  it("aria-label uses '<0.1%' for tiny non-zero slices (mirrors visible formatShare)", () => {
+    render(
+      <ModelDonut
+        data={[
+          { model: "claude-opus-4-6", tokens: 999_999 },
+          { model: "claude-haiku-4-5", tokens: 1 },
+        ]}
+      />,
+    );
+    const items = screen.getAllByTestId("donut-legend-item");
+    expect(items[1].getAttribute("aria-label")).toBe(
+      "claude-haiku-4-5: <0.1% — 1 tokens",
+    );
+  });
 });

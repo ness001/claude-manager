@@ -125,10 +125,24 @@ export function ModelDonut({ data }: ModelDonutProps) {
         >
           {data.map((d, i) => {
             const color = SEGMENT_VARS[i % SEGMENT_VARS.length];
+            // Coherent SR announcement (WCAG 1.3.1 / 4.1.2): the legend
+            // row visually composes color-swatch + model + share + tokens
+            // into one tile, but the DOM is four flat sibling spans (the
+            // swatch is already aria-hidden) with no programmatic linkage.
+            // SR users walking the list hear three disconnected
+            // fragments per item; the rotor list view shows each <li>
+            // only by its first text node, dropping share and token
+            // count entirely. Promote the <li> with one self-contained
+            // announcement combining model + share + tokens. Mirrors PR
+            // #230 (SystemHealth indicator), #231 (RecentSessions row),
+            // and StatCard (lines 70-73) coherent-tile pattern. Visible
+            // layout is unchanged.
+            const liAriaLabel = `${d.model}: ${formatShare(d.tokens, total)} — ${formatTokens(d.tokens)} tokens`;
             return (
               <li
                 key={d.model}
                 data-testid="donut-legend-item"
+                aria-label={liAriaLabel}
                 className="flex items-center gap-2 min-w-0"
               >
                 <span
