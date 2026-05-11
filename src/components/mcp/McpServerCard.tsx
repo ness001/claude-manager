@@ -86,7 +86,15 @@ export function McpServerCard({
               : `Expand details for ${server.name}`
           }
           aria-expanded={expanded}
-          aria-controls={detailId}
+          // Only emit aria-controls when the controlled detail panel is
+          // actually rendered. The panel is conditionally mounted
+          // (`{expanded && <div id={detailId}>…}`), so when collapsed
+          // (the default) aria-controls would point at a missing id —
+          // a broken IDREF. Per WAI-ARIA, every IDREF in aria-controls
+          // must resolve to an element in the document; NVDA/VoiceOver
+          // flag dangling IDREFs as invalid or drop the disclosure
+          // relationship entirely. Mirrors PR #189 (ToolCallBlock).
+          aria-controls={expanded ? detailId : undefined}
           onClick={() => setExpanded((e) => !e)}
           className="rounded-sm text-text-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
