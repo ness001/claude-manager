@@ -107,6 +107,26 @@ export function PluginListView() {
               }}
               disabled={isChecking || plugins.length === 0}
               aria-busy={isChecking}
+              // Sighted users see no tooltip when disabled — they have to
+              // infer "no plugins to check" from the empty grid below.
+              // Mirror the disabling reason into the accessible name +
+              // tooltip so SR users + sighted users alike hear/see why
+              // the button is grey instead of just "Check for Updates,
+              // button, dimmed". Mirrors PR #181 (QuickActions),
+              // PR #183 (SessionListPanel new-session), PR #184
+              // (SessionInfoBar actions). The aria-busy already conveys
+              // the in-flight case ("Checking…") so no aria-label is
+              // needed for that state.
+              aria-label={
+                plugins.length === 0 && !isChecking
+                  ? "Check for Updates (no plugins installed)"
+                  : undefined
+              }
+              title={
+                plugins.length === 0 && !isChecking
+                  ? "No plugins installed"
+                  : undefined
+              }
               className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <RefreshCw size={14} aria-hidden="true" className={isChecking ? "animate-spin" : ""} />
