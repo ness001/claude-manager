@@ -135,6 +135,22 @@ describe("SkillCard", () => {
     }
   });
 
+  // WAI-ARIA Toolbar pattern (4.1.2): the Open-in-VS-Code + Open-in-File-
+  // Browser pair is a related control group acting on the same skill.
+  // Without role="toolbar" + a skill-scoped accessible name, SR users
+  // navigating a list of skills hear identical button pairs with no way to
+  // tell which skill each pair belongs to. Mirrors PR #246 (SessionInfoBar),
+  // PR #248 (McpServerCard), and PR #249 (PluginCard broken-state).
+  it("action row is a named toolbar landmark scoped to the skill name", () => {
+    render(<SkillCard skill={SKILL} />);
+    const toolbar = screen.getByTestId("skill-actions-toolbar");
+    expect(toolbar.getAttribute("role")).toBe("toolbar");
+    expect(toolbar.getAttribute("aria-label")).toBe(`Actions for ${SKILL.name}`);
+    // Both action buttons live inside the toolbar.
+    expect(toolbar.contains(screen.getByTestId("open-vscode-btn"))).toBe(true);
+    expect(toolbar.contains(screen.getByTestId("open-folder-btn"))).toBe(true);
+  });
+
   // Defect: openShell rejection (deleted dir, missing handler for vscode://,
   // shell allowlist denial) was swallowed into console.error — the user
   // clicked the button and got zero feedback. Mirrors PR #91 (PluginListView
