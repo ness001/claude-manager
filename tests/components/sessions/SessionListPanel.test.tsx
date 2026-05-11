@@ -172,6 +172,25 @@ describe("SessionListPanel", () => {
     expect(screen.queryByTestId("virtual-scroller")).not.toBeInTheDocument();
   });
 
+  // WCAG 2.1.1 (Keyboard): the virtual scroller above 50 sessions was already
+  // made keyboard-focusable, but the ≤50-session non-virtual branch — the
+  // overwhelmingly common case — rendered a bare scrollable <div>. Keyboard-
+  // only users on a tall list could not arrow-scroll the region; they had to
+  // Tab through every card. Mirror the virtual-scroller fix.
+  it("non-virtual scroller is keyboard-focusable + named region (WCAG 2.1.1)", () => {
+    const few: SessionMeta[] = Array.from({ length: 10 }, (_, i) =>
+      makeSession({ sessionId: `s${i}` }),
+    );
+    useSessionStore.setState({ sessions: few, viewMode: "my" });
+    render(<SessionListPanel />);
+    const scroller = screen.getByTestId("non-virtual-scroller");
+    expect(scroller.getAttribute("tabindex")).toBe("0");
+    expect(scroller.getAttribute("role")).toBe("region");
+    expect(scroller.getAttribute("aria-label")).toBe("Sessions (scrollable)");
+    expect(scroller.className).toContain("focus-visible:ring-2");
+    expect(scroller.className).toContain("focus-visible:ring-accent");
+  });
+
   it("empty state when no sessions are present", () => {
     render(<SessionListPanel />);
     expect(screen.getByText("No sessions found")).toBeInTheDocument();

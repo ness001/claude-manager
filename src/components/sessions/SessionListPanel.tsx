@@ -283,7 +283,24 @@ export function SessionListPanel() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 overflow-auto flex flex-col gap-1">
+        // WCAG 2.1.1 (Keyboard) + WAI-ARIA APG: the non-virtual scroller
+        // must be keyboard-focusable too — the virtual branch above (lines
+        // 240-243) was already fixed for this defect, but the ≤50-session
+        // branch (the overwhelmingly common case) still rendered a bare
+        // <div> with overflow-auto. Keyboard-only users with a tall
+        // session list could not arrow-scroll the list region; they had
+        // to Tab through every card to advance, with no way to skim.
+        // Mirror the same fix here: tabIndex=0 + role="region" +
+        // aria-label so the scroller appears in the AT landmarks rotor
+        // and accepts arrow-key scrolling. Mirrors ConversationViewer
+        // (lines 354-369) and the virtual branch above.
+        <div
+          data-testid="non-virtual-scroller"
+          tabIndex={0}
+          role="region"
+          aria-label="Sessions (scrollable)"
+          className="flex-1 overflow-auto flex flex-col gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
           {groups.map((g) => {
             // WCAG 1.3.1 (Info and Relationships): each group's cards form
             // a labelled list under the <h3> group header but were emitted
