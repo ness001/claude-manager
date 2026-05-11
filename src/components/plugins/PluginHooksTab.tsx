@@ -9,7 +9,12 @@ interface PluginHooksTabProps {
 export function PluginHooksTab({ hooks }: PluginHooksTabProps) {
   if (hooks.length === 0) {
     return (
-      <div data-testid="hooks-empty" className="text-sm text-text-muted">
+      <div
+        data-testid="hooks-empty"
+        role="status"
+        aria-live="polite"
+        className="text-sm text-text-muted"
+      >
         No hooks bundled.
       </div>
     );

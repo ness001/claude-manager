@@ -43,6 +43,14 @@ describe("PluginHooksTab", () => {
     expect(screen.getByTestId("hooks-empty")).toBeInTheDocument();
   });
 
+  // a11y: see PluginSkillsTab counterpart. Mirrors PRs #154/#155/#207/#212/#213.
+  it("empty state is a polite live region (a11y: tab-load announce)", () => {
+    render(<PluginHooksTab hooks={[]} />);
+    const empty = screen.getByTestId("hooks-empty");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
+
   it("renders each hook as a <dl> term/description pair (WCAG 1.3.1)", () => {
     render(
       <PluginHooksTab

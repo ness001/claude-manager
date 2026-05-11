@@ -42,4 +42,16 @@ describe("PluginSkillsTab", () => {
     render(<PluginSkillsTab skills={[]} />);
     expect(screen.getByTestId("skills-empty")).toBeInTheDocument();
   });
+
+  // a11y: plugin tabs are async-rendered (skills/hooks/agents data loads
+  // when the user clicks into a plugin). Empty-state text appears in-place
+  // without any AT cue. role="status" + aria-live="polite" makes screen
+  // readers announce "No skills bundled." when the tab populates. Mirrors
+  // the live-region family used in PRs #154/#155/#207/#212/#213.
+  it("empty state is a polite live region (a11y: tab-load announce)", () => {
+    render(<PluginSkillsTab skills={[]} />);
+    const empty = screen.getByTestId("skills-empty");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
 });
