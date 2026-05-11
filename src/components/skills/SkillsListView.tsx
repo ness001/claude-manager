@@ -129,6 +129,8 @@ export function SkillsListView() {
       ) : skills.length === 0 ? (
         <div
           data-testid="empty-state"
+          role="status"
+          aria-live="polite"
           className="flex flex-1 items-center justify-center text-center text-sm text-text-muted"
         >
           No custom skills found at{" "}

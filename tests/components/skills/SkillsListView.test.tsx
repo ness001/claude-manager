@@ -102,6 +102,22 @@ describe("SkillsListView", () => {
     expect(empty.textContent).toContain("SKILL.md");
   });
 
+  // a11y: the empty-state message ("No custom skills found at ~/.claude/skills/")
+  // appears asynchronously after the initial skill load completes — without a
+  // live region, screen reader users get silence and can't tell whether the
+  // load is still pending, errored, or completed-with-zero-results. The
+  // sibling no-matches branch (search filter cleared everything) already
+  // declares role="status" + aria-live="polite"; the empty-state branch was
+  // missing the same treatment, so the two zero-result paths announced
+  // inconsistently. Mirrors the no-matches assertion below + PR #154
+  // (PluginListView) and PR #155 (McpPanel).
+  it("empty state is a polite live region (a11y: zero-skills announce)", () => {
+    render(<SkillsListView />);
+    const empty = screen.getByTestId("empty-state");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
+
   it("info box references plugin-bundled skills via Plugins panel", () => {
     render(<SkillsListView />);
     const aside = screen.getByTestId("plugins-info-box");
