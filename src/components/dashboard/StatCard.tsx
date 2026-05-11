@@ -52,10 +52,31 @@ const VALUE_COLOR_VAR: Record<StatAccent, string> = {
 export function StatCard({ value, label, accent, sublabel }: StatCardProps) {
   const stripeColor = ACCENT_VAR[accent];
   const valueColor = VALUE_COLOR_VAR[accent];
+  // Coherent SR announcement (WCAG 1.3.1 / 4.1.2): the card visually
+  // composes value + label (+ sublabel) into one tile, but the DOM is three
+  // separate divs with no programmatic linkage. AT users walking the
+  // dashboard hear "42 … Phase 2 work … Active Since" in DOM order — value
+  // first with no context, label LAST. Promote the root to `role="group"`
+  // with an `aria-label` that combines the parts in natural reading order
+  // ("Active Since: 42 — Phase 2 work") so SR users get one self-contained
+  // announcement per tile. The visible layout is unchanged.
+  //
+  // ReactNode `value` is coerced to a string for the label — only the
+  // primitive shapes used at the call sites (numbers, formatted date
+  // strings) are supported here; if a caller passes a complex JSX value in
+  // the future the label degrades to "[object Object]" which is still
+  // better than the prior empty announcement.
+  const valueText =
+    value === null || value === undefined ? "" : String(value);
+  const ariaLabel = sublabel
+    ? `${label}: ${valueText} — ${sublabel}`
+    : `${label}: ${valueText}`;
   return (
     <div
       data-testid="stat-card"
       data-accent={accent}
+      role="group"
+      aria-label={ariaLabel}
       className="relative flex flex-col gap-1 rounded-md border border-border bg-card-bg p-4 overflow-hidden"
     >
       {/* Left accent stripe — 4px wide, full height. */}
