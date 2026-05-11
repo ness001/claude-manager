@@ -103,9 +103,22 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
       className="flex h-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2 border-b border-border pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <h2 className="text-xl font-semibold text-text-primary">
+        <div className="flex items-center justify-between gap-2">
+          {/* `min-w-0` on the flex child unlocks `truncate` on the <h2>;
+              without it the column is sized to the intrinsic name width,
+              defeating truncation and pushing the right-side action buttons
+              (Open in File Browser / Open in VS Code) off the visible row.
+              The matching `title` lets sighted users hover to recover the
+              hidden tail. Mirrors PR #225 (PluginAgentsTab name), #226
+              (PluginSkillsTab name), #224 (McpServerCard name), #223
+              (SkillCard name), and the broader truncation-recovery family
+              (#167/#170/#171/#175 + PluginCard). */}
+          <div className="flex min-w-0 flex-col">
+            <h2
+              data-testid="plugin-detail-name"
+              title={plugin.name}
+              className="truncate text-xl font-semibold text-text-primary"
+            >
               {plugin.name}
             </h2>
             <div className="text-xs text-text-muted">
