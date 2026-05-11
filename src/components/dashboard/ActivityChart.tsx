@@ -258,7 +258,37 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
         </div>
       </div>
 
-      <div data-testid="chart-canvas" className="flex-1 min-h-[200px]">
+      <div
+        data-testid="chart-canvas"
+        // WCAG 1.1.1 (Non-text Content): the Recharts SVG is a purely visual
+        // data graphic — axes, grid, area path. Without role="img" + a
+        // descriptive aria-label, the entire chart is invisible to screen
+        // readers (NVDA / VoiceOver skip the SVG subtree entirely). Compose
+        // a one-line summary capturing the actionable shape: which series,
+        // window length, sample count, and the peak value within the
+        // window. SR users now hear something like "Messages activity over
+        // last 7 days, 7 data points, peak 12 on 2026-01-07" instead of
+        // silence.
+        role="img"
+        aria-label={(() => {
+          const seriesLabel = SERIES_LABELS[series];
+          const windowLabel = period === "all" ? "all time" : `last ${period}`;
+          const samples = sliced.length;
+          let peak = 0;
+          let peakDate = "";
+          for (const e of sliced) {
+            const v = (e[dataKey] as number) ?? 0;
+            if (v > peak) {
+              peak = v;
+              peakDate = e.date;
+            }
+          }
+          const peakClause =
+            peak > 0 ? `, peak ${peak} on ${peakDate}` : ", no activity in window";
+          return `${seriesLabel} activity over ${windowLabel}, ${samples} ${samples === 1 ? "data point" : "data points"}${peakClause}`;
+        })()}
+        className="flex-1 min-h-[200px]"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={sliced} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <defs>

@@ -54,6 +54,35 @@ describe("ActivityChart", () => {
     expect(chart.textContent).toContain("No activity yet");
   });
 
+  // WCAG 1.1.1 (Non-text Content): the chart canvas is an SVG data graphic.
+  // Without role="img" + a descriptive aria-label, the entire chart is
+  // invisible to screen readers. The label must summarize the visible data
+  // (series, window, sample count, peak) so AT users get the actionable
+  // shape, not silence.
+  it("chart-canvas exposes a descriptive role=img + aria-label (WCAG 1.1.1)", () => {
+    render(<ActivityChart data={makeData(7)} />);
+    const canvas = screen.getByTestId("chart-canvas");
+    expect(canvas.getAttribute("role")).toBe("img");
+    const label = canvas.getAttribute("aria-label") ?? "";
+    // Default series is "messages", default period is "7d".
+    expect(label).toContain("Messages");
+    expect(label).toContain("last 7d");
+    expect(label).toContain("7 data points");
+    // makeData uses messageCount=i (i=0..6), so peak is 6 on day 07.
+    expect(label).toContain("peak 6");
+    expect(label).toContain("2026-01-07");
+  });
+
+  it("aria-label uses 'no activity' when window has zero peak (WCAG 1.1.1)", () => {
+    const zeroData: DailyActivityEntry[] = [
+      { date: "2026-01-01", messageCount: 0, sessionCount: 0, toolCallCount: 0 },
+      { date: "2026-01-02", messageCount: 0, sessionCount: 0, toolCallCount: 0 },
+    ];
+    render(<ActivityChart data={zeroData} />);
+    const label = screen.getByTestId("chart-canvas").getAttribute("aria-label") ?? "";
+    expect(label).toContain("no activity in window");
+  });
+
   it("mounts populated state without console errors", () => {
     const errs: unknown[] = [];
     const orig = console.error;
