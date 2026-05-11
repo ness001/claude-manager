@@ -111,8 +111,16 @@ export function ModelDonut({ data }: ModelDonutProps) {
           </div>
         )}
 
+        {/* WCAG 2.4.6 (Headings and Labels) / 1.3.1 (Info and Relationships):
+            screen-reader users navigating by lists (NVDA "L", JAWS "L") would
+            hear "list, N items" with no clue this is the model-usage
+            breakdown — the visual context (the donut beside it, the "Model
+            Usage" h3 above) is not exposed to AT for the list itself.
+            aria-label promotes the list to a recognizably named landmark in
+            the rotor / elements list. */}
         <ul
           data-testid="donut-legend"
+          aria-label="Model usage breakdown"
           className="flex-1 flex flex-col gap-1 text-xs min-w-0"
         >
           {data.map((d, i) => {
