@@ -122,7 +122,10 @@ export function McpServerCard({
           )}
         </button>
         <StatusDot state={server.status} />
-        <span className="truncate text-sm font-medium text-text-primary">
+        <span
+          className="truncate text-sm font-medium text-text-primary"
+          title={server.name}
+        >
           {highlightQuery ? highlight(server.name, highlightQuery) : server.name}
         </span>
         <Pill testid="status-pill" tone={statusTone(server.status)}>
