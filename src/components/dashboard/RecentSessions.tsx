@@ -67,7 +67,22 @@ export function RecentSessions({ data }: RecentSessionsProps) {
               >
                 {s.displayName || "(untitled)"}
               </span>
-              <span className="text-[11px] text-text-muted tabular-nums shrink-0">
+              {/* The visible "3h ago" / "Yesterday" string is great for
+                  scanning but useless for forensics ("which session ran
+                  at 14:23?"). Surface the absolute timestamp via the
+                  title tooltip on hover, so users can recover the exact
+                  time without leaving the dashboard. Mirrors the
+                  truncate+title family (PRs #167, #170, #171, #175,
+                  #176, #179). Skip when the timestamp is missing/0 to
+                  avoid an empty-tooltip artifact. */}
+              <span
+                className="text-[11px] text-text-muted tabular-nums shrink-0"
+                title={
+                  s.startedAt > 0
+                    ? new Date(s.startedAt).toLocaleString()
+                    : undefined
+                }
+              >
                 {timeAgo(s.startedAt)}
               </span>
               <span

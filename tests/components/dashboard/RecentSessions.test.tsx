@@ -172,4 +172,66 @@ describe("RecentSessions", () => {
     expect(nameSpan).not.toBeNull();
     expect(nameSpan!.getAttribute("title")).toBe("(untitled)");
   });
+
+  // UX: the visible "3h ago" / "Yesterday" string is great for scanning
+  // but useless for forensics ("which session ran at 14:23?"). Surface
+  // the absolute timestamp via a title tooltip on hover so users can
+  // recover the exact time without leaving the dashboard. Mirrors the
+  // truncate+title family (PRs #167, #170, #171, #175, #176, #179).
+  it("relative-time span exposes the absolute timestamp via title tooltip", () => {
+    const ts = new Date("2026-05-09T14:23:00").getTime();
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s",
+            displayName: "Whatever",
+            messageCount: 1,
+            startedAt: ts,
+          },
+        ]}
+      />,
+    );
+    const row = screen.getByTestId("recent-session-row");
+    // The time span is the only one whose textContent matches a timeAgo()
+    // shape ("…ago", "Yesterday", a date) AND is NOT the message count.
+    const spans = Array.from(row.querySelectorAll("span")) as HTMLElement[];
+    const timeSpan = spans.find(
+      (s) =>
+        s.getAttribute("data-testid") !== "recent-session-msg-count" &&
+        s.className.includes("tabular-nums"),
+    );
+    expect(timeSpan).toBeDefined();
+    // The exact locale string varies by environment; assert it equals the
+    // platform's own formatting of the same epoch — this guarantees the
+    // tooltip is the absolute time rather than a copy of the relative.
+    expect(timeSpan!.getAttribute("title")).toBe(new Date(ts).toLocaleString());
+  });
+
+  // Defensive: when startedAt is 0 / missing (RCA Bug 1 territory), the
+  // tooltip must be omitted rather than render an empty string (which
+  // some browsers display as a 1-px tooltip box). undefined → no attr.
+  it("relative-time span omits title when startedAt is 0", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s",
+            displayName: "Whatever",
+            messageCount: 1,
+            startedAt: 0,
+          },
+        ]}
+      />,
+    );
+    const row = screen.getByTestId("recent-session-row");
+    const spans = Array.from(row.querySelectorAll("span")) as HTMLElement[];
+    const timeSpan = spans.find(
+      (s) =>
+        s.getAttribute("data-testid") !== "recent-session-msg-count" &&
+        s.className.includes("tabular-nums"),
+    );
+    expect(timeSpan).toBeDefined();
+    expect(timeSpan!.hasAttribute("title")).toBe(false);
+  });
 });
