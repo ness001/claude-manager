@@ -133,7 +133,20 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           <div className="text-[11px] text-status-red">
             Files missing at install path. Reinstall or remove this plugin.
           </div>
-          <div className="flex gap-2">
+          {/* WAI-ARIA Toolbar pattern: the Reinstall + Remove pair is a
+            * related control group operating on the same broken plugin.
+            * Without role="toolbar" + a plugin-scoped accessible name, SR
+            * users navigating a list of broken plugins hear identical
+            * "Reinstall, button … Remove, button" pairs with no way to
+            * tell which plugin each belongs to. Embedding plugin.name in
+            * the toolbar label gives unique landmark names per card.
+            * Mirrors PR #246 (SessionInfoBar) and PR #248 (McpServerCard). */}
+          <div
+            role="toolbar"
+            aria-label={`Recovery actions for ${plugin.name}`}
+            data-testid="plugin-broken-actions-toolbar"
+            className="flex gap-2"
+          >
             {/* TODO(ui-defect-sweep#L293): wire Reinstall to a `claude plugins
               * install <name>` IPC. Tracked in
               * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md (the
