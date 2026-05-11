@@ -118,6 +118,30 @@ describe("PluginCard", () => {
     expect(btn.title.toLowerCase()).toContain("not yet wired");
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): the disabled stub buttons previously
+  // exposed the "not yet wired" hint only via the visual `title` tooltip.
+  // Screen-reader users heard just "Reinstall, button, dimmed" / "Remove,
+  // button, dimmed" and had no way to discover the CLI workaround. Mirror
+  // the title text into aria-label so SR users get the same hint, and add
+  // aria-disabled="true" for parity with the codebase's other disabled
+  // stubs (PR #181 QuickActions, PR #183 SessionListPanel new-session,
+  // PR #184 SessionInfoBar actions, PluginListView Install Plugin stub).
+  it("Reinstall + Remove disabled stubs expose the CLI hint via aria-label (WCAG 4.1.2)", () => {
+    render(
+      <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
+    );
+    const reinstall = screen.getByTestId("reinstall-btn");
+    expect(reinstall.getAttribute("aria-disabled")).toBe("true");
+    expect(reinstall.getAttribute("aria-label")?.toLowerCase()).toContain(
+      "not yet wired",
+    );
+    const remove = screen.getByTestId("remove-btn");
+    expect(remove.getAttribute("aria-disabled")).toBe("true");
+    expect(remove.getAttribute("aria-label")?.toLowerCase()).toContain(
+      "not yet wired",
+    );
+  });
+
   // Same treatment for Remove — no `claude plugin uninstall` IPC yet.
   it("Remove button is disabled with an explanatory title (no IPC backing yet)", () => {
     render(
