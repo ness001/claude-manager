@@ -42,4 +42,21 @@ describe("PluginHooksTab", () => {
     render(<PluginHooksTab hooks={[]} />);
     expect(screen.getByTestId("hooks-empty")).toBeInTheDocument();
   });
+
+  it("renders each hook as a <dl> term/description pair (WCAG 1.3.1)", () => {
+    render(
+      <PluginHooksTab
+        hooks={[{ event: "SessionStart", command: "echo hi" }]}
+      />,
+    );
+    const row = screen.getByTestId("hook-row");
+    const dl = row.querySelector("dl");
+    expect(dl).not.toBeNull();
+    const dt = row.querySelector("dt");
+    const dd = row.querySelector("dd");
+    expect(dt?.textContent).toBe("SessionStart");
+    expect(dd?.textContent).toBe("echo hi");
+    // The command stays inside <code> for monospace semantics.
+    expect(dd?.querySelector("code")?.textContent).toBe("echo hi");
+  });
 });
