@@ -435,4 +435,22 @@ describe("SessionInfoBar", () => {
     const byRole = screen.getByRole("toolbar", { name: "Session actions" });
     expect(byRole).toBe(tb);
   });
+
+  // a11y: WCAG 4.1.2 (Name, Role, Value) — the state-pill's visible label
+  // ("ALIVE" / "ENDED" / "ORPHANED") is an opaque token without a "Session
+  // state:" prefix. Mirrors the model-badge / message-count-badge /
+  // entrypoint-badge labelling pattern (PRs #247/#250/#252).
+  it("state-pill exposes 'Session state: <label>' to assistive tech", () => {
+    render(<SessionInfoBar session={makeSession({ state: "alive" })} />);
+    expect(
+      screen.getByTestId("state-pill").getAttribute("aria-label"),
+    ).toBe("Session state: Alive");
+  });
+
+  it("state-pill aria-label tracks state changes (ended)", () => {
+    render(<SessionInfoBar session={makeSession({ state: "ended" })} />);
+    expect(
+      screen.getByTestId("state-pill").getAttribute("aria-label"),
+    ).toBe("Session state: Ended");
+  });
 });
