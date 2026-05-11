@@ -243,4 +243,23 @@ describe("McpPanel", () => {
     expect(evt).toBe(true); // default NOT prevented
     expect(input.value).toBe("");
   });
+
+  // Defect: store sets `error` on `claude mcp list` / `check_mcp_status`
+  // IPC failures (missing `claude` binary, sandbox denial, malformed output)
+  // but the UI never rendered it — the user clicked Refresh Status and got
+  // zero feedback. Mirrors PR #168 (PluginDetailView), PR #172 (SkillsListView
+  // Create Skill silent failure).
+  it("renders the store's error as an inline alert when set", () => {
+    useMcpStore.setState({ error: "claude binary not found in PATH" });
+    render(<McpPanel />);
+    const alert = screen.getByTestId("mcp-refresh-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toContain("claude binary not found in PATH");
+  });
+
+  it("does not render the error alert when error is null", () => {
+    useMcpStore.setState({ error: null });
+    render(<McpPanel />);
+    expect(screen.queryByTestId("mcp-refresh-error")).toBeNull();
+  });
 });
