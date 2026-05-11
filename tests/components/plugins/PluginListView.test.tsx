@@ -86,6 +86,18 @@ describe("PluginListView", () => {
     expect(empty.textContent).toContain("claude plugins install");
   });
 
+  // a11y: when the loading skeleton resolves to a zero-plugin result,
+  // the empty-state replaces the skeleton without focus change. Without
+  // role="status" + aria-live="polite", SR users get NO feedback that
+  // the load completed AND yielded nothing. Mirrors PRs
+  // #154/#155/#207/#212/#213/#214.
+  it("empty state is a polite live region (a11y: load→empty announce)", () => {
+    render(<PluginListView />);
+    const empty = screen.getByTestId("empty-state");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
+
   it("header stats reflect store contents", () => {
     usePluginStore.setState({
       plugins: [
