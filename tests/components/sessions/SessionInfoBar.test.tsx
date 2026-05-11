@@ -335,4 +335,55 @@ describe("SessionInfoBar", () => {
     expect(input.className).not.toMatch(/(^|\s)outline-none(\s|$)/);
     expect(input.className).not.toMatch(/(^|\s)focus:ring-1(\s|$)/);
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): the action buttons that aren't yet
+  // wired (everything except open-cwd / open-vscode) carry a `title="Coming
+  // soon"` tooltip for sighted users, and the dead-CWD case carries a
+  // `title="Directory not found"` tooltip — but the buttons' accessible
+  // name was just the visible label ("Resume", "Fork", …). A screen-reader
+  // user navigating by buttons hears "<action>, button, dimmed" with no
+  // hint why. Mirror the visual tooltip into aria-label so SR and sighted
+  // users get the same affordance.
+  it("unwired actions announce (coming soon) status to AT", () => {
+    existsMock.mockResolvedValue(true);
+    render(<SessionInfoBar session={makeSession({ state: "ended" })} />);
+    // Resume/Fork/View Conversation/Tag-Rename/Archive are unwired in this
+    // state row; pick one we know is in the row regardless of CWD checks.
+    const fork = screen.getByTestId("action-fork");
+    expect(fork.getAttribute("aria-label")).toBe("Fork (coming soon)");
+    expect(fork).toBeDisabled();
+  });
+
+  it("dead-CWD actions announce (directory not found) status to AT", async () => {
+    existsMock.mockResolvedValue(false);
+    render(
+      <SessionInfoBar
+        session={makeSession({ state: "ended", cwd: "/missing/path" })}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("dead-cwd-warning")).toBeInTheDocument();
+    });
+    const cwdBtn = screen.getByTestId("action-open-cwd");
+    expect(cwdBtn.getAttribute("aria-label")).toBe(
+      "Open CWD (directory not found)",
+    );
+    const codeBtn = screen.getByTestId("action-open-vscode");
+    expect(codeBtn.getAttribute("aria-label")).toBe(
+      "Open in VS Code (directory not found)",
+    );
+  });
+
+  it("wired actions do NOT add a redundant aria-label", async () => {
+    existsMock.mockResolvedValue(true);
+    render(<SessionInfoBar session={makeSession({ state: "ended" })} />);
+    await waitFor(() => {
+      expect(screen.getByTestId("action-open-cwd")).not.toBeDisabled();
+    });
+    // The visible "Open CWD" text already serves as the accessible name;
+    // adding aria-label="Open CWD" would be redundant noise.
+    expect(screen.getByTestId("action-open-cwd").hasAttribute("aria-label")).toBe(
+      false,
+    );
+  });
 });
