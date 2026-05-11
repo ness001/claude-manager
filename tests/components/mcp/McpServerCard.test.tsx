@@ -555,4 +555,21 @@ describe("McpServerCard", () => {
       screen.getByTestId("status-pill").hasAttribute("aria-label"),
     ).toBe(false);
   });
+
+  // WAI-ARIA Toolbar pattern: the row of action buttons is a related
+  // control group operating on the same MCP server. Without role="toolbar"
+  // + a name embedding the server name, SR users hear them as a flat
+  // sequence of unrelated buttons. Mirrors PR #246 (SessionInfoBar).
+  it("action row is a named toolbar landmark scoped to the server name", () => {
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
+    );
+    const tb = screen.getByTestId("mcp-actions-toolbar");
+    expect(tb.getAttribute("role")).toBe("toolbar");
+    expect(tb.getAttribute("aria-label")).toBe(`Actions for ${FIX_CONNECTED.name}`);
+    const byRole = screen.getByRole("toolbar", {
+      name: `Actions for ${FIX_CONNECTED.name}`,
+    });
+    expect(byRole).toBe(tb);
+  });
 });
