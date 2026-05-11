@@ -128,6 +128,28 @@ describe("RecentSessions", () => {
     expect(cell.textContent).toBe(expected);
   });
 
+  // WCAG 4.1.2 — bare "5 msgs" is opaque to SR users; mirror the visual
+  // "messages" cue into the accessible name. Same pattern as SessionCard
+  // (PR #250), SessionInfoBar message-count-badge, and AssistantMessage
+  // model-badge (PR #247).
+  it("recent-session-msg-count announces 'Messages: <n>' to assistive tech", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s",
+            displayName: "n",
+            messageCount: 17,
+            startedAt: Date.now(),
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByTestId("recent-session-msg-count").getAttribute("aria-label"),
+    ).toBe("Messages: 17");
+  });
+
   // Defect: row name has `truncate`, so long session names get clipped with
   // an ellipsis. Rows are non-interactive (see test above), so a sighted user
   // has NO way to recover the hidden tail — they'd have to switch to the
