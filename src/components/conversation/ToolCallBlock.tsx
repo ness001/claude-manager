@@ -39,7 +39,16 @@ export function ToolCallBlock({
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-1 rounded text-left text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         aria-expanded={open}
-        aria-controls={bodyId}
+        // Only emit aria-controls when the controlled element actually
+        // exists in the DOM. The body region is conditionally rendered
+        // (`{open && <div id={bodyId}>…}`), so when collapsed (the
+        // default state), aria-controls would point at a missing id —
+        // a broken IDREF. Per WAI-ARIA: id references in aria-controls
+        // must resolve to an element in the document; some screen
+        // readers (NVDA, VoiceOver) report "invalid reference" or
+        // simply ignore the relationship when the target is absent.
+        // Emit the attribute only when the body is rendered.
+        aria-controls={open ? bodyId : undefined}
       >
         <ChevronRight
           size={14}

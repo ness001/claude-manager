@@ -292,11 +292,39 @@ describe("ToolCallBlock", () => {
       />,
     );
     const toggle = screen.getByTestId("tool-call-toggle");
+    fireEvent.click(toggle);
     const controls = toggle.getAttribute("aria-controls");
     expect(controls).toBeTruthy();
-    fireEvent.click(toggle);
     const body = screen.getByTestId("tool-call-body");
     expect(body.id).toBe(controls);
+  });
+
+  // Regression: when collapsed (the default), the body region is NOT in the
+  // DOM (`{open && <div id={bodyId}>…}`). Previously aria-controls was
+  // emitted unconditionally, so it referenced a non-existent id — a broken
+  // IDREF that some AT (NVDA, VoiceOver) flag as an invalid reference.
+  // Per WAI-ARIA, aria-controls' targets must resolve to elements in the
+  // document. Drop the attribute when collapsed; restore it on expand.
+  it("toggle button omits aria-controls while collapsed (no broken IDREF)", () => {
+    render(
+      <ToolCallBlock
+        toolName="Bash"
+        toolInput={{ cmd: "ls" }}
+        toolOutput="ok"
+      />,
+    );
+    const toggle = screen.getByTestId("tool-call-toggle");
+    // Default state is collapsed.
+    expect(screen.queryByTestId("tool-call-body")).toBeNull();
+    expect(toggle.hasAttribute("aria-controls")).toBe(false);
+    // Expand → aria-controls reappears and resolves.
+    fireEvent.click(toggle);
+    const controls = toggle.getAttribute("aria-controls");
+    expect(controls).toBeTruthy();
+    expect(document.getElementById(controls!)).not.toBeNull();
+    // Re-collapse → aria-controls drops again.
+    fireEvent.click(toggle);
+    expect(toggle.hasAttribute("aria-controls")).toBe(false);
   });
 
   it("two ToolCallBlocks on the same page have distinct aria-controls ids", () => {
@@ -308,6 +336,10 @@ describe("ToolCallBlock", () => {
     );
     const toggles = screen.getAllByTestId("tool-call-toggle");
     expect(toggles).toHaveLength(2);
+    // Expand both so aria-controls is emitted (collapsed-state omits it
+    // to avoid a broken IDREF — see the regression test above).
+    fireEvent.click(toggles[0]);
+    fireEvent.click(toggles[1]);
     const a = toggles[0].getAttribute("aria-controls");
     const b = toggles[1].getAttribute("aria-controls");
     expect(a).toBeTruthy();
