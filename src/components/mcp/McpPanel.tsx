@@ -128,14 +128,30 @@ export function McpPanel() {
       </header>
 
       {isLoading && servers.length === 0 ? (
-        <div data-testid="loading-skeleton" className="flex flex-col gap-4">
+        // WCAG 4.1.3 (Status Messages) + 1.1.1 (Non-text Content): the
+        // animated pulsing rectangles convey "loading in progress" purely
+        // visually — screen readers see only empty <div>s. Without
+        // aria-busy + a polite status announcement, SR users hear the page
+        // header, then nothing, then content suddenly appears with no
+        // signal that loading was happening. aria-busy="true" tells AT
+        // "this region is being updated, ignore intermediate state"; the
+        // visually-hidden role="status" line provides the equivalent of
+        // the visual skeleton ("Loading MCP servers…").
+        <div
+          data-testid="loading-skeleton"
+          aria-busy="true"
+          className="flex flex-col gap-4"
+        >
+          <span role="status" aria-live="polite" className="sr-only">
+            Loading MCP servers…
+          </span>
           {SCOPE_ORDER.map((scope) => (
             <div key={scope} className="flex flex-col gap-2">
               <h2 className="text-sm font-semibold text-text-secondary">
                 {SCOPE_HEADERS[scope]}
               </h2>
-              <div className="h-16 animate-pulse rounded-md bg-bg-tertiary" />
-              <div className="h-16 animate-pulse rounded-md bg-bg-tertiary" />
+              <div aria-hidden="true" className="h-16 animate-pulse rounded-md bg-bg-tertiary" />
+              <div aria-hidden="true" className="h-16 animate-pulse rounded-md bg-bg-tertiary" />
             </div>
           ))}
         </div>
