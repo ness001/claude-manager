@@ -32,6 +32,12 @@ export function McpPanel() {
   const startEditing = useMcpStore((s) => s.startEditing);
   const removeServer = useMcpStore((s) => s.removeServer);
   const refreshStatus = useMcpStore((s) => s.refreshStatus);
+  // Store sets `error` on `claude mcp list` / `check_mcp_status` IPC failure
+  // but the UI was never rendering it — clicks on Refresh Status that hit a
+  // missing `claude` binary, sandbox denial, or network probe failure showed
+  // nothing visible. Mirrors PR #168 (PluginDetailView), PR #172 (SkillsListView
+  // Create Skill), and the SkillCard skill-open-error pattern.
+  const error = useMcpStore((s) => s.error);
 
   const filtered = useMemo(
     () => filterMcpServers(servers, searchQuery),
@@ -110,6 +116,15 @@ export function McpPanel() {
             className="w-full rounded-md border border-border bg-bg-tertiary py-1.5 pl-7 pr-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           />
         </div>
+        {error !== null && (
+          <p
+            data-testid="mcp-refresh-error"
+            role="alert"
+            className="text-xs text-status-red"
+          >
+            Couldn't refresh MCP status: {error}
+          </p>
+        )}
       </header>
 
       {isLoading && servers.length === 0 ? (
