@@ -279,4 +279,19 @@ describe("SessionCard", () => {
     );
     expect(screen.getByTestId("time-ago").textContent).toBe("—");
   });
+
+  // WCAG 4.1.2 — bare "5 msgs" is opaque to SR users; mirror the visual
+  // "messages" cue into the accessible name. Same pattern as
+  // SessionInfoBar's message-count-badge.
+  it("message-count announces 'Messages: <n>' to assistive tech", () => {
+    render(
+      <SessionCard
+        session={makeSession({ messageCount: 47 })}
+        selected={false}
+      />,
+    );
+    expect(
+      screen.getByTestId("message-count").getAttribute("aria-label"),
+    ).toBe("Messages: 47");
+  });
 });
