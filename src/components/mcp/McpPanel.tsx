@@ -158,6 +158,15 @@ export function McpPanel() {
       ) : servers.length === 0 ? (
         <div
           data-testid="empty-state"
+          // Live region: when the panel transitions from loading→empty (or
+          // a delete drops the last server), screen-reader users get NO
+          // feedback that the list is now empty without role="status" +
+          // aria-live="polite". The sibling `no-matches` branch below
+          // already has it; this is the missed twin. Mirrors PR #214
+          // (PluginSkills/Hooks/Agents tabs) and PR #218 (PluginListView
+          // empty-state).
+          role="status"
+          aria-live="polite"
           className="flex flex-1 flex-col items-center justify-center gap-3 text-center text-sm text-text-muted"
         >
           No MCP servers configured. Add one to extend Claude's capabilities.
