@@ -588,6 +588,39 @@ describe("McpServerForm", () => {
     expect(document.activeElement).toBe(nameInput);
   });
 
+  // WCAG 2.4.3 Focus Order + WAI-ARIA APG modal-dialog pattern: closing the
+  // modal must return focus to the element that opened it. Without this,
+  // keyboard/SR users were dumped at <body> on close — they'd Tab from page
+  // start to relocate the trigger. Mirrors the open-side fix already shipped
+  // (auto-focus the Name input on mount).
+  it("restores focus to the previously-focused element when the modal unmounts (WCAG 2.4.3)", () => {
+    // Simulate the trigger button outside the dialog (e.g. "Add Server" in
+    // McpPanel header). It must exist in the DOM and be focused at the time
+    // McpServerForm mounts.
+    const trigger = document.createElement("button");
+    trigger.textContent = "Add Server";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    const { unmount } = render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    // Open-side: focus moved into the dialog.
+    expect(document.activeElement).not.toBe(trigger);
+
+    unmount();
+    // Close-side: focus returned to the trigger.
+    expect(document.activeElement).toBe(trigger);
+
+    document.body.removeChild(trigger);
+  });
+
   // WCAG 2.4.6 (Headings and Labels) — both Headers and Env KeyValueEditor
   // instances render a button with the bare visible text "+ Add". A screen
   // reader user navigating the form by buttons hears "+ Add, button" twice

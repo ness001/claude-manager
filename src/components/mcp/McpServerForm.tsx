@@ -72,9 +72,25 @@ export function McpServerForm({
   // into it (otherwise focus stays on the trigger button outside the
   // dialog, and keyboard/SR users have to manually click into it before
   // typing). Name is the first required field — a sensible default.
+  //
+  // The unmount cleanup completes the round-trip: WAI-ARIA APG modal pattern
+  // requires that closing the dialog returns focus to the element that opened
+  // it (WCAG 2.4.3 Focus Order). Without this, keyboard / SR users were
+  // dumped at <body> when the modal closed — they'd Tab from the start of the
+  // page to find the trigger again. Capture the previously-focused element
+  // on mount, restore it on unmount.
   const nameRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     nameRef.current?.focus();
+    return () => {
+      // Guard: the trigger may have been removed from the DOM while the
+      // modal was open (e.g., scope changed). `focus()` on a detached node
+      // is a no-op in browsers but throws in jsdom — check connectedness.
+      if (previouslyFocused && previouslyFocused.isConnected) {
+        previouslyFocused.focus();
+      }
+    };
   }, []);
 
   const nameError = useMemo(() => {
