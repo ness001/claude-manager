@@ -95,6 +95,28 @@ describe("SidebarRail", () => {
     }
   });
 
+  // WAI-ARIA `aria-keyshortcuts`: the shortcut info is currently only on the
+  // visible `title` tooltip, which is sighted-hover-only. SR users (NVDA /
+  // JAWS / VoiceOver) need the shortcut announced on focus through the
+  // dedicated `aria-keyshortcuts` attribute, not by polluting the
+  // accessible name.
+  it("each nav button exposes its shortcut via aria-keyshortcuts", () => {
+    render(<SidebarRail />);
+    const pairs: Array<[string, string]> = [
+      ["Dashboard", "Ctrl+1"],
+      ["Sessions", "Ctrl+2"],
+      ["Plugins", "Ctrl+3"],
+      ["Skills", "Ctrl+4"],
+      ["MCP Servers", "Ctrl+5"],
+      ["Settings", "Ctrl+6"],
+    ];
+    for (const [label, shortcut] of pairs) {
+      expect(
+        screen.getByRole("button", { name: label }),
+      ).toHaveAttribute("aria-keyshortcuts", shortcut);
+    }
+  });
+
   it("buttons have a focus-visible ring class for keyboard navigation", () => {
     render(<SidebarRail />);
     const btn = screen.getByRole("button", { name: "Dashboard" });
