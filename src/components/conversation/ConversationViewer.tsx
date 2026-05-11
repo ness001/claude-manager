@@ -358,7 +358,14 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
         // scroll prior turns into view.
         tabIndex={0}
         aria-label="Conversation"
-        className="flex-1 overflow-auto px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        // `pb-14` reserves bottom padding equal to the floating `turn-nav`
+        // widget's height + offset (≈28px tall + 8px bottom-2 = 36px) so
+        // scrolling to the end of the conversation never leaves the last
+        // assistant/user/tool message obscured by the absolutely-positioned
+        // overlay below. Without this, when totalTurns>0 the bottom 36-40px
+        // of content are visually clipped by the turn-nav badge — invisible
+        // to sighted users and unreachable even after scrolling fully down.
+        className={`flex-1 overflow-auto px-3 py-2 ${totalTurns > 0 ? "pb-14" : ""} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent`}
       >
         <div
           style={{
