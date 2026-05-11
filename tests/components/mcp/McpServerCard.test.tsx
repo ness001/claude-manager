@@ -24,6 +24,7 @@ import {
   FIX_ERROR,
   FIX_STARTING,
   FIX_SHADOWED_USER,
+  FIX_HTTP,
 } from "../../fixtures/mcp-ui/servers";
 
 beforeEach(() => {
@@ -583,5 +584,47 @@ describe("McpServerCard", () => {
       name: `Actions for ${FIX_CONNECTED.name}`,
     });
     expect(byRole).toBe(tb);
+  });
+
+  // Functional bug: project-scoped MCP servers come from <root>/.mcp.json
+  // (per spec §17.10 the Edit dialog only renders User/Local radios).
+  // The previous Edit click forwarded the full project-scoped server to
+  // McpServerForm, which silently coerced scope → "user" on save — a
+  // data-loss path. Disable Edit for project-scoped servers and direct
+  // the user to the .mcp.json file via the title tooltip.
+  it("disables the Edit action for project-scoped servers and explains why", () => {
+    render(
+      <McpServerCard server={FIX_HTTP} onEdit={noop} onRemove={noop} />,
+    );
+    const btn = screen.getByTestId("action-edit") as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute("aria-disabled")).toBe("true");
+    const title = btn.getAttribute("title") ?? "";
+    expect(title).toMatch(/\.mcp\.json/);
+    // Title is mirrored into aria-label by ActionButton (see component
+    // line 417 comment) so SR users hear the same hint as sighted hover.
+    expect(btn.getAttribute("aria-label")).toMatch(/\.mcp\.json/);
+  });
+
+  it("clicking the disabled Edit on a project-scoped server does NOT fire onEdit", () => {
+    const onEdit = vi.fn();
+    render(
+      <McpServerCard server={FIX_HTTP} onEdit={onEdit} onRemove={noop} />,
+    );
+    fireEvent.click(screen.getByTestId("action-edit"));
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  // Belt-and-suspenders: user/local-scoped Edit must still work — the
+  // project-only disable must not regress the common path.
+  it("user-scoped Edit remains enabled and calls onEdit with the server", () => {
+    const onEdit = vi.fn();
+    render(
+      <McpServerCard server={FIX_CONNECTED} onEdit={onEdit} onRemove={noop} />,
+    );
+    const btn = screen.getByTestId("action-edit") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    fireEvent.click(btn);
+    expect(onEdit).toHaveBeenCalledWith(FIX_CONNECTED);
   });
 });
