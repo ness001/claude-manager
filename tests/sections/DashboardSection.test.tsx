@@ -6,7 +6,7 @@
 //   - global `fetch`                → SystemHealth's HEAD probe (non-blocking)
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 
 const dbSelectMock = vi.fn();
 const readStatsCacheMock = vi.fn();
@@ -123,6 +123,29 @@ describe("DashboardSection", () => {
       .getAllByTestId("stat-card")
       .map((el) => el.getAttribute("data-accent"));
     expect(accents).toEqual(["green", "blue", "yellow", "mauve"]);
+  });
+
+  // WCAG 1.3.1 (Info and Relationships): the four stat cards form a
+  // coherent group of "key statistics" but were emitted as flat sibling
+  // <div>s in a non-semantic <div className="grid">. Promote to
+  // <ul aria-label="Key statistics"> + <li> so the SR rotor surfaces
+  // "list, 4 items, Key statistics". Mirrors PRs #235/#236/#237/#238/#239.
+  it("row 1 wraps stat cards in <ul aria-label='Key statistics'> with <li> per card", async () => {
+    render(<DashboardSection />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const list = screen.getByTestId("dashboard-row-1");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe("Key statistics");
+    const byRole = screen.getByRole("list", { name: "Key statistics" });
+    expect(byRole).toBe(list);
+    const items = within(list).getAllByRole("listitem");
+    expect(items).toHaveLength(4);
+    items.forEach((li) => {
+      expect(li.querySelector("[data-testid='stat-card']")).not.toBeNull();
+    });
   });
 
   it("hides the load-error banner on a healthy load", async () => {
