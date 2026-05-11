@@ -19,7 +19,7 @@
 // component only renders the right buttons in the right state and calls
 // already-known callbacks. That keeps T2.10 a presentational task.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { exists } from "@tauri-apps/plugin-fs";
 import { open as openShell } from "@tauri-apps/plugin-shell";
@@ -105,6 +105,11 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
   const [name, setName] = useState(
     session.displayName ?? session.firstPrompt ?? "",
   );
+  // Set by the Esc handler to suppress the immediately-following onBlur
+  // commit (the Esc handler calls blur() to drop focus, which fires
+  // onBlur synchronously before the setName(canonical) state update from
+  // the Esc handler is applied). See commitName() below.
+  const skipNextBlurCommitRef = useRef(false);
   useEffect(() => {
     setName(session.displayName ?? session.firstPrompt ?? "");
   }, [session.sessionId, session.displayName, session.firstPrompt]);
@@ -134,6 +139,14 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
   }, [session.cwd]);
 
   function commitName() {
+    if (skipNextBlurCommitRef.current) {
+      // Esc-to-revert just ran and called blur() to drop focus — that
+      // browser blur synchronously fires onBlur=commitName, which would
+      // read the stale `name` (React batches the setName(canonical) from
+      // the Esc handler) and re-commit the draft. Skip this commit.
+      skipNextBlurCommitRef.current = false;
+      return;
+    }
     const trimmed = name.trim();
     if (trimmed && trimmed !== session.displayName) {
       setSessionDisplayName(session.sessionId, trimmed);
@@ -194,6 +207,18 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               commitName();
+              (e.target as HTMLInputElement).blur();
+            } else if (e.key === "Escape") {
+              // Esc-to-revert: standard inline-edit pattern (mirrors the
+              // TurnInput in ConversationViewer.tsx line 519, the McpPanel
+              // search Esc handler, and the PluginListView search Esc
+              // handler). Without it, a user mid-edit who wants to cancel
+              // has no easy way out — clicking elsewhere fires onBlur which
+              // commits whatever draft is in the field. Restore the canonical
+              // store value and blur to drop focus from the input.
+              e.preventDefault();
+              setName(session.displayName ?? session.firstPrompt ?? "");
+              skipNextBlurCommitRef.current = true;
               (e.target as HTMLInputElement).blur();
             }
           }}
