@@ -202,22 +202,41 @@ export function McpPanel() {
             grouped[scope].length === 0 ? null : (
               <div key={scope} className="flex flex-col gap-2">
                 <h2
+                  id={`scope-header-${scope}`}
                   data-testid={`scope-header-${scope}`}
                   className="text-sm font-semibold text-text-secondary"
                 >
                   {SCOPE_HEADERS[scope]}
                 </h2>
-                {grouped[scope].map((s) => (
-                  <McpServerCard
-                    key={`${s.scope}:${s.name}`}
-                    server={s}
-                    highlightQuery={searchQuery}
-                    onEdit={startEditing}
-                    onRemove={(srv) => {
-                      void removeServer(srv.scope, srv.name);
-                    }}
-                  />
-                ))}
+                {/* WCAG 1.3.1 (Info and Relationships): the scope's
+                    cards form a list of N servers but were previously
+                    emitted as flat sibling <div>s alongside the <h2> —
+                    SR users navigating by lists (NVDA "L", JAWS "L",
+                    VoiceOver rotor → Lists) heard nothing for this
+                    collection and the count was lost. Promote each
+                    scope group to a <ul aria-labelledby={scope-header}>
+                    so the rotor surfaces "list, N items" with the
+                    scope header as the list's accessible name. Mirrors
+                    PR #235 (SkillsListView), PR #236 (PluginListView),
+                    and SystemHealth indicator list (#230). */}
+                <ul
+                  data-testid={`scope-list-${scope}`}
+                  aria-labelledby={`scope-header-${scope}`}
+                  className="flex flex-col gap-2"
+                >
+                  {grouped[scope].map((s) => (
+                    <li key={`${s.scope}:${s.name}`}>
+                      <McpServerCard
+                        server={s}
+                        highlightQuery={searchQuery}
+                        onEdit={startEditing}
+                        onRemove={(srv) => {
+                          void removeServer(srv.scope, srv.name);
+                        }}
+                      />
+                    </li>
+                  ))}
+                </ul>
               </div>
             ),
           )}
