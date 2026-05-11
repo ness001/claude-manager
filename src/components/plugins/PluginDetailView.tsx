@@ -125,7 +125,20 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
               {plugin.marketplace} · v{plugin.version} · {plugin.state}
             </div>
           </div>
-          <div className="flex gap-2">
+          {/* WAI-ARIA Toolbar pattern: Open in File Browser + Open in VS
+              Code form a related action group scoped to this plugin.
+              `role="toolbar"` + `aria-label` lets SR users land on the
+              group as a single landmark and arrow-key through the actions
+              instead of tabbing one button at a time. The label is scoped
+              by plugin name so multiple detail views can be navigated
+              unambiguously via the SR rotor. Mirrors PR #246 (SessionInfoBar),
+              #248 (McpServerCard), #249 (PluginCard), #253 (SkillCard). */}
+          <div
+            role="toolbar"
+            aria-label={`Actions for ${plugin.name}`}
+            data-testid="plugin-detail-actions-toolbar"
+            className="flex gap-2"
+          >
             <button
               type="button"
               data-testid="open-folder-btn"

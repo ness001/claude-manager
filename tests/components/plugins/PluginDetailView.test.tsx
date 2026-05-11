@@ -59,15 +59,17 @@ describe("PluginDetailView", () => {
     }
   });
 
-  // a11y: WAI-ARIA Tabs Pattern — the tablist needs an aria-label to
-  // disambiguate it from the other tablists in the app (Plugins / Skills
-  // / MCP / Settings each have their own). Mirrors the labeled-collection
-  // sweep (#235/#236/#237/#238/#239/#240/#254/#255/#257).
-  it("tablist carries an aria-label scoped to the plugin name", () => {
+  // a11y: WAI-ARIA Toolbar pattern — Open in File Browser + Open in VS
+  // Code form a related action group scoped to this plugin. Mirrors PRs
+  // #246/#248/#249/#253.
+  it("action row is a named toolbar landmark scoped to plugin name", () => {
     render(<PluginDetailView plugin={makeDetail({ name: "alpha" })} />);
-    const tablist = screen.getByTestId("tab-bar");
-    expect(tablist.getAttribute("role")).toBe("tablist");
-    expect(tablist.getAttribute("aria-label")).toBe("alpha sections");
+    const toolbar = screen.getByTestId("plugin-detail-actions-toolbar");
+    expect(toolbar.getAttribute("role")).toBe("toolbar");
+    expect(toolbar.getAttribute("aria-label")).toBe("Actions for alpha");
+    // The two action buttons live inside the toolbar.
+    expect(toolbar.contains(screen.getByTestId("open-folder-btn"))).toBe(true);
+    expect(toolbar.contains(screen.getByTestId("open-vscode-btn"))).toBe(true);
   });
 
   it("default tab is Skills", () => {
