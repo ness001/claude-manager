@@ -113,6 +113,38 @@ describe("PluginListView", () => {
     expect(screen.getByTestId("stat-disabled").textContent).toBe("1 disabled");
   });
 
+  // WCAG 1.3.1 / 4.1.2 — three flat sibling stat spans wrapped in a non-
+  // semantic <div> are invisible to SR list-rotor and each bare span ("5
+  // installed") is opaque without a role prefix. Promote to a labeled <ul>
+  // with per-<li> aria-labels so the rotor surfaces "list, 3 items, Plugin
+  // counts" and each item announces "Installed: 5". Mirrors PR #235
+  // (SkillsListView), PR #236 (plugin grid), PR #230 (SystemHealth).
+  it("plugin counts render as a labeled <ul> with per-stat aria-labels (WCAG 1.3.1)", () => {
+    usePluginStore.setState({
+      plugins: [
+        makePlugin({ name: "p1", state: "active" }),
+        makePlugin({ name: "p2", state: "active" }),
+        makePlugin({ name: "p3", state: "disabled" }),
+      ],
+    });
+    render(<PluginListView />);
+    const list = screen.getByTestId("plugin-stats-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe("Plugin counts");
+
+    const installed = screen.getByTestId("stat-installed");
+    expect(installed.tagName).toBe("LI");
+    expect(installed.getAttribute("aria-label")).toBe("Installed: 3");
+
+    const active = screen.getByTestId("stat-active");
+    expect(active.tagName).toBe("LI");
+    expect(active.getAttribute("aria-label")).toBe("Active: 2");
+
+    const disabled = screen.getByTestId("stat-disabled");
+    expect(disabled.tagName).toBe("LI");
+    expect(disabled.getAttribute("aria-label")).toBe("Disabled: 1");
+  });
+
   it("search filters the grid and shows a no-matches message", () => {
     usePluginStore.setState({
       plugins: [
