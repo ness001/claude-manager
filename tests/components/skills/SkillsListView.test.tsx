@@ -161,6 +161,25 @@ describe("SkillsListView", () => {
     expect(cards[0].dataset.skillName).toBe("beta");
   });
 
+  // WCAG 1.3.1 (Info and Relationships): the SkillCard collection was rendered
+  // as flat siblings inside a bare <div>, so SR list-rotor (NVDA/JAWS "L",
+  // VoiceOver rotor → Lists) saw nothing for the collection and announced
+  // no count. Mirrors PR #236 (PluginListView grid → labeled <ul>).
+  it("skill-grid is a labeled <ul> with each card wrapped in <li> (WCAG 1.3.1)", () => {
+    useSkillStore.setState({
+      skills: [makeSkill({ name: "a" }), makeSkill({ name: "b", dirPath: "/h/.claude/skills/b" })],
+    });
+    render(<SkillsListView />);
+    const grid = screen.getByTestId("skill-grid");
+    expect(grid.tagName).toBe("UL");
+    expect(grid.getAttribute("aria-label")).toBe("Custom skills");
+    const items = grid.querySelectorAll(":scope > li");
+    expect(items).toHaveLength(2);
+    items.forEach((li) => {
+      expect(li.querySelector("[data-testid='skill-card']")).not.toBeNull();
+    });
+  });
+
   it("empty state matches spec §17.6", () => {
     render(<SkillsListView />);
     const empty = screen.getByTestId("empty-state");
