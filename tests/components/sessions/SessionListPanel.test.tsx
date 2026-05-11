@@ -142,6 +142,27 @@ describe("SessionListPanel", () => {
     expect(screen.getByTestId("virtual-scroller")).toBeInTheDocument();
   });
 
+  // WCAG 2.1.1 (Keyboard) + WAI-ARIA APG: a scrollable region must be
+  // keyboard-focusable so keyboard-only users can scroll it. The virtual
+  // scroller activates above 50 sessions; without tabIndex={0} keyboard
+  // users could only move focus card-by-card, not skim. role="region" +
+  // aria-label promotes the focusable scroller to a named landmark.
+  // Mirrors ConversationViewer's same fix.
+  it("virtual scroller is keyboard-focusable + named region (WCAG 2.1.1)", () => {
+    const many: SessionMeta[] = Array.from({ length: 60 }, (_, i) =>
+      makeSession({ sessionId: `s${i}` }),
+    );
+    useSessionStore.setState({ sessions: many, viewMode: "my" });
+    render(<SessionListPanel />);
+    const scroller = screen.getByTestId("virtual-scroller");
+    expect(scroller.getAttribute("tabindex")).toBe("0");
+    expect(scroller.getAttribute("role")).toBe("region");
+    expect(scroller.getAttribute("aria-label")).toBe("Sessions (scrollable)");
+    // Focus ring must be visible on keyboard focus (WCAG 2.4.7).
+    expect(scroller.className).toContain("focus-visible:ring-2");
+    expect(scroller.className).toContain("focus-visible:ring-accent");
+  });
+
   it("under threshold renders without the virtual scroller", () => {
     const few: SessionMeta[] = Array.from({ length: 10 }, (_, i) =>
       makeSession({ sessionId: `s${i}` }),
