@@ -53,7 +53,10 @@ export function SkillCard({ skill }: SkillCardProps) {
           size={14}
           className="shrink-0 text-text-muted"
         />
-        <span className="truncate text-sm font-medium text-text-primary">
+        <span
+          className="truncate text-sm font-medium text-text-primary"
+          title={skill.name}
+        >
           {skill.name}
         </span>
       </div>

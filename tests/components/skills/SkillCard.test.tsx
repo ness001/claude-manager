@@ -80,6 +80,19 @@ describe("SkillCard", () => {
     expect(codeEl.getAttribute("title")).toBe(SKILL.skillMdPath);
   });
 
+  // UX bug: the skill name span has `truncate` but no `title`, so long
+  // skill names get clipped with no recovery — sighted users have no
+  // way to read the hidden tail. Mirror the visible string into `title`
+  // (same family as PR #167 SkillCard path, PR #170 RecentSessions,
+  // PR #171 SystemHealth, PR #175 SessionCard, PluginCard name).
+  it("skill name span mirrors its visible text into the `title` attribute (UX truncation recovery)", () => {
+    const longName = "anthropic-experimental-conversational-memory-with-vector-embeddings-skill";
+    render(<SkillCard skill={{ ...SKILL, name: longName }} />);
+    const span = screen.getByText(longName);
+    expect(span.className).toContain("truncate");
+    expect(span.getAttribute("title")).toBe(longName);
+  });
+
   it("'Open in VS Code' invokes shell open with vscode:// URI", () => {
     render(<SkillCard skill={SKILL} />);
     fireEvent.click(screen.getByTestId("open-vscode-btn"));
