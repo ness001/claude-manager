@@ -71,4 +71,24 @@ describe("QuickActions", () => {
     const heading = screen.getByRole("heading", { name: "Quick Actions", level: 3 });
     expect(heading.tagName).toBe("H3");
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): each button is rendered `disabled` with
+  // a `title="Coming soon"` tooltip for sighted users, but the accessible
+  // name was just the visible label ("New Session" etc.). A screen-reader
+  // user navigating by buttons hears "New Session, button, dimmed" with no
+  // hint that the dimmed state is intentional/temporary — they may assume
+  // the app is broken. Mirror the visual tooltip into aria-label so SR and
+  // sighted users get the same affordance.
+  it("disabled buttons announce their (coming soon) status to assistive tech", () => {
+    render(<QuickActions />);
+    const cases: Array<[string, string]> = [
+      ["action-new-session", "New Session (coming soon)"],
+      ["action-resume-latest", "Resume Latest (coming soon)"],
+      ["action-open-cwd", "Open CWD (coming soon)"],
+      ["action-rebuild-stats", "Rebuild Stats (coming soon)"],
+    ];
+    for (const [id, label] of cases) {
+      expect(screen.getByTestId(id).getAttribute("aria-label")).toBe(label);
+    }
+  });
 });
