@@ -296,6 +296,10 @@ describe("McpServerCard", () => {
       expect(btn, `disabled for status=${fix.status}`).toBeDisabled();
       expect(btn).toHaveAttribute("aria-disabled", "true");
       expect(btn).toHaveAttribute("title", "Coming soon");
+      // WCAG 4.1.2: the "Coming soon" hint must also be exposed via
+      // aria-label so SR users hear it (mirrors PR #181/#183/#184/PluginCard
+      // family). Without this they only hear "View Logs, button, dimmed".
+      expect(btn.getAttribute("aria-label")).toBe("View Logs — Coming soon");
       unmount();
     }
   });
