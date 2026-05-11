@@ -128,7 +128,16 @@ export function ModelDonut({ data }: ModelDonutProps) {
                   style={{ backgroundColor: color }}
                   className="inline-block h-2 w-2 shrink-0 rounded-sm"
                 />
-                <span className="truncate text-text-secondary flex-1">
+                {/* Model strings like "claude-opus-4-5-20251101" routinely
+                    overflow the legend column — `truncate` clips them with
+                    no recovery. Mirror the visible string into `title` so
+                    sighted users can hover to see the full id. Mirrors
+                    the truncate+title family (PRs #167, #170, #171, #175,
+                    #176, #179). */}
+                <span
+                  className="truncate text-text-secondary flex-1"
+                  title={d.model}
+                >
                   {d.model}
                 </span>
                 <span

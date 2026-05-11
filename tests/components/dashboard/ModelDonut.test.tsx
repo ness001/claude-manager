@@ -188,4 +188,20 @@ describe("ModelDonut", () => {
     const empty = screen.getByRole("img", { name: "No model usage data" });
     expect(empty).toBeInTheDocument();
   });
+
+  // UX truncation recovery: model identifiers like
+  // "claude-opus-4-5-20251101" routinely overflow the legend column and
+  // get clipped by `truncate` with no way to recover the hidden tail.
+  // Mirror the visible string into `title` so a hover tooltip shows the
+  // full id. Mirrors the truncate+title family (PRs #167, #170, #171,
+  // #175, #176, #179, #185).
+  it("legend model name span mirrors its visible text into the `title` attribute", () => {
+    const longModel = "claude-opus-4-5-20251101-extended-thinking-preview";
+    render(<ModelDonut data={[{ model: longModel, tokens: 1234 }]} />);
+    const item = screen.getByTestId("donut-legend-item");
+    const nameSpan = item.querySelector("span.truncate") as HTMLElement | null;
+    expect(nameSpan).not.toBeNull();
+    expect(nameSpan!.textContent).toBe(longModel);
+    expect(nameSpan!.getAttribute("title")).toBe(longModel);
+  });
 });
