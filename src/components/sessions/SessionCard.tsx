@@ -24,7 +24,21 @@ interface SessionCardProps {
 const STATUS_COLOR: Record<SessionState, string> = {
   alive: "bg-status-green",
   ended: "bg-text-muted",
-  orphaned: "bg-status-yellow",
+  // WCAG 1.4.11 (Non-text Contrast): the status dot is a 2x2 (8px)
+  // circle. The original `bg-status-yellow` (#eab308) on the white
+  // card-bg in light mode gives only ~1.6:1 contrast — well below the
+  // 3:1 floor for graphical UI components. Sighted users in light mode
+  // saw what was effectively an invisible dot for the only visual cue
+  // distinguishing an orphaned session from an ended one. SR users get
+  // the info via the status dot's own aria-label ("Orphaned"), but the
+  // visible signal is gone. Swap to `bg-status-amber` (#d97706 light /
+  // #fab387 dark) — already this codebase's "warning" semantic color
+  // (PR #293 ActivityChart staleness banner, PR #294 SystemHealth warn
+  // dot, PluginCard update-pill, McpServerCard "starting" pill). On
+  // white that gives ~3.36:1, comfortably above the 3:1 floor; the
+  // dark-theme amber is unchanged in feel because it's already a pale
+  // color on dark surfaces.
+  orphaned: "bg-status-amber",
   archived: "bg-border-strong",
 };
 
