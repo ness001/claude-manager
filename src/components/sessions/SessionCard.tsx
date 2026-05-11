@@ -121,7 +121,16 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
       )}
 
       <div className="flex items-center justify-between text-[11px] text-text-muted pl-4">
-        <span data-testid="time-ago" title={startedAtAbsolute}>{timeLabel}</span>
+        {/* When `startedAt` is missing/unparseable (common for ENDED sessions
+            with no PID file), `timeAgo()` returns "" — leaving the time
+            slot visually empty. To sighted users that reads as a layout
+            glitch ("why is this row missing its left field?"); to SR users
+            it's silence. Render an em-dash placeholder so the slot is
+            visibly populated and AT users hear "dash" rather than skipping
+            an empty span. The tooltip stays omitted (covered by the
+            "omits title when startedAt is empty" test) — there's no
+            absolute timestamp to surface. */}
+        <span data-testid="time-ago" title={startedAtAbsolute}>{timeLabel === "" ? "—" : timeLabel}</span>
         <span data-testid="message-count">
           {session.messageCount} {session.messageCount === 1 ? "msg" : "msgs"}
         </span>
