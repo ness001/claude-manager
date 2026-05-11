@@ -139,6 +139,32 @@ describe("SessionsSection", () => {
     });
   });
 
+  // WCAG 4.1.3 (Status Messages): aria-busy alone tells AT "this region
+  // is updating" but emits no announcement — the user gets a silent UI.
+  // Add a sr-only role="status" + aria-live="polite" sibling so SR users
+  // hear "Loading sessions…" once when the skeleton appears. The skeleton
+  // card placeholders carry aria-hidden so SR users don't traverse empty
+  // pulsing graphics. Mirrors PR #202 (McpPanel skeleton) and PR #203
+  // (PluginListView skeleton).
+  it("loading skeleton announces 'Loading sessions…' via polite live region (WCAG 4.1.3)", async () => {
+    useSessionStore.setState({ isLoading: true, sessions: [] });
+    render(<SessionsSection />);
+    const skel = screen.getByTestId("session-list-skeleton");
+    const status = skel.querySelector('[role="status"]');
+    expect(status).not.toBeNull();
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+    expect(status?.textContent).toBe("Loading sessions…");
+    // Card placeholders are decorative — SR users shouldn't traverse them.
+    const cards = screen.getAllByTestId("session-card-skeleton");
+    for (const c of cards) {
+      expect(c.getAttribute("aria-hidden")).toBe("true");
+    }
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+  });
+
   it("empty state: 'No sessions found' + New Session CTA when sessions=[]", async () => {
     render(<SessionsSection />);
     // Allow loadSessions() promise + state updates to flush.
