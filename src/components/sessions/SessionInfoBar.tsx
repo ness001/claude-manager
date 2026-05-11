@@ -35,7 +35,23 @@ interface SessionInfoBarProps {
 const STATE_PILL: Record<SessionState, { dot: string; label: string }> = {
   alive: { dot: "bg-status-green", label: "Alive" },
   ended: { dot: "bg-text-muted", label: "Ended" },
-  orphaned: { dot: "bg-status-yellow", label: "Orphaned" },
+  // WCAG 1.4.11 (Non-text Contrast): the dot is a 2x2 (8px) circle
+  // sitting on the state pill's `bg-bg-tertiary` (#f1f3f5 light /
+  // #232338 dark) background. The original `bg-status-yellow`
+  // (#eab308) on #f1f3f5 gives only ~1.65:1 contrast — well below
+  // the 3:1 floor for graphical UI components. Sighted users in
+  // light mode saw what was effectively an invisible dot for the
+  // primary visual cue distinguishing "orphaned" from "ended". SR
+  // users get nothing from the dot itself (it's `aria-hidden`) and
+  // rely on the parent pill's "Session state: Orphaned" aria-label,
+  // but the visible signal was gone. Swap to `bg-status-amber`
+  // (#d97706 light → ~3.30:1 on #f1f3f5, comfortably above the 3:1
+  // floor; #fab387 dark, unchanged in feel because it's already a
+  // pale color on dark surfaces). Same convention established by
+  // PRs #293 (ActivityChart staleness banner), #294 (SystemHealth
+  // warn dot), #295 (SessionCard orphaned dot), #296 (PluginCard
+  // orphaned dot) — amber is this codebase's "warning" semantic.
+  orphaned: { dot: "bg-status-amber", label: "Orphaned" },
   archived: { dot: "bg-border-strong", label: "Archived" },
 };
 
