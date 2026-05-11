@@ -277,6 +277,18 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
               : a.id === "open-vscode"
                 ? openInVsCode
                 : undefined;
+          // Sighted users get the disabled hint via the `title` tooltip
+          // (either "Directory not found" for the dead-CWD case or
+          // "Coming soon" for unwired actions). Mirror it into the
+          // accessible name so screen-reader users hear the same hint
+          // instead of just "<action>, button, dimmed" and assuming the
+          // app is broken (WCAG 4.1.2). Mirrors PR #181 (QuickActions)
+          // and PR #183 (SessionListPanel new-session button).
+          const ariaLabel = cwdDead
+            ? `${a.label} (directory not found)`
+            : !wired
+              ? `${a.label} (coming soon)`
+              : undefined;
           const baseCls =
             a.variant === "primary"
               ? "bg-accent text-white"
@@ -290,6 +302,7 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
               data-testid={`action-${a.id}`}
               disabled={!wired}
               aria-disabled={!wired || undefined}
+              aria-label={ariaLabel}
               onClick={wired ? onClick : undefined}
               title={
                 cwdDead
