@@ -26,14 +26,35 @@ export function PluginAgentsTab({ agents }: PluginAgentsTabProps) {
             {a.name}
           </span>
           <span className="text-xs text-text-secondary">{a.description}</span>
-          <div className="flex gap-2 text-[10px] text-text-muted">
-            {a.model && <span data-testid="agent-model">model: {a.model}</span>}
-            {a.tools && a.tools.length > 0 && (
-              <span data-testid="agent-tools">
-                tools: {a.tools.join(", ")}
-              </span>
-            )}
-          </div>
+          {/* WCAG 1.3.1 (Info and Relationships): "model: <value>" and
+              "tools: <value>" are key/value (term/description) pairs. The
+              previous flat <span> rendering hid the relationship from AT —
+              SR users heard "model colon claude-sonnet-4 tools colon Read
+              Edit Bash" as one undifferentiated string. <dl>/<dt>/<dd>
+              exposes the term-description association so screen-readers
+              (NVDA, VoiceOver) can announce them as discrete pairs and
+              navigate them via the rotor. Mirrors PR #199 (PluginHooksTab
+              event/command). The visible "model:" / "tools:" prefixes are
+              kept on the <dt> for sighted-user parity. `m-0` neutralizes
+              the UA-default <dl>/<dd> margins so the visible row layout
+              stays identical. */}
+          {((a.model && a.model.length > 0) ||
+            (a.tools && a.tools.length > 0)) && (
+            <dl className="flex gap-2 text-[10px] text-text-muted m-0">
+              {a.model && (
+                <div data-testid="agent-model" className="flex gap-1">
+                  <dt>model:</dt>
+                  <dd className="m-0">{a.model}</dd>
+                </div>
+              )}
+              {a.tools && a.tools.length > 0 && (
+                <div data-testid="agent-tools" className="flex gap-1">
+                  <dt>tools:</dt>
+                  <dd className="m-0">{a.tools.join(", ")}</dd>
+                </div>
+              )}
+            </dl>
+          )}
         </li>
       ))}
     </ul>
