@@ -47,8 +47,25 @@ export function McpServerCard({
   // hit Remove and focus stays on the (still-visible) Remove ActionButton —
   // they can't easily reach Cancel without tabbing across the whole card.
   const cancelRef = useRef<HTMLButtonElement | null>(null);
+  // Where focus came from before the alertdialog opened (typically the
+  // Remove ActionButton). WAI-ARIA APG alertdialog pattern + WCAG 2.4.3:
+  // when the dialog closes (Esc, Cancel click, or confirm click) focus must
+  // return to the element that opened it. Without this, keyboard / SR users
+  // got dumped at <body> on dismissal — they had to Tab from page start to
+  // relocate the trigger. Mirrors PR #204 (McpServerForm dialog close).
+  const triggerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    if (confirming) cancelRef.current?.focus();
+    if (confirming) {
+      triggerRef.current = document.activeElement as HTMLElement | null;
+      cancelRef.current?.focus();
+    } else if (triggerRef.current && triggerRef.current.isConnected) {
+      // Closing transition (true → false). Restore focus to the trigger.
+      // Guard with isConnected: the trigger may have been re-rendered out
+      // of the DOM (e.g., the parent list rebuilt). focus() on a detached
+      // node is a no-op in browsers but throws in jsdom.
+      triggerRef.current.focus();
+      triggerRef.current = null;
+    }
   }, [confirming]);
 
   // Escape closes the Remove-confirm dialog without removing — same UX as
