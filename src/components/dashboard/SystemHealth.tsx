@@ -9,7 +9,7 @@
 // version from `claude --version`) are wired in later phases. Props let
 // callers feed real values in once those sources exist.
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 type HealthStatus = "ok" | "warn" | "fail" | "checking";
 
@@ -103,12 +103,24 @@ export function SystemHealth({
   const pluginStatus: HealthStatus = pluginCount > 0 ? "ok" : "warn";
   const cliStatus: HealthStatus = cliVersion === "unknown" ? "warn" : "ok";
 
+  // WCAG 1.3.1 + WAI-ARIA APG: dashboard cards each have a visible <h3>
+  // header but render as bare <div>s — the SR landmarks rotor cannot
+  // surface them by name. Promote the card to a labelled <section> bound
+  // to its <h3> via aria-labelledby so users can route to "System Health"
+  // directly. Mirrors PR #262 (ModelDonut) and the broader region-
+  // landmark sweep (#245 / #256 / #261).
+  const headingId = useId();
+
   return (
-    <div
+    <section
       data-testid="system-health"
+      aria-labelledby={headingId}
       className="flex flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
-      <h3 className="text-xs uppercase tracking-wide text-text-muted">
+      <h3
+        id={headingId}
+        className="text-xs uppercase tracking-wide text-text-muted"
+      >
         System Health
       </h3>
       {/* WCAG 2.4.6 (Headings and Labels) / 1.3.1 (Info and Relationships):
@@ -134,7 +146,7 @@ export function SystemHealth({
         />
         <Indicator label="CLI" status={cliStatus} value={cliVersion} />
       </ul>
-    </div>
+    </section>
   );
 }
 
