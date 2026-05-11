@@ -40,12 +40,33 @@ export function RecentSessions({ data }: RecentSessionsProps) {
         </div>
       ) : (
         <ul className="flex-1 flex flex-col gap-1 overflow-auto">
-          {data.map((s) => (
-            <li
-              key={s.sessionId}
-              data-testid="recent-session-row"
-              className="flex items-center gap-2 px-2 py-1.5 rounded text-sm min-w-0"
-            >
+          {data.map((s) => {
+            const name = s.displayName || "(untitled)";
+            const msgPart = `${s.messageCount} ${s.messageCount === 1 ? "msg" : "msgs"}`;
+            // Coherent SR announcement (WCAG 1.3.1 / 4.1.2): the row
+            // visually composes name + time-ago + message count into one
+            // tile, but the DOM is three flat sibling spans (the dot is
+            // already aria-hidden) with no programmatic linkage. SR users
+            // walking the list hear three disconnected fragments per
+            // item; the rotor list view shows each <li> only by its first
+            // text node, dropping time + message count entirely. Promote
+            // the <li> to a self-contained announcement that combines all
+            // three pieces in natural reading order. When `startedAt` is
+            // 0/missing the visible "—" placeholder is meaningless to SR
+            // users, so the time clause is omitted from the aria-label.
+            // Mirrors PR #230 (SystemHealth indicator) and StatCard
+            // (lines 70-73). Visible layout unchanged.
+            const liAriaLabel =
+              s.startedAt > 0
+                ? `${name}: ${msgPart} — ${timeAgo(s.startedAt)}`
+                : `${name}: ${msgPart}`;
+            return (
+              <li
+                key={s.sessionId}
+                data-testid="recent-session-row"
+                aria-label={liAriaLabel}
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm min-w-0"
+              >
               {/* Recent sessions are by definition not "alive" anymore in
                   Phase 2 (no live state on this row); use the neutral muted
                   dot. T2.13 may revisit when live state is wired in. */}
@@ -99,7 +120,8 @@ export function RecentSessions({ data }: RecentSessionsProps) {
                 {s.messageCount} {s.messageCount === 1 ? "msg" : "msgs"}
               </span>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
