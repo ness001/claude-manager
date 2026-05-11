@@ -167,6 +167,16 @@ export function PluginListView() {
       ) : plugins.length === 0 ? (
         <div
           data-testid="empty-state"
+          // Live region: when the loading skeleton resolves to a zero-plugin
+          // result, the empty-state replaces the skeleton without any
+          // focus change. Without role="status" + aria-live="polite", SR
+          // users get NO feedback that the load completed AND yielded
+          // nothing — they'd only discover the new copy by tab-hunting.
+          // Mirrors PRs #154/#155/#207/#212/#213/#214. The sibling
+          // `no-matches` state (filter→empty) already has this; this
+          // applies the same treatment to the load→empty branch.
+          role="status"
+          aria-live="polite"
           className="flex flex-1 items-center justify-center text-center text-sm text-text-muted"
         >
           No plugins installed. Use{" "}
