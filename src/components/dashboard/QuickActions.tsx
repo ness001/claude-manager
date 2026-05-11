@@ -37,8 +37,17 @@ const ACTIONS: ActionDef[] = [
 
 export function QuickActions() {
   return (
-    <div
+    // WCAG 1.3.1 + WAI-ARIA APG: dashboard cards each have a visible <h3>
+    // header but render as bare <div>s — the SR landmarks rotor cannot
+    // surface them by name. Promote the card to a labelled <section>
+    // bound to its <h3> via aria-labelledby so users can route to "Quick
+    // Actions" directly. The inner <ul> already references the same id;
+    // both pointers are valid AT relationships and the visible layout is
+    // unchanged. Mirrors PRs #262 (ModelDonut), #263 (SystemHealth) and
+    // the broader region-landmark sweep (#245 / #256 / #261).
+    <section
       data-testid="quick-actions"
+      aria-labelledby="quick-actions-heading"
       className="flex flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
       <h3
@@ -91,6 +100,6 @@ export function QuickActions() {
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   );
 }
