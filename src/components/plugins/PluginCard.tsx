@@ -92,6 +92,15 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           </span>
           <span
             data-testid="version-pill"
+            // WCAG 4.1.2 (Name, Role, Value): the visible text is a bare
+            // version string ("1.2.3") — SR users hear it as an opaque
+            // token with no semantic context (build number? patch level?
+            // protocol version?). Sighted users infer "version" from the
+            // pill's right-aligned position next to the plugin name.
+            // Mirror that into the accessible name with a "Version: …"
+            // prefix. Same pattern as PR #246/#247 model badges and PR
+            // #250 message-count badge.
+            aria-label={`Version: ${plugin.version}`}
             className="ml-auto rounded bg-bg-tertiary px-1.5 py-0.5 text-[10px] text-text-secondary"
           >
             {plugin.version}
