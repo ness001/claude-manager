@@ -495,4 +495,24 @@ describe("McpServerCard", () => {
       `Collapse details for ${FIX_CONNECTED.name}`,
     );
   });
+
+  // UX bug: the server-name span has `truncate` but no `title`, so long
+  // server names get clipped with no recovery — sighted users have no
+  // way to read the hidden tail. Mirror the visible string into `title`.
+  // Same family as PR #167 (SkillCard path), PR #170 (RecentSessions),
+  // PR #171 (SystemHealth), PR #175 (SessionCard), PR #223 (SkillCard
+  // name), PluginCard name.
+  it("server-name span mirrors its visible text into the `title` attribute (UX truncation recovery)", () => {
+    const longName = "anthropic-experimental-mcp-server-with-very-long-descriptive-identifier";
+    render(
+      <McpServerCard
+        server={{ ...FIX_CONNECTED, name: longName }}
+        onEdit={() => {}}
+        onRemove={() => {}}
+      />,
+    );
+    const span = screen.getByText(longName);
+    expect(span.className).toContain("truncate");
+    expect(span.getAttribute("title")).toBe(longName);
+  });
 });
