@@ -146,10 +146,24 @@ interface IndicatorProps {
 }
 
 function Indicator({ label, status, value, testId }: IndicatorProps) {
+  // Coherent SR announcement (WCAG 1.3.1 / 4.1.2): the indicator visually
+  // composes label + value + status-dot into one tile, but the DOM is a
+  // colored dot ("OK") plus two flat sibling spans ("MCP", "0 servers")
+  // with no programmatic linkage. SR users walking the list hear three
+  // disconnected fragments per item ("image, OK, MCP, 0 servers") and
+  // the rotor list view shows each <li> only by its first text node.
+  // Promote the <li> to a self-contained announcement that combines the
+  // dimension, the value, and the status: "MCP: 0 servers — Warning".
+  // Mirrors StatCard (lines 70-73) and ModelDonut donut-legend's labeled-
+  // list pattern. The dot keeps its own role="img" + aria-label so direct
+  // image-rotor navigation still works (and the existing test pinning
+  // dot.aria-label="OK" stays green); the visible layout is unchanged.
+  const liAriaLabel = `${label}: ${value} — ${STATUS_LABEL[status]}`;
   return (
     <li
       data-testid={testId ?? "health-indicator"}
       data-status={status}
+      aria-label={liAriaLabel}
       className="flex items-center gap-2"
     >
       <span
