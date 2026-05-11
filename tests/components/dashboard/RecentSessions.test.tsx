@@ -93,6 +93,22 @@ describe("RecentSessions", () => {
     expect(heading.tagName).toBe("H3");
   });
 
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — promote the card root to a labelled
+  // <section> bound to the visible <h3> via aria-labelledby so it appears
+  // in the SR rotor's landmarks list. Mirrors PRs #262 (ModelDonut),
+  // #263 (SystemHealth), #264 (QuickActions), and the broader region-
+  // landmark sweep.
+  it("card root is a labelled <section> region bound to the visible <h3> heading", () => {
+    render(<RecentSessions data={[]} />);
+    const root = screen.getByTestId("recent-sessions");
+    expect(root.tagName).toBe("SECTION");
+    expect(root.getAttribute("aria-labelledby")).toBe("recent-sessions-heading");
+    const heading = document.getElementById("recent-sessions-heading");
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H3");
+    expect(heading!.textContent).toBe("Recent Sessions");
+  });
+
   it("rows are non-interactive: no onClick + no hover-bg cue (spec §4.1 — only 'View All Sessions' is the documented affordance)", () => {
     // Defect: previously the row had `hover:bg-bg-tertiary` implying it was
     // clickable, but no click handler was wired. Either remove the misleading
