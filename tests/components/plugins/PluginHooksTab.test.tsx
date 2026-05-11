@@ -43,6 +43,17 @@ describe("PluginHooksTab", () => {
     expect(screen.getByTestId("hooks-empty")).toBeInTheDocument();
   });
 
+  // WCAG 2.4.6 / 1.3.1 — bare <ul> is "list, N items" with no name.
+  // Companion fix in this PR for PluginAgentsTab + PluginSkillsTab.
+  it("hooks list has aria-label 'Bundled hooks'", () => {
+    render(
+      <PluginHooksTab hooks={[{ event: "SessionStart", command: "echo hi" }]} />,
+    );
+    const list = screen.getByTestId("hooks-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe("Bundled hooks");
+  });
+
   // a11y: see PluginSkillsTab counterpart. Mirrors PRs #154/#155/#207/#212/#213.
   it("empty state is a polite live region (a11y: tab-load announce)", () => {
     render(<PluginHooksTab hooks={[]} />);
