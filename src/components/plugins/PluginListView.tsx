@@ -53,13 +53,25 @@ export function PluginListView() {
   };
 
   return (
+    // WCAG 1.3.1 + WAI-ARIA APG: the page-level <section> already wrapped
+    // the view but was unlabeled — the SR landmarks rotor surfaced an
+    // anonymous "section" entry with no name. Bind aria-labelledby to the
+    // visible <h1> "Plugins" so users routing by landmarks (NVDA D, JAWS R,
+    // VoiceOver rotor → Landmarks) jump to a named region. Mirrors the
+    // dashboard region-landmark sweep (#262/#263/#264/#265).
     <section
       data-testid="plugin-list-view"
+      aria-labelledby="plugin-list-view-heading"
       className="flex h-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-text-primary">Plugins</h1>
+          <h1
+            id="plugin-list-view-heading"
+            className="text-2xl font-semibold text-text-primary"
+          >
+            Plugins
+          </h1>
           <div className="flex gap-2">
             {/* TODO(ui-defect-sweep#L295): wire Install Plugin to a `claude
               * plugins install <name>` IPC. Tracked in
