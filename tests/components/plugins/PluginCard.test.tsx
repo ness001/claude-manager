@@ -227,4 +227,18 @@ describe("PluginCard", () => {
     expect(src).toMatch(/TODO\(ui-defect-sweep#L293\)[\s\S]*Reinstall/);
     expect(src).toMatch(/TODO\(ui-defect-sweep#L294\)[\s\S]*Remove/);
   });
+
+  // UX bug: the plugin name span has `truncate` but no `title`, so long
+  // plugin names get clipped with no recovery — sighted users have no way
+  // to read the hidden tail. Mirror the visible string into `title`.
+  // Mirrors PR #167 (SkillCard), PR #170 (RecentSessions), PR #171
+  // (SystemHealth), PR #175 (SessionCard).
+  it("plugin name span mirrors its visible text into the `title` attribute (UX truncation recovery)", () => {
+    const longName =
+      "anthropic-experimental-conversational-memory-with-vector-embeddings-plugin";
+    render(<PluginCard plugin={makePlugin({ name: longName })} selected={false} />);
+    const span = screen.getByText(longName);
+    expect(span.className).toContain("truncate");
+    expect(span.getAttribute("title")).toBe(longName);
+  });
 });

@@ -84,7 +84,10 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
             data-testid="status-dot"
             className={`inline-block h-2 w-2 rounded-full shrink-0 ${dotClass}`}
           />
-          <span className="truncate text-sm font-medium text-text-primary">
+          <span
+            className="truncate text-sm font-medium text-text-primary"
+            title={plugin.name}
+          >
             {plugin.name}
           </span>
           <span
