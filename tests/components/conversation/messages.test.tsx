@@ -6,7 +6,7 @@
 // markers (testids + key text).
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 // Mock @tauri-apps/plugin-shell so AssistantMessage's link click handler
 // can call openShell() under jsdom without firing a real IPC.
@@ -171,6 +171,44 @@ describe("AssistantMessage", () => {
     // Default must be prevented so the WebView does not actually navigate.
     expect(evt).toBe(false);
     expect(openShellMock).toHaveBeenCalledWith("https://www.anthropic.com");
+  });
+
+  // Functional bug: when the OS shell handler rejects (no registered
+  // handler for the URI scheme like `mailto:` with no mail client, the
+  // Tauri shell allowlist forbids the target, etc.) the prior
+  // `.catch(() => {})` swallowed the error entirely. Sighted users
+  // clicked the link and got nothing, with no clue whether the app was
+  // broken or the link was bad. SR users got the same opaque silence.
+  // Surface the failure inline as `role="alert"` so both sighted and
+  // SR users get an audible/visible signal. Mirrors SkillCard's
+  // open-error surfacing (PR #91-era family).
+  it("surfaces a role='alert' message when openShell rejects", async () => {
+    openShellMock.mockReset().mockRejectedValue(new Error("no handler for mailto:"));
+    render(
+      <AssistantMessage text="Mail me at [me](mailto:nobody@example.com)" />,
+    );
+    fireEvent.click(screen.getByTestId("assistant-link"));
+    const alert = await waitFor(() => screen.getByTestId("assistant-link-error"));
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toContain("no handler for mailto:");
+  });
+
+  // Belt-and-suspenders: a successful open MUST NOT render the error
+  // banner — otherwise a stale error from a previous click would
+  // confuse users on the next attempt.
+  it("clears any prior link-error after a successful open", async () => {
+    // First click: reject → banner appears.
+    openShellMock.mockReset().mockRejectedValue(new Error("boom"));
+    render(<AssistantMessage text="[a](https://a.test)" />);
+    fireEvent.click(screen.getByTestId("assistant-link"));
+    await waitFor(() => screen.getByTestId("assistant-link-error"));
+    // Second click: resolve → banner clears (we reset openError on click,
+    // before awaiting the shell promise).
+    openShellMock.mockReset().mockResolvedValue(undefined);
+    fireEvent.click(screen.getByTestId("assistant-link"));
+    await waitFor(() =>
+      expect(screen.queryByTestId("assistant-link-error")).toBeNull(),
+    );
   });
 
   // WCAG 1.4.1 (Use of Color): links must be distinguishable from prose by
