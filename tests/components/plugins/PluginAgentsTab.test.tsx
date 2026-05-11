@@ -52,6 +52,14 @@ describe("PluginAgentsTab", () => {
     expect(screen.getByTestId("agents-empty")).toBeInTheDocument();
   });
 
+  // a11y: see PluginSkillsTab counterpart. Mirrors PRs #154/#155/#207/#212/#213.
+  it("empty state is a polite live region (a11y: tab-load announce)", () => {
+    render(<PluginAgentsTab agents={[]} />);
+    const empty = screen.getByTestId("agents-empty");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
+
   // WCAG 1.3.1 (Info and Relationships): "model: <value>" and "tools:
   // <value>" are key/value pairs. The previous flat-<span> rendering hid
   // that relationship from AT — SR users heard one undifferentiated string.

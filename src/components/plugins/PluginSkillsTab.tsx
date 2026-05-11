@@ -9,7 +9,12 @@ interface PluginSkillsTabProps {
 export function PluginSkillsTab({ skills }: PluginSkillsTabProps) {
   if (skills.length === 0) {
     return (
-      <div data-testid="skills-empty" className="text-sm text-text-muted">
+      <div
+        data-testid="skills-empty"
+        role="status"
+        aria-live="polite"
+        className="text-sm text-text-muted"
+      >
         No skills bundled.
       </div>
     );
