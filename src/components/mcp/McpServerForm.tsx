@@ -188,7 +188,18 @@ export function McpServerForm({
         </Field>
 
         <Field label="Scope">
-          <div className="flex gap-3 text-sm">
+          {/* WAI-ARIA Radio Group pattern: a set of radios that share a `name`
+            * attribute is functionally a radiogroup at the form level, but
+            * without role="radiogroup" + an accessible group name, screen-
+            * reader users hear two/three orphan radios with no announcement
+            * of what the *group* represents. The visible "Scope" label sits
+            * in a sibling <label> that has no `htmlFor` so it doesn't
+            * programmatically associate with anything — the group has no
+            * accessible name at all. Wrap with role="radiogroup" + an inline
+            * aria-label so SR rotor announces "Scope, radio group" and the
+            * APG-required keyboard arrow-key roving works under the right
+            * semantic primitive. Mirrors the Type group below. */}
+          <div role="radiogroup" aria-label="Scope" className="flex gap-3 text-sm">
             {(["user", "local"] as const).map((s) => (
               <label key={s} className="flex items-center gap-1">
                 <input
@@ -205,7 +216,7 @@ export function McpServerForm({
         </Field>
 
         <Field label="Type">
-          <div className="flex gap-3 text-sm">
+          <div role="radiogroup" aria-label="Type" className="flex gap-3 text-sm">
             {(["stdio", "sse", "http"] as const).map((t) => (
               <label key={t} className="flex items-center gap-1">
                 <input
