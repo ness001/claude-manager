@@ -4,7 +4,7 @@
 // layout cheap and theme-aware). Below the donut is a legend with each model
 // name, its share, and absolute token count.
 
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 
 import type { ModelUsageEntry } from "../../stores/dashboard-store";
 
@@ -72,13 +72,30 @@ export function ModelDonut({ data }: ModelDonutProps) {
 
   const isEmpty = data.length === 0 || total === 0;
 
+  // WCAG 1.3.1 (Info and Relationships) + WAI-ARIA APG: the dashboard is
+  // a 2x2 grid of `<div>` cards (StatCard, ModelDonut, SystemHealth,
+  // ActivityChart). Each visually has a heading, but only StatCard
+  // currently exposes itself to AT as a landmark — the others appear as
+  // generic divs. Promote the donut card to a labelled <section> /
+  // role="region" pair, bound to the existing visible <h3> via
+  // aria-labelledby. SR users can now route to "Model Usage" from the
+  // landmarks rotor (NVDA "D", VoiceOver rotor → Landmarks). Mirrors
+  // the region-landmark sweep (UserMessage / SummaryBanner /
+  // SessionDetailPanel #245 / ToolCallBlock #256 / ConversationViewer
+  // scroller #261).
+  const headingId = useId();
+
   return (
-    <div
+    <section
       data-testid="model-donut"
       data-empty={isEmpty ? "true" : "false"}
+      aria-labelledby={headingId}
       className="flex h-full min-h-[240px] flex-col gap-3 rounded-md border border-border bg-card-bg p-4"
     >
-      <h3 className="text-xs uppercase tracking-wide text-text-muted">
+      <h3
+        id={headingId}
+        className="text-xs uppercase tracking-wide text-text-muted"
+      >
         Model Usage
       </h3>
 
@@ -176,6 +193,6 @@ export function ModelDonut({ data }: ModelDonutProps) {
           })}
         </ul>
       </div>
-    </div>
+    </section>
   );
 }
