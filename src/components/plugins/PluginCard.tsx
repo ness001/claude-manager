@@ -138,6 +138,14 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
               type="button"
               data-testid="reinstall-btn"
               disabled
+              aria-disabled="true"
+              // Sighted users see the long "Reinstall is not yet wired …"
+              // tooltip on hover; mirror the gist into the accessible name
+              // so screen-reader users hear the same CLI-workaround hint
+              // instead of just "Reinstall, button, dimmed" and assuming
+              // the app is broken (WCAG 4.1.2). Mirrors PR #181 / #183 /
+              // #184 / #154 (PluginListView Install Plugin stub).
+              aria-label="Reinstall (not yet wired — use the CLI)"
               title="Reinstall is not yet wired — run `claude plugin install` from the terminal for now"
               className="cursor-not-allowed rounded border border-border px-2 py-1 text-[11px] text-text-secondary opacity-50"
             >
@@ -151,6 +159,9 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
               type="button"
               data-testid="remove-btn"
               disabled
+              aria-disabled="true"
+              // See companion comment on the Reinstall button above.
+              aria-label="Remove (not yet wired — use the CLI)"
               title="Remove is not yet wired — run `claude plugin uninstall` from the terminal for now"
               className="cursor-not-allowed rounded border border-border px-2 py-1 text-[11px] text-text-secondary opacity-50"
             >
