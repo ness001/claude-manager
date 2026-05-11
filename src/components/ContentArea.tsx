@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { useEffect, useRef } from "react";
 import {
   useNavigationStore,
   type Section,
@@ -38,8 +39,21 @@ const SECTION_LABEL: Record<Section, string> = {
 export function ContentArea() {
   const activeSection = useNavigationStore((s) => s.activeSection);
   const Component = SECTION_MAP[activeSection];
+  // Reset scroll on section change. <main> is the same DOM node across
+  // navigations (only `<Component />` swaps), so without this the browser
+  // preserves whatever scrollTop the previous section left behind. Symptom:
+  // user scrolls deep in Plugins, clicks the Dashboard sidebar item, and
+  // lands on a Dashboard whose top is clipped above the viewport — the new
+  // content fits in one screen but `<main>` is still scrolled down. Same
+  // defect class and shape as PR #306 (ConversationViewer scrollTop reset
+  // on session-path change).
+  const mainRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  }, [activeSection]);
   return (
     <main
+      ref={mainRef}
       aria-label={SECTION_LABEL[activeSection]}
       // WCAG 2.1.1 (Keyboard): the <main> landmark is the only scroll
       // container for sections whose content overflows the viewport (e.g.
