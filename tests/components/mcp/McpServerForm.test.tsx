@@ -821,4 +821,42 @@ describe("McpServerForm", () => {
     expect(url.getAttribute("aria-invalid")).toBe("true");
     expect(url.getAttribute("aria-describedby")).toBe("form-error-url");
   });
+
+  // WAI-ARIA APG modal-dialog pattern + WCAG 2.4.3 (Focus Order): the form
+  // is `role="dialog" aria-modal="true"` (line ~164 of source) but without a
+  // Tab/Shift+Tab handler the keyboard focus could escape the modal and land
+  // on background controls (McpPanel toolbar buttons, search field, cards
+  // beneath the backdrop) — those are visually obscured but still in the
+  // document focus order. The trap cycles within the form's tabbable set.
+  it("Tab from the last focusable wraps to the first; Shift+Tab from first wraps to last (focus trap)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    const form = screen.getByTestId("mcp-form") as HTMLFormElement;
+    const tabbables = Array.from(
+      form.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((el) => el.tabIndex !== -1);
+    expect(tabbables.length).toBeGreaterThan(1);
+    const first = tabbables[0];
+    const last = tabbables[tabbables.length - 1];
+
+    // Tab from last → wraps to first.
+    last.focus();
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+
+    // Shift+Tab from first → wraps to last.
+    first.focus();
+    expect(document.activeElement).toBe(first);
+    fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
 });

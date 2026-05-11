@@ -99,6 +99,15 @@ export function McpServerForm({
   // page to find the trigger again. Capture the previously-focused element
   // on mount, restore it on unmount.
   const nameRef = useRef<HTMLInputElement | null>(null);
+  // Focus-trap container ref. The dialog has `aria-modal="true"` (line ~164)
+  // but without a Tab/Shift+Tab interceptor, keyboard users can Tab past the
+  // last focusable element and land on background controls (the McpPanel
+  // toolbar buttons, the search field, the cards underneath) — which are
+  // visually obscured by the backdrop but still in the document focus order.
+  // WAI-ARIA APG modal-dialog pattern + WCAG 2.4.3 (Focus Order) requires
+  // focus to cycle within the modal until it's dismissed. Mirrors the same
+  // gap closed for native browser <dialog> via showModal()'s built-in trap.
+  const formRef = useRef<HTMLFormElement | null>(null);
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
     nameRef.current?.focus();
@@ -187,6 +196,40 @@ export function McpServerForm({
     >
       <form
         data-testid="mcp-form"
+        ref={formRef}
+        // Focus trap: cycle Tab / Shift+Tab among focusable descendants of
+        // the form so the modal honors WAI-ARIA APG (focus must not escape
+        // a modal). Query the focusable set on each Tab press because
+        // controls appear/disappear with type/scope changes and
+        // disabled-state transitions; caching would go stale. The selector
+        // matches the standard tabbable set (form fields + buttons +
+        // links + tabIndex-augmented elements), filters out disabled and
+        // tabindex="-1" entries.
+        onKeyDown={(e) => {
+          if (e.key !== "Tab") return;
+          const root = formRef.current;
+          if (!root) return;
+          const tabbables = Array.from(
+            root.querySelectorAll<HTMLElement>(
+              'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter((el) => el.tabIndex !== -1);
+          if (tabbables.length === 0) return;
+          const first = tabbables[0];
+          const last = tabbables[tabbables.length - 1];
+          const active = document.activeElement as HTMLElement | null;
+          if (e.shiftKey) {
+            if (active === first || !root.contains(active)) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (active === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }}
         // Wrapping the field stack in a real <form> + Enter-key default-submit
         // gives keyboard users the universally-expected "type, press Enter to
         // save" behavior — the previous <div> swallowed Enter silently and
