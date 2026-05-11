@@ -386,4 +386,36 @@ describe("SessionInfoBar", () => {
       false,
     );
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): the model / message-count / entrypoint
+  // badges render bare values ("claude-sonnet-4-6", "47 msgs",
+  // "interactive") with no semantic prefix. Sighted users infer the role
+  // from the badge layout; SR users hear opaque strings ("claude dash
+  // sonnet dash four dash six") and have no idea which dimension that
+  // describes. Mirror the implicit visual role into the accessible name
+  // via aria-label, matching the disabled-stub aria-label family
+  // (#181/#183/#184/#222) — visible text untouched. The state-pill is
+  // intentionally NOT covered here because its visible text already reads
+  // as a complete value ("Alive", "Ended"), and adding a "State: …"
+  // prefix would just make SR announcements longer without adding info.
+  it("model / message-count / entrypoint badges expose semantic role via aria-label (WCAG 4.1.2)", () => {
+    render(
+      <SessionInfoBar
+        session={makeSession({
+          model: "claude-sonnet-4-6",
+          messageCount: 47,
+          entrypoint: "interactive",
+        })}
+      />,
+    );
+    expect(screen.getByTestId("model-badge").getAttribute("aria-label")).toBe(
+      "Model: claude-sonnet-4-6",
+    );
+    expect(
+      screen.getByTestId("message-count-badge").getAttribute("aria-label"),
+    ).toBe("Messages: 47");
+    expect(
+      screen.getByTestId("entrypoint-badge").getAttribute("aria-label"),
+    ).toBe("Entrypoint: interactive");
+  });
 });

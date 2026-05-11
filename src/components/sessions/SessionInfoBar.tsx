@@ -233,6 +233,15 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
         {session.model && (
           <span
             data-testid="model-badge"
+            // WCAG 4.1.2 (Name, Role, Value): the visible text "claude-sonnet-4-6"
+            // is a bare model identifier — SR users hear it as an opaque
+            // string with no semantic context. The aria-label prefixes the
+            // role ("Model: …") so AT users get the same key/value
+            // affordance sighted users already infer from the badge layout.
+            // Same pattern as the disabled-stub aria-label family
+            // (#181/#183/#184/#222) — mirror the visual cue into the
+            // accessible name. Kept the visible text untouched.
+            aria-label={`Model: ${session.model}`}
             className="rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary"
           >
             {session.model}
@@ -241,6 +250,10 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
 
         <span
           data-testid="message-count-badge"
+          // SR users hear "47 msgs" without knowing it counts session
+          // messages — could plausibly be unread-count, queued-count, etc.
+          // Prefix the role ("Messages: …") in the accessible name.
+          aria-label={`Messages: ${session.messageCount}`}
           className="rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary"
         >
           {session.messageCount} {session.messageCount === 1 ? "msg" : "msgs"}
@@ -248,6 +261,9 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
 
         <span
           data-testid="entrypoint-badge"
+          // SR users hear "claude-code" / "vscode-extension" with no clue
+          // what dimension that describes. Prefix with "Entrypoint: …".
+          aria-label={`Entrypoint: ${session.entrypoint || session.kind}`}
           className="rounded bg-bg-tertiary px-2 py-0.5 text-xs text-text-secondary"
         >
           {session.entrypoint || session.kind}
