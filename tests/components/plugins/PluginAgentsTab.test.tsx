@@ -52,6 +52,19 @@ describe("PluginAgentsTab", () => {
     expect(screen.getByTestId("agents-empty")).toBeInTheDocument();
   });
 
+  // WCAG 2.4.6 / 1.3.1 — bare <ul> is "list, N items" in the SR rotor
+  // with no collection name. aria-label promotes it to a recognizably
+  // named landmark. Mirrors PR #235 (SkillsListView grid → "Skills"),
+  // PR #236 (PluginListView grid → "Plugins").
+  it("agents list has aria-label 'Bundled agents'", () => {
+    render(
+      <PluginAgentsTab agents={[{ name: "a1", description: "d" }]} />,
+    );
+    const list = screen.getByTestId("agents-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe("Bundled agents");
+  });
+
   // a11y: see PluginSkillsTab counterpart. Mirrors PRs #154/#155/#207/#212/#213.
   it("empty state is a polite live region (a11y: tab-load announce)", () => {
     render(<PluginAgentsTab agents={[]} />);
