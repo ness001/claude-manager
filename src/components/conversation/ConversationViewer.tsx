@@ -434,6 +434,18 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
           // StatCard).
           role="group"
           aria-label="Turn navigation"
+          // WAI-ARIA `aria-keyshortcuts`: the Ctrl+ArrowDown / Ctrl+ArrowUp
+          // global shortcuts that step turns are wired in the keydown
+          // handler above (lines 288-308) but are completely undiscoverable
+          // by SR users — there is no visible affordance, no tooltip, and
+          // the role="group" name says nothing about the shortcut. Expose
+          // them via aria-keyshortcuts so NVDA / JAWS / VoiceOver announce
+          // the available shortcuts on focus and surface them in the AT
+          // shortcut-discovery dialog. Per ARIA 1.2 the value is space-
+          // separated key combos using platform-agnostic key names
+          // ("Control" not "Ctrl", "ArrowDown" not "Down"). Mirrors PR
+          // #276 (SidebarRailItem Ctrl+1..6 shortcuts).
+          aria-keyshortcuts="Control+ArrowDown Control+ArrowUp"
           className="absolute bottom-2 right-3 flex items-center gap-1 rounded-md border border-border bg-bg-secondary px-2 py-1 text-xs text-text-secondary shadow"
         >
           <span>Turn</span>

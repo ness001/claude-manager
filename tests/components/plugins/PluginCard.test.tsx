@@ -206,6 +206,21 @@ describe("PluginCard", () => {
     expect(screen.getByTestId("update-pill")).toBeInTheDocument();
   });
 
+  // WCAG 4.1.2 (Name, Role, Value) — bare "Update" is opaque to SR users
+  // (could be a button command, section label, or count). Mirror the
+  // amber-pill cue ("update available") into the accessible name.
+  it("update-pill announces 'Update available' to assistive tech", () => {
+    render(
+      <PluginCard
+        plugin={makePlugin({ state: "update-available" })}
+        selected={false}
+      />,
+    );
+    expect(
+      screen.getByTestId("update-pill").getAttribute("aria-label"),
+    ).toBe("Update available");
+  });
+
   // WCAG 2.4.7 (Focus Visible): the card body button is the keyboard target
   // for selecting a plugin. Without focus-visible:ring, tabbing through the
   // plugin list gives no indication of the current row. Mirrors the family
@@ -321,5 +336,43 @@ describe("PluginCard", () => {
     expect(
       screen.getByTestId("version-pill").getAttribute("aria-label"),
     ).toBe("Version: 2.4.1");
+  });
+
+  // WCAG 4.1.2 — the visible marketplace text ("official", "community", a
+  // vendor slug) sits between the plugin name and the description with no
+  // semantic prefix. SR users hear the bare token with no clue what
+  // dimension it describes (could plausibly be a tag, an author, a
+  // category). Mirror the visual cue into the accessible name with a
+  // "Marketplace: …" prefix — same pattern as version-pill above.
+  it("marketplace label announces 'Marketplace: <name>' to assistive tech", () => {
+    render(
+      <PluginCard
+        plugin={makePlugin({ marketplace: "community" })}
+        selected={false}
+      />,
+    );
+    expect(
+      screen.getByTestId("marketplace-label").getAttribute("aria-label"),
+    ).toBe("Marketplace: community");
+  });
+
+  // a11y: WCAG 4.1.2 (Name, Role, Value) — visual selection state was
+  // conveyed only by accent border + sidebar-active background. SR users
+  // had no programmatic signal of which card was active. Mirror SessionCard
+  // (line 78) by exposing aria-current="true" on the body button when
+  // selected, undefined when not. The latter avoids cluttering N-1
+  // unselected cards with a "false" announcement.
+  it("body button exposes aria-current='true' when selected", () => {
+    render(<PluginCard plugin={makePlugin()} selected={true} />);
+    expect(
+      screen.getByTestId("plugin-card-body").getAttribute("aria-current"),
+    ).toBe("true");
+  });
+
+  it("body button omits aria-current when not selected", () => {
+    render(<PluginCard plugin={makePlugin()} selected={false} />);
+    expect(
+      screen.getByTestId("plugin-card-body").getAttribute("aria-current"),
+    ).toBeNull();
   });
 });

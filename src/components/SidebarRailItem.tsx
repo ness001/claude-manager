@@ -12,6 +12,13 @@ export interface SidebarRailItemProps {
   onClick: () => void;
   /** Optional keyboard shortcut shown in the tooltip (e.g. "Ctrl+1"). */
   shortcut?: string;
+  /** Optional secondary keyboard shortcut, exposed only via aria-keyshortcuts
+   *  (NOT shown in the visible tooltip). Used by Settings to advertise the
+   *  conventional `Ctrl+,` alternative alongside its primary `Ctrl+6` —
+   *  both shortcuts are wired in App.tsx but only the primary deserves
+   *  tooltip real estate. Per ARIA 1.2, aria-keyshortcuts accepts a
+   *  space-separated list of key combos. */
+  extraKeyshortcut?: string;
   /** Forwarded keydown handler — SidebarRail uses this to wire arrow-key roving. */
   onKeyDown?: (e: KeyboardEvent<HTMLButtonElement>) => void;
   /** Forwarded button ref — SidebarRail uses this to programmatically focus
@@ -34,6 +41,7 @@ export function SidebarRailItem({
   active,
   onClick,
   shortcut,
+  extraKeyshortcut,
   onKeyDown,
   buttonRef,
   tabIndex,
@@ -45,6 +53,12 @@ export function SidebarRailItem({
   const inactiveClasses =
     "border-transparent text-text-secondary hover:bg-sidebar-active/50 hover:text-text-primary";
   const title = shortcut ? `${label} (${shortcut})` : label;
+  // aria-keyshortcuts is space-separated combos per ARIA 1.2. When an extra
+  // is provided (Settings has both Ctrl+6 and Ctrl+,), join them; otherwise
+  // pass the primary alone, and undefined when neither is set.
+  const keyshortcuts = extraKeyshortcut
+    ? `${shortcut ?? ""} ${extraKeyshortcut}`.trim()
+    : shortcut;
 
   return (
     <button
@@ -52,6 +66,18 @@ export function SidebarRailItem({
       type="button"
       aria-label={label}
       aria-current={active ? "page" : undefined}
+      // WAI-ARIA `aria-keyshortcuts`: the section keyboard shortcut (e.g.
+      // "Ctrl+1") is currently exposed only via the visible `title` tooltip.
+      // SR users have no way to discover the shortcut — `title` is sighted-
+      // hover-only, and the bare aria-label ("Dashboard") doesn't carry it.
+      // `aria-keyshortcuts` is the purpose-built ARIA attribute for this:
+      // NVDA / JAWS / VoiceOver announce the shortcut on focus without
+      // polluting the accessible name. The value is space-separated key
+      // tokens per the ARIA spec — "Ctrl+1" is the canonical form. Mirrors
+      // the title-into-AT-channel pattern used for disabled stubs (#181 /
+      // #183 / #184 / #272), but routed through the correct attribute for
+      // the keyboard-shortcut case rather than rewriting aria-label.
+      aria-keyshortcuts={keyshortcuts}
       title={title}
       data-active={active ? "true" : "false"}
       tabIndex={tabIndex}

@@ -227,6 +227,21 @@ describe("ConversationViewer", () => {
     expect(nav.getAttribute("aria-label")).toBe("Turn navigation");
   });
 
+  // WAI-ARIA `aria-keyshortcuts`: Ctrl+ArrowDown / Ctrl+ArrowUp step turns
+  // (handler at ConversationViewer lines 288-308) but the shortcuts have
+  // no visible affordance and the role=group label says nothing about
+  // them. Expose via aria-keyshortcuts so AT announces them on focus.
+  // Mirrors PR #276 (SidebarRailItem Ctrl+1..6).
+  it("turn-nav exposes its Ctrl+Arrow shortcuts via aria-keyshortcuts", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-nav"));
+    const nav = screen.getByTestId("turn-nav");
+    expect(nav.getAttribute("aria-keyshortcuts")).toBe(
+      "Control+ArrowDown Control+ArrowUp",
+    );
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): the previous aria-label "Jump to
   // turn" gave SR users the field's purpose but NOT the legal range.
   // The visible "/ N" sibling is not programmatically associated with
