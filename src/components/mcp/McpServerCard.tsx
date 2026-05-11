@@ -131,8 +131,24 @@ export function McpServerCard({
         <Pill testid="status-pill" tone={statusTone(server.status)}>
           {server.status}
         </Pill>
-        <Pill testid="type-pill">{server.type}</Pill>
-        <Pill testid="scope-pill">{server.scope}</Pill>
+        {/* WCAG 4.1.2 (Name, Role, Value): the type and scope pills render
+            bare values ("stdio" / "user") with no semantic prefix. Sighted
+            users infer the dimension from the badge layout; SR users hear
+            opaque strings and have no idea those are the transport type
+            and config scope. The aria-label exposes the role+value as a
+            self-contained pair while the visible text stays the same.
+            Mirrors PR #228 (SessionInfoBar model/messages/entrypoint
+            badges) and the disabled-stub aria-label family
+            (#181/#183/#184/#222). status-pill is intentionally NOT
+            relabeled — its info is already covered by the StatusDot's
+            `aria-label="status: <state>"` (line 295), so adding a "Status:"
+            prefix here would just create a triple-announcement. */}
+        <Pill testid="type-pill" ariaLabel={`Type: ${server.type}`}>
+          {server.type}
+        </Pill>
+        <Pill testid="scope-pill" ariaLabel={`Scope: ${server.scope}`}>
+          {server.scope}
+        </Pill>
         {dimmed && server.overriddenBy && (
           <Pill testid="overridden-badge" tone="warning">
             Overridden by {server.overriddenBy}
@@ -310,10 +326,15 @@ function Pill({
   children,
   tone = "default",
   testid,
+  ariaLabel,
 }: {
   children: React.ReactNode;
   tone?: Tone;
   testid?: string;
+  /** Optional accessible name. When set, overrides the visible text for AT
+      so SR users hear a self-describing role+value (e.g. "Type: stdio")
+      instead of an opaque value ("stdio"). See call-site comments. */
+  ariaLabel?: string;
 }) {
   const cls =
     tone === "success"
@@ -326,6 +347,7 @@ function Pill({
   return (
     <span
       data-testid={testid}
+      aria-label={ariaLabel}
       className={`rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${cls}`}
     >
       {children}
