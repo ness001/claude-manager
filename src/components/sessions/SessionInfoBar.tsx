@@ -282,7 +282,19 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
         *
         * The dead-CWD case (§17.5) keeps its own tooltip + disabled state so
         * the more specific reason wins. */}
-      <div className="flex flex-wrap gap-2">
+      {/* WAI-ARIA Toolbar pattern: this row is a group of related action
+        * buttons (View Live / Resume / Stop / Archive / …). Without
+        * role="toolbar" + an accessible name, screen-reader users hear the
+        * buttons as a flat sequence of unrelated controls indistinguishable
+        * from any other button strip on the page. role="toolbar" is the
+        * correct ARIA primitive for a button group (vs. list/menubar) per
+        * the APG, and the aria-label tells SR users what the toolbar does. */}
+      <div
+        role="toolbar"
+        aria-label="Session actions"
+        data-testid="session-actions-toolbar"
+        className="flex flex-wrap gap-2"
+      >
         {actions.map((a) => {
           const cwdDead = CWD_DEPENDENT.has(a.id) && !cwdExists;
           const wired =
