@@ -312,4 +312,28 @@ describe("PluginDetailView", () => {
       expect(screen.getByTestId("tabpanel-hooks").hasAttribute("hidden")).toBe(true);
     });
   });
+
+  // Layout + UX truncation recovery: long plugin names (qualified or
+  // namespaced plugins regularly run 60+ chars) used to wrap onto multiple
+  // lines, breaking the header `flex items-center justify-between` row and
+  // pushing the right-side action buttons (Open in File Browser / Open in
+  // VS Code) off the visible row. `truncate` keeps the <h2> to one line;
+  // the matching `title` lets sighted users hover to read the hidden tail.
+  // Same family as PR #225 (PluginAgentsTab name), #226 (PluginSkillsTab
+  // name), #224 (McpServerCard name), #223 (SkillCard name), and the
+  // broader truncation-recovery sweep (#167/#170/#171/#175 + PluginCard).
+  it("plugin name <h2> has truncate + title for layout/UX recovery", () => {
+    const longName =
+      "anthropic-experimental-conversational-memory-with-vector-embeddings-plugin";
+    render(<PluginDetailView plugin={makeDetail({ name: longName })} />);
+    const h2 = screen.getByTestId("plugin-detail-name");
+    expect(h2.tagName).toBe("H2");
+    expect(h2.className).toContain("truncate");
+    expect(h2.getAttribute("title")).toBe(longName);
+    expect(h2.textContent).toBe(longName);
+    // The flex column wrapping the <h2> needs `min-w-0` so `truncate`
+    // actually engages — without it, the column is sized to the intrinsic
+    // name width and the action buttons get pushed off the row.
+    expect(h2.parentElement?.className).toContain("min-w-0");
+  });
 });
