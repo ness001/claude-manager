@@ -185,8 +185,26 @@ describe("SessionsSection", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
-    expect(
-      screen.getByTestId("sessions-section").getAttribute("aria-label"),
-    ).toBe("Sessions");
+    // Now sourced from the sr-only <h1> via aria-labelledby (same name,
+    // stronger semantics — h1 also lands in the headings list).
+    const section = screen.getByTestId("sessions-section");
+    expect(section.getAttribute("aria-labelledby")).toBe("sessions-heading");
+    const heading = document.getElementById("sessions-heading");
+    expect(heading?.textContent).toBe("Sessions");
+  });
+
+  // WCAG 1.3.1 / 2.4.6 — every other top-level section (Dashboard,
+  // Plugins, Skills, MCP, Settings) renders an <h1> so SR users can
+  // navigate via the headings list. SessionsSection was the only one
+  // without one. Mirrors DashboardSection's sr-only h1 (line 62-64).
+  it("renders an <h1> 'Sessions' heading (WCAG 1.3.1 / 2.4.6)", async () => {
+    loadAllSessionsMock.mockResolvedValueOnce([]);
+    render(<SessionsSection />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const heading = screen.getByRole("heading", { name: "Sessions", level: 1 });
+    expect(heading.tagName).toBe("H1");
   });
 });
