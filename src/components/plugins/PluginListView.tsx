@@ -73,6 +73,14 @@ export function PluginListView() {
               data-testid="install-plugin-btn"
               disabled
               aria-disabled="true"
+              // Sighted users see the long "Not yet wired …" tooltip on
+              // hover; mirror the gist into the accessible name so
+              // screen-reader users hear the same hint instead of just
+              // "Install Plugin, button, dimmed" and assuming the app is
+              // broken (WCAG 4.1.2). Mirrors PR #181 (QuickActions),
+              // PR #183 (SessionListPanel new-session), PR #184
+              // (SessionInfoBar actions).
+              aria-label="Install Plugin (not yet wired — use the CLI)"
               title="Not yet wired — run `claude plugins install <name>` in your terminal for now"
               className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary opacity-50 cursor-not-allowed"
             >
