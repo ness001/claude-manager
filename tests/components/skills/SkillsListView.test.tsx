@@ -362,4 +362,22 @@ describe("SkillsListView", () => {
     });
     expect(screen.queryByTestId("skill-create-error")).toBeNull();
   });
+
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — the page-level <section> must be a
+  // labelled landmark bound to the visible <h1> so SR rotor users routing
+  // by landmarks (NVDA D, JAWS R, VoiceOver rotor → Landmarks) jump to a
+  // named region instead of an anonymous "section". Mirrors PR #266
+  // (PluginListView) and the dashboard region-landmark sweep
+  // (#262/#263/#264/#265).
+  it("root <section> is a labelled region bound to the visible <h1> heading", () => {
+    render(<SkillsListView />);
+    const root = screen.getByTestId("skill-list-view");
+    expect(root.tagName).toBe("SECTION");
+    const labelledBy = root.getAttribute("aria-labelledby");
+    expect(labelledBy).not.toBeNull();
+    const heading = document.getElementById(labelledBy!);
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H1");
+    expect(heading!.textContent).toBe("Custom Skills");
+  });
 });
