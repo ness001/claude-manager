@@ -19,6 +19,8 @@ export function SessionDetailPanel() {
     return (
       <div
         data-testid="session-detail-empty"
+        role="status"
+        aria-live="polite"
         className="flex flex-1 items-center justify-center text-sm text-text-muted"
       >
         Select a session to view its conversation
@@ -37,6 +39,8 @@ export function SessionDetailPanel() {
       ) : (
         <div
           data-testid="conversation-viewer-placeholder"
+          role="status"
+          aria-live="polite"
           className="flex-1 overflow-auto p-4 text-sm text-text-muted"
         >
           No conversation file available for this session.
