@@ -338,6 +338,24 @@ describe("PluginCard", () => {
     ).toBe("Version: 2.4.1");
   });
 
+  // WCAG 4.1.2 — the visible marketplace text ("official", "community", a
+  // vendor slug) sits between the plugin name and the description with no
+  // semantic prefix. SR users hear the bare token with no clue what
+  // dimension it describes (could plausibly be a tag, an author, a
+  // category). Mirror the visual cue into the accessible name with a
+  // "Marketplace: …" prefix — same pattern as version-pill above.
+  it("marketplace label announces 'Marketplace: <name>' to assistive tech", () => {
+    render(
+      <PluginCard
+        plugin={makePlugin({ marketplace: "community" })}
+        selected={false}
+      />,
+    );
+    expect(
+      screen.getByTestId("marketplace-label").getAttribute("aria-label"),
+    ).toBe("Marketplace: community");
+  });
+
   // a11y: WCAG 4.1.2 (Name, Role, Value) — visual selection state was
   // conveyed only by accent border + sidebar-active background. SR users
   // had no programmatic signal of which card was active. Mirror SessionCard
