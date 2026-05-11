@@ -67,14 +67,25 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
   const tabId = (t: Tab) => `${idBase}-tab-${t}`;
   const panelId = (t: Tab) => `${idBase}-panel-${t}`;
 
+  // Surface failures inline. `openShell` rejects when the install path is
+  // missing (broken plugin), the OS has no handler for the URI scheme
+  // (VS Code not installed → vscode:// has no registered handler), or the
+  // Tauri shell allowlist forbids the path. Previously these failures were
+  // only `console.error`'d — the user clicked Open in File Browser / VS
+  // Code, nothing happened, and they had no idea why. Mirrors SkillCard
+  // and SessionInfoBar `openError` patterns.
+  const [openError, setOpenError] = useState<string | null>(null);
+
   const openInFileBrowser = async () => {
+    setOpenError(null);
     try {
       await openShell(plugin.installPath);
     } catch (err) {
-      console.error("Failed to open install path:", err);
+      setOpenError(err instanceof Error ? err.message : String(err));
     }
   };
   const openInVsCode = async () => {
+    setOpenError(null);
     try {
       // The vscode://file/ URI scheme is RFC 3986; Windows paths like
       // "C:\Users\..." must use forward slashes, otherwise VS Code's URI
@@ -82,7 +93,7 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
       const uriPath = plugin.installPath.replace(/\\/g, "/");
       await openShell(`vscode://file/${uriPath}`);
     } catch (err) {
-      console.error("Failed to open in VS Code:", err);
+      setOpenError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -129,6 +140,16 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
         <p className="text-sm text-text-secondary">{plugin.description}</p>
       </header>
 
+      {openError !== null && (
+        <p
+          data-testid="plugin-open-error"
+          role="alert"
+          className="text-xs text-status-red"
+        >
+          Couldn't open: {openError}
+        </p>
+      )}
+
       <nav
         data-testid="tab-bar"
         className="flex gap-2 border-b border-border"
@@ -168,17 +189,41 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
         ))}
       </nav>
 
-      <div
-        role="tabpanel"
-        id={panelId(tab)}
-        aria-labelledby={tabId(tab)}
-        data-testid={`tabpanel-${tab}`}
-        className="flex-1 overflow-auto"
-      >
-        {tab === "skills" && <PluginSkillsTab skills={plugin.skills} />}
-        {tab === "agents" && <PluginAgentsTab agents={plugin.agents} />}
-        {tab === "hooks" && <PluginHooksTab hooks={plugin.hooks} />}
-      </div>
+      {/*
+        WAI-ARIA Tabs Pattern: every tab in the tablist must reference its
+        owning panel via aria-controls, and every IDREF must resolve to an
+        element actually in the DOM. Previously we rendered a single
+        tabpanel whose id was `panelId(tab)` (the *current* tab), so the
+        two non-active tabs' aria-controls pointed at ids that did not
+        exist anywhere — 2/3 dangling IDREFs at all times. NVDA / VoiceOver
+        flag dangling IDREFs as invalid references or drop the disclosure
+        relationship entirely. Same defect class as PR #189
+        (ToolCallBlock) and PR #191 (McpServerCard); the chosen fix here
+        differs because the WAI-ARIA Tabs Pattern explicitly recommends
+        rendering all panels and toggling visibility via the `hidden`
+        attribute (rather than conditionally mounting), so all three
+        IDREFs always resolve.
+
+        The three child tabs (PluginSkillsTab/Agents/Hooks) are pure
+        presentational components with no useState / useEffect / fetch
+        hooks, so always-mounting them costs nothing at runtime — verified
+        via grep before adopting this approach.
+      */}
+      {TABS.map((t) => (
+        <div
+          key={t}
+          role="tabpanel"
+          id={panelId(t)}
+          aria-labelledby={tabId(t)}
+          data-testid={`tabpanel-${t}`}
+          hidden={tab !== t}
+          className="flex-1 overflow-auto"
+        >
+          {t === "skills" && <PluginSkillsTab skills={plugin.skills} />}
+          {t === "agents" && <PluginAgentsTab agents={plugin.agents} />}
+          {t === "hooks" && <PluginHooksTab hooks={plugin.hooks} />}
+        </div>
+      ))}
     </section>
   );
 }
