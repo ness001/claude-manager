@@ -176,6 +176,16 @@ describe("McpPanel", () => {
     expect(screen.getByTestId("empty-add-btn")).toBeInTheDocument();
   });
 
+  // WCAG 4.1.3 (Status Messages): the loading→empty transition (or a delete
+  // that drops the last server) leaves SR users with no feedback. Mirrors
+  // PR #214 (Plugin tabs) and PR #218 (PluginListView empty-state).
+  it("empty state is a polite live region (a11y)", () => {
+    render(<McpPanel />);
+    const empty = screen.getByTestId("empty-state");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+  });
+
   it("dark + light theme parity: same root utilities", () => {
     useMcpStore.setState({ servers: [] });
     const { unmount } = render(<McpPanel />);
