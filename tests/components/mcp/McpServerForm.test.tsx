@@ -204,7 +204,105 @@ describe("McpServerForm", () => {
     expect(saveMock.mock.calls[0][1]).toEqual({ cwd: "C:/proj" });
   });
 
+  it("Enter on a text input submits the form (universal form UX)", async () => {
+    // Repro: McpServerForm previously wrapped its fields in a <div>, so
+    // pressing Enter inside the name/command/url inputs did nothing. Users
+    // had to mouse over to the Save button to commit. Wrapping in <form>
+    // + a submit button enables the browser's implicit-submission behavior.
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd="C:/proj"
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    fireEvent.change(screen.getByTestId("form-name"), {
+      target: { value: "ok" },
+    });
+    fireEvent.change(screen.getByTestId("form-command"), {
+      target: { value: "npx" },
+    });
+    // Direct submit dispatch on the form mirrors what the browser does
+    // when the user presses Enter inside any text input within an
+    // implicit-submission form.
+    await act(async () => {
+      fireEvent.submit(screen.getByTestId("mcp-form"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(saveMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("Enter on the args input adds an arg and does NOT submit", async () => {
+    // Regression guard for the form-arg-input's preventDefault path:
+    // adding an argument with Enter must NOT also trigger the implicit
+    // form submission. The arg input's onKeyDown calls e.preventDefault()
+    // which by browser default also cancels the implicit submit.
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd="C:/proj"
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    fireEvent.change(screen.getByTestId("form-name"), {
+      target: { value: "ok" },
+    });
+    fireEvent.change(screen.getByTestId("form-command"), {
+      target: { value: "npx" },
+    });
+    const argInput = screen.getByTestId("form-arg-input");
+    fireEvent.change(argInput, { target: { value: "--flag" } });
+    await act(async () => {
+      fireEvent.keyDown(argInput, { key: "Enter" });
+      await Promise.resolve();
+    });
+    // The arg got added (arg pill rendered) and save was NOT called.
+    expect(screen.getByText("--flag")).toBeTruthy();
+    expect(saveMock).not.toHaveBeenCalled();
+  });
+
   // === a11y assertions (PRs #36, #72-#79) ===
+
+  it("Scope radios are wrapped in role=radiogroup with an accessible name (WAI-ARIA Radio Group)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    // Walk up from a known radio to find the radiogroup ancestor — pinning
+    // by closest("[role=radiogroup]") survives layout reshuffles that pure
+    // testid lookups would miss.
+    const userRadio = screen.getByTestId("form-scope-user");
+    const group = userRadio.closest('[role="radiogroup"]');
+    expect(group).not.toBeNull();
+    expect(group!.getAttribute("aria-label")).toBe("Scope");
+    // Both scope radios live inside this group (sanity).
+    expect(group!.contains(screen.getByTestId("form-scope-local"))).toBe(true);
+  });
+
+  it("Type radios are wrapped in role=radiogroup with an accessible name (WAI-ARIA Radio Group)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    const stdioRadio = screen.getByTestId("form-type-stdio");
+    const group = stdioRadio.closest('[role="radiogroup"]');
+    expect(group).not.toBeNull();
+    expect(group!.getAttribute("aria-label")).toBe("Type");
+    // All three type radios live inside this group.
+    expect(group!.contains(screen.getByTestId("form-type-sse"))).toBe(true);
+    expect(group!.contains(screen.getByTestId("form-type-http"))).toBe(true);
+  });
 
   it("name input has an accessible name (aria-label)", () => {
     render(
