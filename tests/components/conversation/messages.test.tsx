@@ -287,6 +287,26 @@ describe("ToolCallBlock", () => {
     expect(badge.textContent).toBe("Error");
   });
 
+  // WCAG 1.4.3 (Contrast Minimum): the badge is 10px text on the
+  // bg-status-red/15 over bg-bg-secondary blend (~#f7d6d6 light). The
+  // stripe red #dc2626 on that blend gives only ~4.4:1 — fails the
+  // 4.5:1 floor for normal text. The darker --color-status-red-text
+  // token (#b91c1c light) lands at ~5.6:1. Mirrors PR #289 (yellow-text
+  // token, corruption warning).
+  it("error badge uses the darker red-text token (WCAG 1.4.3)", () => {
+    render(
+      <ToolCallBlock
+        toolName="Read"
+        toolInput={{}}
+        toolOutput="permission denied"
+        isError
+      />,
+    );
+    const badge = screen.getByTestId("tool-call-error-badge");
+    expect(badge.className).toContain("text-status-red-text");
+    expect(badge.className).not.toMatch(/text-status-red(?!-text)/);
+  });
+
   // WCAG 1.3.1 / 4.1.2: the bordered tool-call bubble was a non-semantic
   // <div> — landmark/region rotors (NVDA "D", JAWS region nav, VoiceOver
   // rotor → Landmarks) skipped right past it, so SR users in a long
