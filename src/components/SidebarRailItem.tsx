@@ -52,6 +52,18 @@ export function SidebarRailItem({
       type="button"
       aria-label={label}
       aria-current={active ? "page" : undefined}
+      // WAI-ARIA `aria-keyshortcuts`: the section keyboard shortcut (e.g.
+      // "Ctrl+1") is currently exposed only via the visible `title` tooltip.
+      // SR users have no way to discover the shortcut — `title` is sighted-
+      // hover-only, and the bare aria-label ("Dashboard") doesn't carry it.
+      // `aria-keyshortcuts` is the purpose-built ARIA attribute for this:
+      // NVDA / JAWS / VoiceOver announce the shortcut on focus without
+      // polluting the accessible name. The value is space-separated key
+      // tokens per the ARIA spec — "Ctrl+1" is the canonical form. Mirrors
+      // the title-into-AT-channel pattern used for disabled stubs (#181 /
+      // #183 / #184 / #272), but routed through the correct attribute for
+      // the keyboard-shortcut case rather than rewriting aria-label.
+      aria-keyshortcuts={shortcut}
       title={title}
       data-active={active ? "true" : "false"}
       tabIndex={tabIndex}
