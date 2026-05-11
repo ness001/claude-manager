@@ -27,6 +27,12 @@
    * floor). #a16207 on white ≈ 4.5:1, comfortably above the bar. */
   --color-status-yellow-text: #a16207;
   --color-status-red: #dc2626;
+  /* Darker red for use as TEXT on tinted-red backgrounds (e.g. the
+   * ToolCallBlock error badge: bg-status-red/15 over bg-bg-secondary blends
+   * to ~#f7d6d6, on which the stripe red #dc2626 is ~4.4:1 — fails WCAG
+   * 1.4.3 (4.5:1 normal-text floor) at 10px. #b91c1c on that blend ≈ 5.6:1,
+   * comfortably above the bar. Mirrors --color-status-yellow-text. */
+  --color-status-red-text: #b91c1c;
   --color-status-blue: #2563eb;
   --color-status-amber: #d97706;
   /* Semantic aliases — McpServerCard / McpServerForm reference these names
@@ -63,6 +69,11 @@
    * so the StatCard component can reference it independently. */
   --color-status-yellow-text: #f9e2af;
   --color-status-red: #f38ba8;
+  /* Dark theme: the existing pale red #f38ba8 over the bg-status-red/15 +
+   * dark bg blend already exceeds 6:1, so reuse it. Token kept distinct
+   * from the stripe so the ToolCallBlock error-badge can reference it
+   * independently. Mirrors --color-status-yellow-text. */
+  --color-status-red-text: #f38ba8;
   --color-status-blue: #89b4fa;
   --color-status-amber: #fab387;
   --color-status-success: #a6e3a1;
