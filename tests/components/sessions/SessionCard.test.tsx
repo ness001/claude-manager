@@ -92,7 +92,7 @@ describe("SessionCard", () => {
   const stateCases: Array<{ state: SessionState; bg: string; pulse: boolean }> = [
     { state: "alive", bg: "bg-status-green", pulse: true },
     { state: "ended", bg: "bg-text-muted", pulse: false },
-    { state: "orphaned", bg: "bg-status-yellow", pulse: false },
+    { state: "orphaned", bg: "bg-status-amber", pulse: false },
     { state: "archived", bg: "bg-border-strong", pulse: false },
   ];
   it.each(stateCases)(
@@ -106,6 +106,16 @@ describe("SessionCard", () => {
       expect(dot.className.includes("animate-pulse")).toBe(pulse);
     },
   );
+
+  it("orphaned dot uses contrast-safe status-amber, not bare status-yellow (WCAG 1.4.11)", () => {
+    // The original `bg-status-yellow` (#eab308) on the white card-bg
+    // gave ~1.6:1 contrast — well below the 3:1 non-text floor.
+    // Pin the negative so a future refactor can't silently regress.
+    render(<SessionCard session={makeSession({ state: "orphaned" })} selected={false} />);
+    const dot = screen.getByTestId("status-dot");
+    expect(dot.className).toContain("bg-status-amber");
+    expect(dot.className).not.toMatch(/bg-status-yellow(?!-)/);
+  });
 
   it("renders tag pills, time-ago text, and message count", () => {
     const startedAt = new Date(Date.now() - 5 * 60_000).toISOString();
