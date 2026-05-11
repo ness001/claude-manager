@@ -152,7 +152,23 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           {plugin.marketplace}
         </div>
 
-        <p className="line-clamp-2 text-xs text-text-secondary">
+        <p
+          // Plugin descriptions are double-clipped: JS `truncate(_, 120)`
+          // first, then CSS `line-clamp-2` on top — the user-visible string
+          // is whichever bound hits first. Without `title`, sighted users
+          // have no way to recover the hidden tail (the row is non-text-
+          // selectable inside the parent <button>, and the detail pane is
+          // multiple clicks away). Mirror the visible string into `title`
+          // so hover surfaces the full description. Mirrors the
+          // truncate+title family already applied to the plugin name (line
+          // 100 above), SkillCard skill-path (PR #167), and
+          // RecentSessions / SystemHealth (PRs #170/#171/#175/#176/#179).
+          // Use the *original* description (not the JS-truncated one) so
+          // hover always shows the complete text.
+          title={plugin.description}
+          data-testid="plugin-description"
+          className="line-clamp-2 text-xs text-text-secondary"
+        >
           {truncate(plugin.description, 120)}
         </p>
 
