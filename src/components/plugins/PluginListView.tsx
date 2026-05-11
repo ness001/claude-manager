@@ -202,22 +202,34 @@ export function PluginListView() {
           No results for "{searchQuery}"
         </div>
       ) : (
-        <div
+        // WCAG 1.3.1 (Info and Relationships): the plugin cards form a
+        // list of N installed plugins, but were previously emitted as a
+        // flat <div><div/></div> sequence — SR users navigating by lists
+        // (NVDA "L", JAWS "L", VoiceOver rotor → Lists) heard nothing for
+        // this collection and the count ("list, N items") was lost.
+        // Promote to a labeled <ul> + <li> wrappers. Visible grid layout
+        // is preserved (display: grid works on <ul>; the existing
+        // grid-cols / gap utilities carry over). Mirrors PR #235
+        // (SkillsListView), ModelDonut donut-legend (aria-label "Model
+        // usage breakdown"), and SystemHealth indicator list (#230).
+        <ul
           data-testid="plugin-grid"
+          aria-label="Installed plugins"
           className="grid grid-cols-1 gap-3 overflow-auto md:grid-cols-2 xl:grid-cols-3"
         >
           {filtered.map((p) => (
-            <PluginCard
-              key={`${p.name}@${p.marketplace}@${p.installPath}`}
-              plugin={p}
-              selected={
-                selectedPlugin != null &&
-                selectedPlugin.name === p.name &&
-                selectedPlugin.installPath === p.installPath
-              }
-            />
+            <li key={`${p.name}@${p.marketplace}@${p.installPath}`}>
+              <PluginCard
+                plugin={p}
+                selected={
+                  selectedPlugin != null &&
+                  selectedPlugin.name === p.name &&
+                  selectedPlugin.installPath === p.installPath
+                }
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </section>
   );
