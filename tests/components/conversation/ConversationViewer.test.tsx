@@ -190,6 +190,28 @@ describe("ConversationViewer", () => {
     expect(input.value).toBe("1");
   });
 
+  // The floating turn-nav widget (`absolute bottom-2 right-3`, ~28px tall)
+  // overlaps the bottom of the conversation scroller. Without bottom padding
+  // on the scroller the last 36-40px of content sit underneath the floating
+  // overlay, so the final assistant/tool message is visually clipped and
+  // unreachable even after scrolling fully down. Reserve `pb-14` (≈56px,
+  // > widget+offset) when totalTurns>0; omit it when there's no widget.
+  it("scroller has bottom padding to clear the floating turn-nav overlay", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-nav"));
+    const scroller = screen.getByTestId("conversation-scroller");
+    expect(scroller.className).toContain("pb-14");
+  });
+
+  it("scroller has no extra bottom padding when there are no turns", async () => {
+    invokeMock.mockResolvedValue("");
+    render(<ConversationViewer path="/fake.jsonl" />);
+    const scroller = await screen.findByTestId("conversation-scroller");
+    expect(screen.queryByTestId("turn-nav")).toBeNull();
+    expect(scroller.className).not.toContain("pb-14");
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): the previous aria-label "Jump to
   // turn" gave SR users the field's purpose but NOT the legal range.
   // The visible "/ N" sibling is not programmatically associated with
