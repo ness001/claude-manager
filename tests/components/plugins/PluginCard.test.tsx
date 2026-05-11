@@ -265,4 +265,36 @@ describe("PluginCard", () => {
     expect(span.className).toContain("truncate");
     expect(span.getAttribute("title")).toBe(longName);
   });
+
+  // Defect: counts rendered as "1 skills" / "1 agents" / "1 hooks" — bare
+  // plurals with no n=1 special-case. Mirrors PR #87 (SessionCard message
+  // count), PR #90 (SystemHealth MCP row), PR #133 (RecentSessions msg count).
+  describe("count pluralization", () => {
+    it.each([
+      [0, "0 skills"],
+      [1, "1 skill"],
+      [2, "2 skills"],
+    ])("skill count: %i → %s", (n, expected) => {
+      render(<PluginCard plugin={makePlugin({ skillCount: n })} selected={false} />);
+      expect(screen.getByTestId("skill-count").textContent?.trim()).toBe(expected);
+    });
+
+    it.each([
+      [0, "0 agents"],
+      [1, "1 agent"],
+      [2, "2 agents"],
+    ])("agent count: %i → %s", (n, expected) => {
+      render(<PluginCard plugin={makePlugin({ agentCount: n })} selected={false} />);
+      expect(screen.getByTestId("agent-count").textContent?.trim()).toBe(expected);
+    });
+
+    it.each([
+      [0, "0 hooks"],
+      [1, "1 hook"],
+      [2, "2 hooks"],
+    ])("hook count: %i → %s", (n, expected) => {
+      render(<PluginCard plugin={makePlugin({ hookCount: n })} selected={false} />);
+      expect(screen.getByTestId("hook-count").textContent?.trim()).toBe(expected);
+    });
+  });
 });
