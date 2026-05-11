@@ -66,13 +66,23 @@ describe("PluginCard", () => {
     { state: "active", bg: "bg-status-green" },
     { state: "disabled", bg: "bg-text-muted" },
     { state: "broken", bg: "bg-status-red" },
-    { state: "orphaned", bg: "bg-status-yellow" },
+    { state: "orphaned", bg: "bg-status-amber" },
     { state: "update-available", bg: "bg-status-amber" },
   ];
   it.each(stateCases)("status dot color — $state", ({ state, bg }) => {
     render(<PluginCard plugin={makePlugin({ state })} selected={false} />);
     const dot = screen.getByTestId("status-dot");
     expect(dot.className).toContain(bg);
+  });
+
+  it("orphaned dot uses contrast-safe status-amber, not bare status-yellow (WCAG 1.4.11)", () => {
+    // The original `bg-status-yellow` (#eab308) on the white card-bg
+    // gave ~1.6:1 contrast — well below the 3:1 non-text floor. Pin
+    // the negative so a future refactor can't silently regress.
+    render(<PluginCard plugin={makePlugin({ state: "orphaned" })} selected={false} />);
+    const dot = screen.getByTestId("status-dot");
+    expect(dot.className).toContain("bg-status-amber");
+    expect(dot.className).not.toMatch(/bg-status-yellow(?!-)/);
   });
 
   // WCAG 1.4.1 (Use of Color) + 4.1.2 (Name, Role, Value): the colored dot
