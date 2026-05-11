@@ -108,4 +108,23 @@ describe("PluginAgentsTab", () => {
     const row = screen.getByTestId("agent-row");
     expect(row.querySelector("dl")).toBeNull();
   });
+
+  // Layout + UX truncation recovery: long bundled-agent names (60+ chars
+  // are common) used to wrap and break the card layout. `truncate` keeps
+  // the row to one line; the matching `title` lets sighted users hover
+  // to read the hidden tail. Same family as PR #167/#170/#171/#175/#223/
+  // #224 + PluginCard name.
+  it("agent name span has truncate + title for layout/UX recovery", () => {
+    const longName =
+      "anthropic-experimental-conversational-memory-with-vector-embeddings-agent";
+    render(
+      <PluginAgentsTab
+        agents={[{ name: longName, description: "x" }]}
+      />,
+    );
+    const span = screen.getByTestId("agent-name");
+    expect(span.className).toContain("truncate");
+    expect(span.getAttribute("title")).toBe(longName);
+    expect(span.textContent).toBe(longName);
+  });
 });

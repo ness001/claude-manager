@@ -27,7 +27,18 @@ export function PluginAgentsTab({ agents }: PluginAgentsTabProps) {
           data-testid="agent-row"
           className="flex flex-col gap-0.5 rounded-md border border-border p-2"
         >
-          <span className="text-sm font-medium text-text-primary">
+          {/* Name row: `truncate` keeps long agent names from breaking the
+              card layout (some bundled agents have 60+ char qualified names),
+              and the matching `title` lets sighted users recover the hidden
+              tail on hover. Same family as PR #167 (SkillCard path), PR #170
+              (RecentSessions), PR #171 (SystemHealth), PR #175 (SessionCard),
+              PR #223 (SkillCard name), PR #224 (McpServerCard name),
+              PluginCard name. */}
+          <span
+            data-testid="agent-name"
+            className="truncate text-sm font-medium text-text-primary"
+            title={a.name}
+          >
             {a.name}
           </span>
           <span className="text-xs text-text-secondary">{a.description}</span>
