@@ -7,6 +7,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 
 const invokeMock = vi.fn();
@@ -87,6 +88,35 @@ describe("McpPanel", () => {
     expect(screen.getByTestId("scope-header-project").textContent).toBe(
       "Project Scope",
     );
+  });
+
+  // WCAG 1.3.1 (Info and Relationships): the per-scope cards form a list
+  // of N MCP servers but were previously emitted as flat sibling <div>s
+  // alongside the <h2> scope header — SR users navigating by lists (NVDA
+  // "L", JAWS "L", VoiceOver rotor → Lists) heard nothing for these
+  // collections and the count was lost. Promote each scope group to a
+  // <ul aria-labelledby={scope-header}> so the rotor surfaces "list, N
+  // items" with the scope header text as the list's accessible name.
+  // Mirrors PR #235 (SkillsListView) and PR #236 (PluginListView).
+  it("each scope group wraps cards in a labelled <ul> (WCAG 1.3.1)", () => {
+    useMcpStore.setState({
+      servers: [FIX_CONNECTED, FIX_DISCONNECTED, FIX_HTTP],
+    });
+    render(<McpPanel />);
+    // Each visible scope must have its own <ul> labelled by its <h2>.
+    const userList = screen.getByTestId("scope-list-user");
+    expect(userList.tagName).toBe("UL");
+    expect(userList.getAttribute("aria-labelledby")).toBe("scope-header-user");
+    // The rotor lookup that matters: getByRole("list", { name: ... })
+    // resolves the aria-labelledby chain.
+    const userByRole = screen.getByRole("list", { name: /User Scope/ });
+    expect(userByRole).toBe(userList);
+    // Each card nests in its own listitem rather than sitting beside it.
+    const items = within(userList).getAllByRole("listitem");
+    expect(items.length).toBeGreaterThan(0);
+    expect(
+      items[0].querySelector("[data-testid='mcp-server-card']"),
+    ).not.toBeNull();
   });
 
   it("search filters by name + command + args (stdio) + url (sse/http) per spec §17.7", () => {
