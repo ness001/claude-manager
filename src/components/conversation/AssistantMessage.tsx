@@ -65,6 +65,26 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeKatex, rehypeHighlight]}
           components={{
+            // WCAG 2.1.1 (Keyboard): the markdown <pre> blocks have
+            // overflow-auto (long shell lines / JSON dumps clip horizontally),
+            // so mouse users can scroll the overflow but keyboard-only users
+            // cannot — <pre> is not focusable by default and `tabIndex` is a
+            // DOM property, not something Tailwind's `[&_pre]:` arbitrary
+            // selector can set. Pass an explicit override that adds
+            // tabIndex=0 + an accessible name + a focus-visible ring so
+            // keyboard users can Tab into the block and arrow-scroll. Mirrors
+            // the same fix on `conversation-scroller` (PR #149-ish family).
+            pre: ({ children, ...rest }) => (
+              <pre
+                {...rest}
+                tabIndex={0}
+                role="region"
+                aria-label="Code block"
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                {children}
+              </pre>
+            ),
             // Hand off external links to the OS via the Tauri shell plugin.
             // Without this, clicking a link inside the assistant's markdown
             // would navigate the entire Tauri WebView away to that URL —
