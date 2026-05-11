@@ -96,6 +96,24 @@ describe("ActivityChart", () => {
     expect(label).toContain("no activity in window");
   });
 
+  // WCAG 1.3.1 (Info and Relationships) / 2.4.6 (Headings and Labels):
+  // sibling dashboard sections (SystemHealth, ModelDonut, RecentSessions,
+  // QuickActions) all expose an <h3>"Section Name"</h3> heading so SR
+  // users can navigate to them via the headings list (NVDA "H", JAWS "H").
+  // ActivityChart was the only one missing — the chart was effectively
+  // skipped over in the rotor. Mirrors PRs #61, #63, #64.
+  it("section label uses an <h3> heading (WCAG 1.3.1 / 2.4.6) — populated", () => {
+    render(<ActivityChart data={makeData(7)} />);
+    const heading = screen.getByRole("heading", { name: "Activity", level: 3 });
+    expect(heading.tagName).toBe("H3");
+  });
+
+  it("section label uses an <h3> heading (WCAG 1.3.1 / 2.4.6) — empty", () => {
+    render(<ActivityChart data={[]} />);
+    const heading = screen.getByRole("heading", { name: "Activity", level: 3 });
+    expect(heading.tagName).toBe("H3");
+  });
+
   it("mounts populated state without console errors", () => {
     const errs: unknown[] = [];
     const orig = console.error;
