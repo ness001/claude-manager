@@ -112,6 +112,17 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
             <span
               key={tag}
               data-testid="tag-pill"
+              // WCAG 4.1.2 (Name, Role, Value): the visible text is a bare
+              // tag token (e.g. "urgent", "spike", a free-form user label)
+              // — SR users walking the card hear it with no clue what
+              // dimension it describes (could plausibly be a status, a
+              // category, an author, a project). Sighted users infer "tag"
+              // from the pill shape + the row's pl-4 indent under the name.
+              // Mirror that into the accessible name with a "Tag: …"
+              // prefix. Same opaque-badge pattern as message-count below
+              // (line 144), version-pill (PluginCard), state-pill / model
+              // / messages / entrypoint badges (PRs #247/#250/#252/#271/#279).
+              aria-label={`Tag: ${tag}`}
               className="text-[10px] px-1.5 py-0.5 rounded bg-bg-tertiary text-text-secondary"
             >
               {tag}
