@@ -212,6 +212,27 @@ describe("SkillsListView", () => {
     expect(useNavigationStore.getState().activeSection).toBe("plugins");
   });
 
+  // WCAG 1.3.1 + WAI-ARIA APG (Landmark Regions): <aside> exposes the
+  // implicit `complementary` landmark role. Without an accessible name,
+  // the SR landmarks rotor surfaces an anonymous "complementary" entry —
+  // users can't preview what the side region contains. Mirror the
+  // visible context into the AT channel via aria-label.
+  it("plugins-info-box <aside> exposes a 'complementary' landmark with an accessible name", () => {
+    render(<SkillsListView />);
+    const aside = screen.getByTestId("plugins-info-box");
+    expect(aside.tagName).toBe("ASIDE");
+    expect(aside.getAttribute("aria-label")).toBe(
+      "Plugin-bundled skills info",
+    );
+    // getByRole("complementary", { name }) confirms the labelled landmark
+    // is reachable via the rotor — the contract that matters for SR users.
+    expect(
+      screen.getByRole("complementary", {
+        name: "Plugin-bundled skills info",
+      }),
+    ).toBe(aside);
+  });
+
   it("clicking Create Skill resolves $HOME before passing to openShell (no literal ~)", async () => {
     // Regression: openShell does not expand `~`, so passing the literal
     // `~/.claude/skills/` silently fails on most platforms. The handler must
