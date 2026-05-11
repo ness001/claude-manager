@@ -133,8 +133,39 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
             >
               {plugin.name}
             </h2>
+            {/* WCAG 4.1.2 (Name, Role, Value): the metadata sub-line is
+              * three values joined by visible middots (e.g. "official · v1.0.0
+              * · active"). SR users hear them as one bare token stream with
+              * no role context — each piece is opaque the same way standalone
+              * marketplace / version / state badges were on PluginCard
+              * (PRs #246/#247/#279). Sighted users infer the dimensions from
+              * the layout convention (the "v" prefix on the middle, the
+              * lowercase status on the right). Wrap each value in a span
+              * carrying an aria-label that names its dimension; keep the
+              * decorative middot separators aria-hidden so SR users don't
+              * hear "middle dot" noise between values. The visible text and
+              * layout are unchanged. */}
             <div className="text-xs text-text-muted">
-              {plugin.marketplace} · v{plugin.version} · {plugin.state}
+              <span
+                data-testid="plugin-detail-marketplace"
+                aria-label={`Marketplace: ${plugin.marketplace}`}
+              >
+                {plugin.marketplace}
+              </span>
+              <span aria-hidden="true"> · </span>
+              <span
+                data-testid="plugin-detail-version"
+                aria-label={`Version: ${plugin.version}`}
+              >
+                v{plugin.version}
+              </span>
+              <span aria-hidden="true"> · </span>
+              <span
+                data-testid="plugin-detail-state"
+                aria-label={`State: ${plugin.state}`}
+              >
+                {plugin.state}
+              </span>
             </div>
           </div>
           {/* WAI-ARIA Toolbar pattern: Open in File Browser + Open in VS

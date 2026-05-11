@@ -204,6 +204,44 @@ describe("PluginDetailView", () => {
     }
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): the metadata sub-line under the
+  // plugin name renders three opaque values joined by middots
+  // ("official · v1.0.0 · active"). SR users hear them as a flat token
+  // stream with no role context. Each value should expose its dimension
+  // via aria-label (Marketplace / Version / State) and the decorative
+  // middots should be aria-hidden so SR users don't hear "middle dot"
+  // noise. Mirrors the opaque-badge sweep on PluginCard (PRs #246/#247/
+  // #279) and SessionInfoBar (#250/#252/#271).
+  it("metadata line splits into labeled spans (Marketplace/Version/State) with hidden middots", () => {
+    render(
+      <PluginDetailView
+        plugin={makeDetail({
+          marketplace: "community",
+          version: "2.4.1",
+          state: "update-available",
+        })}
+      />,
+    );
+    expect(
+      screen.getByTestId("plugin-detail-marketplace").getAttribute("aria-label"),
+    ).toBe("Marketplace: community");
+    expect(
+      screen.getByTestId("plugin-detail-version").getAttribute("aria-label"),
+    ).toBe("Version: 2.4.1");
+    expect(
+      screen.getByTestId("plugin-detail-state").getAttribute("aria-label"),
+    ).toBe("State: update-available");
+    // Visible text is unchanged: "v" prefix on version, the lowercase
+    // values otherwise — the metadata div's textContent reads as the
+    // original "<marketplace> · v<version> · <state>" cadence.
+    expect(
+      screen
+        .getByTestId("plugin-detail-marketplace")
+        .parentElement?.textContent?.trim()
+        .replace(/\s+/g, " "),
+    ).toBe("community · v2.4.1 · update-available");
+  });
+
   // WAI-ARIA APG "Tabs" pattern (automatic activation): the tablist needs
   // roving tabindex + arrow / Home / End key support, and the panel must
   // declare role=tabpanel + aria-labelledby pointing at the active tab.
