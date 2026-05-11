@@ -198,14 +198,21 @@ export function SkillsListView() {
           No results for "{searchQuery}"
         </div>
       ) : (
-        <div
+        // WCAG 1.3.1 (Info and Relationships): a visible collection of related items
+        // must expose list semantics so SR list-rotor (NVDA/JAWS "L", VoiceOver
+        // rotor → Lists) can navigate and announce count. Mirrors PR #236
+        // (PluginListView grid → labeled <ul>) and PR #235 (SkillCard collection).
+        <ul
           data-testid="skill-grid"
+          aria-label="Custom skills"
           className="flex flex-col gap-2 overflow-auto"
         >
           {filtered.map((s) => (
-            <SkillCard key={s.dirPath} skill={s} />
+            <li key={s.dirPath}>
+              <SkillCard skill={s} />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       <aside
