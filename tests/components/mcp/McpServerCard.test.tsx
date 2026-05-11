@@ -515,4 +515,44 @@ describe("McpServerCard", () => {
     expect(span.className).toContain("truncate");
     expect(span.getAttribute("title")).toBe(longName);
   });
+
+  // WCAG 4.1.2 (Name, Role, Value): the type and scope pills render bare
+  // values ("stdio" / "user") with no semantic prefix. SR users hear
+  // those as opaque strings without knowing they describe transport type
+  // and config scope. aria-label exposes the role+value as a self-
+  // contained pair while the visible text stays the same.
+  // status-pill is intentionally not relabeled — its info is already
+  // covered by the StatusDot's `aria-label="status: <state>"`, so adding
+  // a "Status:" prefix here would cause a triple-announcement.
+  // Mirrors PR #228 (SessionInfoBar model/messages/entrypoint badges) +
+  // the disabled-stub aria-label family (#181/#183/#184/#222).
+  it("type + scope pills expose semantic role via aria-label (WCAG 4.1.2)", () => {
+    render(
+      <McpServerCard
+        server={FIX_CONNECTED}
+        onEdit={noop}
+        onRemove={noop}
+      />,
+    );
+    expect(screen.getByTestId("type-pill").getAttribute("aria-label")).toBe(
+      `Type: ${FIX_CONNECTED.type}`,
+    );
+    expect(screen.getByTestId("scope-pill").getAttribute("aria-label")).toBe(
+      `Scope: ${FIX_CONNECTED.scope}`,
+    );
+    // Visible text remains exactly the bare value (truncation is the
+    // SR-only enrichment, not a layout change).
+    expect(screen.getByTestId("type-pill").textContent).toBe(
+      FIX_CONNECTED.type,
+    );
+    expect(screen.getByTestId("scope-pill").textContent).toBe(
+      FIX_CONNECTED.scope,
+    );
+    // status-pill is the deliberate omission — assert it has no aria-label
+    // so future maintainers don't "complete the set" without reading the
+    // StatusDot duplicate-announcement comment first.
+    expect(
+      screen.getByTestId("status-pill").hasAttribute("aria-label"),
+    ).toBe(false);
+  });
 });
