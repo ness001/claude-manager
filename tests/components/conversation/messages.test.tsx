@@ -589,4 +589,30 @@ describe("SummaryBanner", () => {
     expect(label.id).toBe(labelId);
     expect(label.textContent).toBe("Session summary");
   });
+
+  // Defect: session summaries originate from the JSONL `summary` field
+  // written by Claude Code's compaction step, which routinely contains
+  // multi-line text (paragraph breaks separating "what was done" / "why" /
+  // "next steps", or markdown bullets). The banner body span inherited
+  // `white-space: normal`, so every newline collapsed into a single space
+  // and a 6-line summary rendered as one undifferentiated wrapped paragraph
+  // — the structural cues the writer put in were silently destroyed. Pin
+  // the body span to `whitespace-pre-wrap` so newlines survive layout.
+  // Mirrors UserMessage line 37.
+  it("preserves newlines in multi-line summary text (whitespace-pre-wrap)", () => {
+    const multi = "Did A.\n\nDid B.\n- bullet 1\n- bullet 2";
+    render(<SummaryBanner text={multi} />);
+    const b = screen.getByTestId("summary-banner");
+    // Find the body span — it's the sibling of the label that carries the text.
+    const label = screen.getByTestId("summary-banner-label");
+    const bodyCandidates = Array.from(b.querySelectorAll("span")).filter(
+      (s) => s !== label,
+    );
+    expect(bodyCandidates.length).toBeGreaterThan(0);
+    const body = bodyCandidates[0]!;
+    expect(body.className).toContain("whitespace-pre-wrap");
+    // textContent preserves newlines from the React tree — proves the JSX
+    // emitted them verbatim (collapsing happens in CSS layout, not the DOM).
+    expect(body.textContent).toBe(multi);
+  });
 });
