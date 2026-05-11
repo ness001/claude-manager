@@ -206,6 +206,21 @@ describe("PluginCard", () => {
     expect(screen.getByTestId("update-pill")).toBeInTheDocument();
   });
 
+  // WCAG 4.1.2 (Name, Role, Value) — bare "Update" is opaque to SR users
+  // (could be a button command, section label, or count). Mirror the
+  // amber-pill cue ("update available") into the accessible name.
+  it("update-pill announces 'Update available' to assistive tech", () => {
+    render(
+      <PluginCard
+        plugin={makePlugin({ state: "update-available" })}
+        selected={false}
+      />,
+    );
+    expect(
+      screen.getByTestId("update-pill").getAttribute("aria-label"),
+    ).toBe("Update available");
+  });
+
   // WCAG 2.4.7 (Focus Visible): the card body button is the keyboard target
   // for selecting a plugin. Without focus-visible:ring, tabbing through the
   // plugin list gives no indication of the current row. Mirrors the family
