@@ -236,4 +236,33 @@ describe("SessionListPanel", () => {
     expect(panel.tagName).toBe("ASIDE");
     expect(panel.getAttribute("aria-label")).toBe("Session list");
   });
+
+  // WCAG 1.3.1 (Info and Relationships): each group's cards form a labelled
+  // collection under the <h3> group header. Without a <ul>/<li> wrapper, SR
+  // rotor's Lists view (NVDA/JAWS "L", VoiceOver rotor → Lists) heard
+  // nothing for the cards and the per-group count was lost. Mirrors PRs
+  // #235/#236/#237/#238/#239/#240/#241.
+  it("non-virtual session groups wrap cards in <ul aria-labelledby>/<li>", () => {
+    useSessionStore.setState({
+      sessions: [
+        makeSession({ sessionId: "p1", isPinned: true, displayName: "PinOne" }),
+        makeSession({ sessionId: "p2", isPinned: true, displayName: "PinTwo" }),
+        makeSession({ sessionId: "n1", isPinned: false, displayName: "NormOne" }),
+      ],
+      viewMode: "my",
+    });
+    render(<SessionListPanel />);
+    const pinnedList = screen.getByTestId("session-group-list-pinned");
+    expect(pinnedList.tagName).toBe("UL");
+    const pinnedHeader = pinnedList.getAttribute("aria-labelledby");
+    expect(pinnedHeader).toBe("session-group-pinned");
+    const headerEl = document.getElementById(pinnedHeader!);
+    expect(headerEl?.tagName).toBe("H3");
+    expect(headerEl?.textContent).toContain("Pinned");
+    const items = pinnedList.querySelectorAll(":scope > li");
+    expect(items).toHaveLength(2);
+    items.forEach((li) => {
+      expect(li.querySelector("[data-testid='session-card']")).not.toBeNull();
+    });
+  });
 });

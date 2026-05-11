@@ -105,4 +105,20 @@ describe("SessionDetailPanel", () => {
     expect(ph.getAttribute("role")).toBe("status");
     expect(ph.getAttribute("aria-live")).toBe("polite");
   });
+
+  // WCAG 2.4.1 (Bypass Blocks) + 1.3.1 (Info and Relationships):
+  // SessionListPanel exposes <aside aria-label="Session list">. Its sibling
+  // detail pane was just a <div> — no landmark, no name — so SR users
+  // could jump to the list region but not the detail region. Promote
+  // wrapper to <section aria-label="Session detail">.
+  it("detail pane is a named region landmark (<section aria-label='Session detail'>)", () => {
+    const s = makeSession({ sessionId: "selected", state: "ended" });
+    useSessionStore.setState({ sessions: [s], selectedId: "selected" });
+    render(<SessionDetailPanel />);
+    const panel = screen.getByTestId("session-detail-panel");
+    expect(panel.tagName).toBe("SECTION");
+    expect(panel.getAttribute("aria-label")).toBe("Session detail");
+    const byRole = screen.getByRole("region", { name: "Session detail" });
+    expect(byRole).toBe(panel);
+  });
 });

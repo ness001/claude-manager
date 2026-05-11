@@ -77,21 +77,30 @@ export function SidebarRail() {
       aria-label="Primary"
       className="flex h-full w-12 flex-col bg-sidebar-bg"
     >
-      {ITEMS.map(({ section, label, Icon, shortcut }, idx) => (
-        <SidebarRailItem
-          key={section}
-          label={label}
-          Icon={Icon}
-          shortcut={shortcut}
-          active={activeSection === section}
-          tabIndex={activeSection === section ? 0 : -1}
-          onClick={() => navigateTo(section)}
-          onKeyDown={(e) => onKeyDown(e, idx)}
-          buttonRef={(el) => {
-            itemRefs.current[idx] = el;
-          }}
-        />
-      ))}
+      {/* WAI-ARIA APG navigation pattern + WCAG 1.3.1 (Info and Relationships):
+          a <nav> rail of N items should expose its links as a list so the SR
+          rotor surfaces "navigation, Primary, list, 6 items" — without the
+          <ul>/<li> wrapper, the 6 buttons are flat siblings inside <nav> and
+          the count is lost. Mirrors PRs #235/#236/#237/#238/#239/#240
+          (collection containers). The flex column layout is element-agnostic. */}
+      <ul className="flex flex-col">
+        {ITEMS.map(({ section, label, Icon, shortcut }, idx) => (
+          <li key={section}>
+            <SidebarRailItem
+              label={label}
+              Icon={Icon}
+              shortcut={shortcut}
+              active={activeSection === section}
+              tabIndex={activeSection === section ? 0 : -1}
+              onClick={() => navigateTo(section)}
+              onKeyDown={(e) => onKeyDown(e, idx)}
+              buttonRef={(el) => {
+                itemRefs.current[idx] = el;
+              }}
+            />
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }

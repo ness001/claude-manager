@@ -191,4 +191,21 @@ describe("SidebarRail", () => {
       expect(svg!.getAttribute("aria-hidden")).toBe("true");
     }
   });
+
+  // WAI-ARIA APG navigation pattern + WCAG 1.3.1 (Info and Relationships):
+  // a <nav> rail of N items should expose its links/buttons as a list so
+  // SR rotor users hear "navigation, Primary, list, 6 items" rather than
+  // "navigation, Primary" with the item count lost. Mirrors PRs #235/#236/
+  // #237/#238/#239/#240 (collection containers).
+  it("rail items are wrapped in a <ul>/<li> inside the <nav> (WCAG 1.3.1)", () => {
+    render(<SidebarRail />);
+    const nav = screen.getByRole("navigation", { name: "Primary" });
+    const list = nav.querySelector("ul");
+    expect(list).not.toBeNull();
+    const items = list!.querySelectorAll(":scope > li");
+    expect(items).toHaveLength(6);
+    items.forEach((li) => {
+      expect(li.querySelector("button")).not.toBeNull();
+    });
+  });
 });
