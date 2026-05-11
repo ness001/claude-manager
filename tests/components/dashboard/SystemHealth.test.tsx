@@ -98,6 +98,29 @@ describe("SystemHealth", () => {
     });
   });
 
+  // Defect: HEAD on api.anthropic.com/v1 commonly returns 405 Method Not
+  // Allowed (the edge rejects HEAD on /v1 root) or 404. Both prove the
+  // server is reachable, but the previous code only mapped {res.ok || 401
+  // || 403} → "ok" so the indicator falsely showed "Down" for users on
+  // perfectly working networks. The indicator measures *reachability*,
+  // not endpoint correctness — any HTTP response means DNS resolved, the
+  // TCP/TLS handshake completed, and the server answered.
+  it.each([
+    ["405 Method Not Allowed", 405],
+    ["404 Not Found", 404],
+    ["500 Internal Server Error", 500],
+    ["502 Bad Gateway", 502],
+  ])("API check treats %s as reachable (ok), not Down", async (_label, status) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status } as Response),
+    );
+    render(<SystemHealth apiCheckUrl="http://example.test/v1" />);
+    await waitFor(() => {
+      expect(screen.getByTestId("health-api").getAttribute("data-status")).toBe("ok");
+    });
+  });
+
   // Defect: a stalled HEAD probe (network never responds) used to leave the
   // dot stuck on "Checking…" forever. Fix adds an 8s AbortController-driven
   // timeout that flips the dot to "fail" so the indicator stays actionable.

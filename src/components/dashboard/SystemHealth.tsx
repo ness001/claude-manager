@@ -101,8 +101,26 @@ export function SystemHealth({
           signal: controller.signal,
         });
         if (cancelled) return;
-        // 401/403 still mean the API is reachable — surface as OK.
-        setApiStatus(res.ok || res.status === 401 || res.status === 403 ? "ok" : "fail");
+        // The indicator measures *reachability* of api.anthropic.com, not
+        // endpoint correctness. Any HTTP response (2xx, 3xx, 4xx, 5xx)
+        // proves the server answered: DNS resolved, TCP/TLS handshake
+        // completed, and a status line came back. Only network-level
+        // failures (DNS NXDOMAIN, connection refused, TLS error,
+        // captive-portal hijack, timeout) should surface as "Down".
+        //
+        // The previous code treated only `res.ok || 401 || 403` as OK, so:
+        //   - HEAD → 405 Method Not Allowed (common — many edges reject
+        //     HEAD on /v1) → showed "API: Down" even though the user's
+        //     CLI worked.
+        //   - HEAD → 404 (the bare /v1 root has no handler at some edges)
+        //     → showed "API: Down".
+        //   - Any 5xx (transient upstream blip) → showed "API: Down" until
+        //     the user navigated away and back.
+        // All four are reachability successes — the API is up; it's the
+        // probe URL or method that the server happens to reject.
+        // Discard `res.ok` and `res.status` checks: if we got here, the
+        // server answered.
+        setApiStatus("ok");
       } catch {
         // AbortError (timeout or unmount) and network errors both → fail.
         // Unmount is handled by the cancelled flag below so we don't write state.
