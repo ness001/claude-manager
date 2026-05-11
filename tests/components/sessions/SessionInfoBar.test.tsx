@@ -507,4 +507,21 @@ describe("SessionInfoBar", () => {
       screen.getByTestId("state-pill").getAttribute("aria-label"),
     ).toBe("Session state: Ended");
   });
+
+  it("orphaned state-pill dot uses contrast-safe status-amber, not bare status-yellow (WCAG 1.4.11)", () => {
+    // The original `bg-status-yellow` (#eab308) on the pill's
+    // `bg-bg-tertiary` (#f1f3f5 light) gave only ~1.65:1 contrast —
+    // well below the 3:1 non-text floor. The dot is the primary
+    // visible cue distinguishing "orphaned" from "ended" (the dot is
+    // aria-hidden so SR users get nothing from it directly). Pin
+    // both positive and negative so a future refactor can't silently
+    // regress.
+    render(<SessionInfoBar session={makeSession({ state: "orphaned" })} />);
+    const pill = screen.getByTestId("state-pill");
+    const dot = pill.querySelector("span[aria-hidden='true']");
+    expect(dot).not.toBeNull();
+    const cls = dot!.getAttribute("class") ?? "";
+    expect(cls).toContain("bg-status-amber");
+    expect(cls).not.toMatch(/bg-status-yellow(?!-)/);
+  });
 });
