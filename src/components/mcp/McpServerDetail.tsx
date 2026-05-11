@@ -13,9 +13,9 @@ interface McpServerDetailProps {
 
 export function McpServerDetail({ server }: McpServerDetailProps) {
   return (
-    <div
+    <dl
       data-testid="mcp-server-detail"
-      className="flex flex-col gap-2 rounded border border-border bg-bg-secondary px-3 py-2 text-xs text-text-secondary"
+      className="flex flex-col gap-2 rounded border border-border bg-bg-secondary px-3 py-2 text-xs text-text-secondary m-0"
     >
       {server.type === "stdio" ? (
         <>
@@ -58,15 +58,23 @@ export function McpServerDetail({ server }: McpServerDetailProps) {
           </ul>
         </Row>
       )}
-    </div>
+    </dl>
   );
 }
 
+// WCAG 1.3.1 (Info and Relationships): each row is a label/value pair
+// (Command/<the cmd>, URL/<the url>, Env/<list>, …). Previously rendered
+// as <span>+<div> with no programmatic association — SR users heard the
+// label and value as two unrelated strings. <dt>/<dd> exposes the
+// term-description relationship so screen readers announce them together
+// and the rotor can navigate them as discrete pairs. Mirrors PR #199
+// (PluginHooksTab) and PR #200 (PluginAgentsTab). The visible row layout
+// is unchanged; `m-0` neutralizes UA-default <dd> indentation.
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className="w-16 shrink-0 text-text-muted">{label}</span>
-      <div className="min-w-0 flex-1 break-all">{children}</div>
+      <dt className="w-16 shrink-0 text-text-muted">{label}</dt>
+      <dd className="min-w-0 flex-1 break-all m-0">{children}</dd>
     </div>
   );
 }
