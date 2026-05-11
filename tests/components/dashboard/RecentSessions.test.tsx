@@ -234,4 +234,25 @@ describe("RecentSessions", () => {
     expect(timeSpan).toBeDefined();
     expect(timeSpan!.hasAttribute("title")).toBe(false);
   });
+
+  // UX: when `startedAt` is 0/missing (e.g. ENDED sessions with no PID
+  // file), `timeAgo()` returns "" — leaving the time-ago slot visually
+  // empty. Render an em-dash placeholder so the slot stays visibly
+  // populated and AT users get a non-empty announcement. Mirrors PR
+  // #210 (SessionCard).
+  it("relative-time span shows an em-dash placeholder when startedAt is 0", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s",
+            displayName: "Whatever",
+            messageCount: 1,
+            startedAt: 0,
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByTestId("recent-session-time").textContent).toBe("—");
+  });
 });
