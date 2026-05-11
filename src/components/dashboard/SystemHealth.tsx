@@ -37,7 +37,26 @@ interface SystemHealthProps {
 
 const STATUS_COLOR: Record<HealthStatus, string> = {
   ok: "bg-status-green",
-  warn: "bg-status-yellow",
+  // WCAG 1.4.11 (Non-text Contrast): the warn dot is a 2x2 (8px) circle
+  // sitting on the white card-bg in light mode. The original
+  // `bg-status-yellow` (#eab308) gives only ~1.6:1 contrast against
+  // #ffffff — well below the 3:1 floor for graphical UI components, so
+  // sighted users in light mode see what is essentially an invisible
+  // dot for the only visual cue distinguishing "warn" from "ok" rows
+  // in the System Health card. The status text fills in the gap for SR
+  // users (each <li> aria-label says "MCP: 0 servers — Warning") but
+  // the visible signal is gone. Swap to `--color-status-amber`
+  // (#d97706 light / #fab387 dark) which already stands for "warning"
+  // in this codebase (PR #293 ActivityChart staleness banner, the
+  // PluginCard update-pill, the McpServerCard "starting" pill) — on
+  // white it gives ~3.36:1, comfortably above the 3:1 non-text floor,
+  // and the dark theme override is unaffected because amber is already
+  // a pale color on dark surfaces. Only swapped for the SystemHealth
+  // dot here; other `bg-status-yellow` sites (orphaned-state SessionCard
+  // / PluginCard / SessionInfoBar dots, ConversationViewer corruption
+  // banner) retain the yellow stripe and will be fixed in their own
+  // PRs to keep blast radius surgical.
+  warn: "bg-status-amber",
   fail: "bg-status-red",
   checking: "bg-text-muted",
 };
