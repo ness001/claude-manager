@@ -122,9 +122,23 @@ export function SkillsListView() {
       </header>
 
       {isLoading && skills.length === 0 ? (
-        <div data-testid="loading-skeleton" className="flex flex-col gap-2">
-          <div className="h-20 animate-pulse rounded-md bg-bg-tertiary" />
-          <div className="h-20 animate-pulse rounded-md bg-bg-tertiary" />
+        // WCAG 4.1.3 (Status Messages): the pulsing rectangles convey
+        // "loading in progress" purely visually — screen readers see only
+        // empty <div>s. Mirrors PR #202 (McpPanel skeleton) + PR #203
+        // (PluginListView skeleton). aria-busy tells AT the region is
+        // being updated; the visually-hidden role="status" announces
+        // "Loading skills…" once; aria-hidden on the placeholders keeps
+        // SR users from traversing empty graphics.
+        <div
+          data-testid="loading-skeleton"
+          aria-busy="true"
+          className="flex flex-col gap-2"
+        >
+          <span role="status" aria-live="polite" className="sr-only">
+            Loading skills…
+          </span>
+          <div aria-hidden="true" className="h-20 animate-pulse rounded-md bg-bg-tertiary" />
+          <div aria-hidden="true" className="h-20 animate-pulse rounded-md bg-bg-tertiary" />
         </div>
       ) : skills.length === 0 ? (
         <div

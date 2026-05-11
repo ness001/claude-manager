@@ -46,6 +46,26 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("SkillsListView", () => {
+  // WCAG 4.1.3 (Status Messages): the loading skeleton's pulsing rectangles
+  // convey "loading in progress" purely visually. Mirrors PR #202 (McpPanel)
+  // and PR #203 (PluginListView) — same defect class, third parallel
+  // location.
+  it("loading skeleton exposes aria-busy + polite status to AT (WCAG 4.1.3)", () => {
+    useSkillStore.setState({ isLoading: true, skills: [] });
+    render(<SkillsListView />);
+    const sk = screen.getByTestId("loading-skeleton");
+    expect(sk.getAttribute("aria-busy")).toBe("true");
+    const status = sk.querySelector("[role='status']");
+    expect(status).not.toBeNull();
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+    expect(status?.textContent).toContain("Loading skills");
+    const pulses = sk.querySelectorAll(".animate-pulse");
+    expect(pulses.length).toBe(2);
+    pulses.forEach((p) => {
+      expect(p.getAttribute("aria-hidden")).toBe("true");
+    });
+  });
+
   it("mounts without console errors", () => {
     const errs: unknown[] = [];
     const orig = console.error;
