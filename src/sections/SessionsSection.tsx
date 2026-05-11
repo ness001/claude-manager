@@ -27,10 +27,21 @@ function SessionListSkeleton() {
       aria-busy="true"
       className="flex h-full w-[260px] shrink-0 flex-col gap-2 border-r border-border bg-sidebar-bg p-3"
     >
+      {/* WCAG 4.1.3 (Status Messages): aria-busy on the wrapper tells AT
+          "this region is being updated" but emits no announcement. Without
+          a polite live region, SR users get no audible cue that a load is
+          in progress when the section mounts — they only hear the cards
+          appear later, with no sense that loading was happening. Mirrors
+          PR #202 (McpPanel skeleton) and PR #203 (PluginListView skeleton);
+          same defect class as the SkillsListView skeleton (loading-skeleton). */}
+      <span role="status" aria-live="polite" className="sr-only">
+        Loading sessions…
+      </span>
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
           data-testid="session-card-skeleton"
+          aria-hidden="true"
           className="h-14 rounded-md bg-bg-tertiary animate-pulse"
         />
       ))}
