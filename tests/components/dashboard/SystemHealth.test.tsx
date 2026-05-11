@@ -144,6 +144,18 @@ describe("SystemHealth", () => {
     expect(heading.tagName).toBe("H3");
   });
 
+  // WCAG 2.4.6 (Headings and Labels) / 1.3.1 (Info and Relationships):
+  // screen-reader users navigating by lists (NVDA "L", JAWS "L") would hear
+  // "list, 4 items" with no clue this is the system-health breakdown — the
+  // visual context (the "System Health" h3 above) is not exposed to AT for
+  // the list itself. Mirrors the labeled-list pattern in ModelDonut
+  // (donut-legend, lines 114-124).
+  it("indicator list has an aria-label so AT rotor users get context", () => {
+    render(<SystemHealth skipApiCheck />);
+    const list = screen.getByRole("list", { name: "System health indicators" });
+    expect(list.tagName).toBe("UL");
+  });
+
   // MCP indicator pluralization. Previously hardcoded to "servers", so a
   // single configured server rendered the ungrammatical "1 servers".
   it.each([
