@@ -362,6 +362,19 @@ function ActionButton({
       disabled={disabled}
       aria-disabled={disabled || undefined}
       title={title}
+      // WCAG 4.1.2 (Name, Role, Value): when a stub is `disabled` with a
+      // `title` hint (e.g. "Coming soon"), the hint is sighted-only —
+      // tooltip-on-hover gives nothing to keyboard/SR users. Mirror the
+      // title into aria-label so SR users hear "View Logs — Coming soon"
+      // instead of "View Logs, button, dimmed". All call sites pass a
+      // string child, so the coercion is straightforward. Mirrors PR #181
+      // (QuickActions), PR #183 (SessionListPanel new-session), PR #184
+      // (SessionInfoBar actions), PluginCard Reinstall/Remove stubs.
+      aria-label={
+        disabled && title && typeof children === "string"
+          ? `${children} — ${title}`
+          : undefined
+      }
       className={`rounded border px-2 py-1 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${cls}`}
     >
       {children}
