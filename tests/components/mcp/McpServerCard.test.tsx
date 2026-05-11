@@ -367,21 +367,21 @@ describe("McpServerCard", () => {
   // `aria-controls` pointing to the disclosed region. Without it, screen
   // readers announce "expanded/collapsed" but users have no programmatic
   // way to know what region this button toggles. The detail panel is
-  // rendered conditionally, so the controlled element only exists in the
-  // DOM when expanded — the contract still requires the id to point at
-  // the panel when present.
-  it("expand-toggle has aria-controls pointing to the detail panel", () => {
+  // rendered conditionally, so to satisfy the WAI-ARIA constraint that
+  // every IDREF must resolve to an element in the DOM, aria-controls is
+  // emitted only while the panel exists. Mirrors PR #189 (ToolCallBlock).
+  it("expand-toggle has aria-controls pointing to the detail panel only while expanded", () => {
     render(
       <McpServerCard server={FIX_CONNECTED} onEdit={noop} onRemove={noop} />,
     );
     const btn = screen.getByTestId("expand-toggle");
+    // Default state is collapsed → no panel, no aria-controls (no broken
+    // IDREF).
+    expect(btn.hasAttribute("aria-controls")).toBe(false);
+    // Expand → aria-controls reappears AND resolves to the detail panel.
+    fireEvent.click(btn);
     const controlsId = btn.getAttribute("aria-controls");
     expect(controlsId).toBeTruthy();
-    // While collapsed, no element with that id exists yet.
-    expect(document.getElementById(controlsId!)).toBeNull();
-    // Expand → the controlled element with the matching id is in the DOM.
-    fireEvent.click(btn);
-    expect(btn.getAttribute("aria-controls")).toBe(controlsId);
     const panel = document.getElementById(controlsId!);
     expect(panel).not.toBeNull();
     // The panel wraps the McpServerDetail body — sanity-check that some
@@ -389,6 +389,9 @@ describe("McpServerCard", () => {
     // their own testids; the wrapper just needs to contain *something*
     // from the detail subtree).
     expect(panel!.children.length).toBeGreaterThan(0);
+    // Re-collapse → aria-controls drops again.
+    fireEvent.click(btn);
+    expect(btn.hasAttribute("aria-controls")).toBe(false);
   });
 
   // Destructive-confirm UX: when the user clicks Remove, focus must move
