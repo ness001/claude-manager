@@ -135,7 +135,22 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           )}
         </div>
 
-        <div className="text-[11px] text-text-muted">{plugin.marketplace}</div>
+        {/* WCAG 4.1.2 (Name, Role, Value): the visible text is a bare
+          * marketplace identifier ("official", "community", a vendor slug)
+          * — SR users hear it as an opaque token between the plugin name
+          * and the description, with no clue what dimension it describes
+          * (could plausibly be a tag, an author, a category). Sighted
+          * users infer "marketplace" from layout convention. Mirror that
+          * into the accessible name with a "Marketplace: …" prefix. Same
+          * pattern as the version-pill above (line 114) and the model /
+          * messages / entrypoint / state badges (PRs #247/#250/#252/#271). */}
+        <div
+          data-testid="marketplace-label"
+          aria-label={`Marketplace: ${plugin.marketplace}`}
+          className="text-[11px] text-text-muted"
+        >
+          {plugin.marketplace}
+        </div>
 
         <p className="line-clamp-2 text-xs text-text-secondary">
           {truncate(plugin.description, 120)}
