@@ -77,7 +77,13 @@ export function ToolCallBlock({
             <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
               Input
             </div>
-            <pre className="overflow-auto rounded bg-bg-tertiary p-2 text-xs font-mono text-text-secondary">
+            <pre
+              data-testid="tool-call-input-pre"
+              tabIndex={0}
+              role="region"
+              aria-label="Tool input"
+              className="overflow-auto rounded bg-bg-tertiary p-2 text-xs font-mono text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
               {JSON.stringify(toolInput, null, 2)}
             </pre>
           </div>
@@ -86,7 +92,13 @@ export function ToolCallBlock({
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
                 Output
               </div>
-              <pre className="overflow-auto rounded bg-bg-tertiary p-2 text-xs font-mono text-text-secondary whitespace-pre-wrap">
+              <pre
+                data-testid="tool-call-output-pre"
+                tabIndex={0}
+                role="region"
+                aria-label="Tool output"
+                className="overflow-auto rounded bg-bg-tertiary p-2 text-xs font-mono text-text-secondary whitespace-pre-wrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
                 {toolOutput}
               </pre>
             </div>
