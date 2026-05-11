@@ -255,4 +255,93 @@ describe("RecentSessions", () => {
     );
     expect(screen.getByTestId("recent-session-time").textContent).toBe("—");
   });
+
+  // WCAG 1.3.1 (Info and Relationships) / 4.1.2 (Name, Role, Value): the
+  // row visually composes name + time-ago + message count, but the DOM is
+  // three flat sibling spans with no programmatic linkage. SR users
+  // walking by list items via the rotor see only the first text node per
+  // <li> and lose the time + message count entirely. Promote each <li>
+  // with a coherent aria-label combining the three pieces. Mirrors PR
+  // #230 (SystemHealth indicator) and StatCard precedent.
+  it("each <li> exposes a coherent name+msg+time aria-label (WCAG 1.3.1 / 4.1.2)", () => {
+    // Pin a deterministic startedAt (~5min ago) so timeAgo() is stable.
+    const fiveMinAgo = Date.now() - 5 * 60_000;
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s-1",
+            displayName: "phase 2 work",
+            messageCount: 3,
+            startedAt: fiveMinAgo,
+          },
+        ]}
+      />,
+    );
+    const row = screen.getByTestId("recent-session-row");
+    const label = row.getAttribute("aria-label");
+    expect(label).toContain("phase 2 work");
+    expect(label).toContain("3 msgs");
+    expect(label).toContain("—");
+    // Sanity-check the format: "<name>: <msg> — <time>".
+    expect(label).toMatch(/^phase 2 work: 3 msgs — /);
+  });
+
+  it("aria-label respects singular pluralization (n=1)", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s-1",
+            displayName: "alpha",
+            messageCount: 1,
+            startedAt: Date.now() - 60_000,
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByTestId("recent-session-row").getAttribute("aria-label"),
+    ).toMatch(/^alpha: 1 msg — /);
+  });
+
+  // When startedAt is 0/missing the visible "—" placeholder is meaningless
+  // to SR users, so the time clause must be omitted from the aria-label.
+  it("aria-label omits time when startedAt is 0", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s-1",
+            displayName: "alpha",
+            messageCount: 7,
+            startedAt: 0,
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByTestId("recent-session-row").getAttribute("aria-label"),
+    ).toBe("alpha: 7 msgs");
+  });
+
+  // Falls back to "(untitled)" when displayName is empty — matches the
+  // existing visible-text fallback so the aria-label doesn't drift.
+  it("aria-label uses (untitled) fallback when displayName is empty", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s-1",
+            displayName: "",
+            messageCount: 2,
+            startedAt: 0,
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByTestId("recent-session-row").getAttribute("aria-label"),
+    ).toBe("(untitled): 2 msgs");
+  });
 });
