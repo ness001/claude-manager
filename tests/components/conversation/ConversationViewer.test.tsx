@@ -212,6 +212,21 @@ describe("ConversationViewer", () => {
     expect(scroller.className).not.toContain("pb-14");
   });
 
+  // WCAG 1.3.1 / 4.1.2: the floating turn-nav widget composes "Turn",
+  // a spin-button input, and "/ N" into one logical control. Without a
+  // wrapping role + name SR users hear three disconnected fragments and
+  // the widget never appears as a discoverable group. role="group" +
+  // aria-label exposes it as one named unit (matches the StatCard
+  // pattern).
+  it("turn-nav exposes role=group + aria-label so it announces as one unit", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() => screen.getByTestId("turn-nav"));
+    const nav = screen.getByTestId("turn-nav");
+    expect(nav.getAttribute("role")).toBe("group");
+    expect(nav.getAttribute("aria-label")).toBe("Turn navigation");
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): the previous aria-label "Jump to
   // turn" gave SR users the field's purpose but NOT the legal range.
   // The visible "/ N" sibling is not programmatically associated with
