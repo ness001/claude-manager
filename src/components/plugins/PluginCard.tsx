@@ -6,6 +6,8 @@
 // Toggle and Reinstall/Remove call the store; this component is presentational
 // otherwise.
 
+import { useEffect, useRef, useState } from "react";
+
 import { usePluginStore } from "../../stores/plugin-store";
 import type { PluginMeta, PluginState } from "../../lib/plugin-types";
 
@@ -59,6 +61,52 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
   const isBroken = plugin.state === "broken";
   const isDisabled = plugin.state === "disabled";
   const isUpdateAvailable = plugin.state === "update-available";
+
+  // WAI-ARIA Toolbar pattern keyboard model for the broken-plugin
+  // Reinstall/Remove pair — roving tabindex + ArrowLeft/Right + Home/End.
+  // Without this, declaring role="toolbar" on the recovery actions row was
+  // a false promise: SR users hearing "toolbar, Reinstall, button"
+  // expected arrow-key nav and got nothing, and sighted keyboard users
+  // had to Tab through both buttons instead of skipping the toolbar as a
+  // unit. Same defect class as PR #317 (SessionInfoBar action toolbar)
+  // and PR #316 (ViewModeToggle radiogroup) — declaring an ARIA pattern
+  // role commits you to its keyboard model. Hooks unconditionally so
+  // they don't violate the rules-of-hooks even when isBroken is false.
+  const recoveryRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [recoveryTabStop, setRecoveryTabStop] = useState(0);
+  // The broken-actions row always has exactly two buttons (Reinstall,
+  // Remove); the clamp guards against any future addition/removal so the
+  // tab stop never points past the end.
+  const RECOVERY_COUNT = 2;
+  useEffect(() => {
+    setRecoveryTabStop((i) => Math.min(i, RECOVERY_COUNT - 1));
+  }, []);
+  const focusRecoveryAt = (idx: number) => {
+    const wrapped = (idx + RECOVERY_COUNT) % RECOVERY_COUNT;
+    const target = recoveryRefs.current[wrapped];
+    if (target) {
+      target.focus();
+      setRecoveryTabStop(wrapped);
+    }
+  };
+  const onRecoveryKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    i: number,
+  ) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      focusRecoveryAt(i - 1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      focusRecoveryAt(i + 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusRecoveryAt(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusRecoveryAt(RECOVERY_COUNT - 1);
+    }
+  };
 
   // Toggle is meaningful only for active/disabled (and update-available which
   // is a flavored "active"). Broken / orphaned can't be flipped without first
@@ -230,10 +278,24 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
               * wire-up tracker inline so the placeholder isn't an
               * undiscoverable orphan. */}
             <button
+              ref={(el) => {
+                recoveryRefs.current[0] = el;
+              }}
               type="button"
               data-testid="reinstall-btn"
-              disabled
+              // WAI-ARIA APG (Toolbar pattern): use `aria-disabled="true"`
+              // rather than the native `disabled` attribute so the button
+              // remains focusable. Native `disabled` makes the element
+              // unfocusable in Chromium/WebView2, breaking the Toolbar
+              // pattern's roving-tabindex keyboard model — arrow keys
+              // can't land on a button that can't take focus. The button
+              // is visually disabled (opacity-50 + cursor-not-allowed)
+              // and has no onClick handler so soft-disable is safe.
+              // https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/
               aria-disabled="true"
+              tabIndex={recoveryTabStop === 0 ? 0 : -1}
+              onFocus={() => setRecoveryTabStop(0)}
+              onKeyDown={(e) => onRecoveryKeyDown(e, 0)}
               // Sighted users see the long "Reinstall is not yet wired …"
               // tooltip on hover; mirror the gist into the accessible name
               // so screen-reader users hear the same CLI-workaround hint
@@ -251,10 +313,16 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
               * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md ("Remove
               * button has no onClick handler"). Per CLAUDE.md R2. */}
             <button
+              ref={(el) => {
+                recoveryRefs.current[1] = el;
+              }}
               type="button"
               data-testid="remove-btn"
-              disabled
+              // See companion ARIA-disable comment on the Reinstall button above.
               aria-disabled="true"
+              tabIndex={recoveryTabStop === 1 ? 0 : -1}
+              onFocus={() => setRecoveryTabStop(1)}
+              onKeyDown={(e) => onRecoveryKeyDown(e, 1)}
               // See companion comment on the Reinstall button above.
               aria-label="Remove (not yet wired — use the CLI)"
               title="Remove is not yet wired — run `claude plugin uninstall` from the terminal for now"
