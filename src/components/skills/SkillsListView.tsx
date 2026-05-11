@@ -51,13 +51,24 @@ export function SkillsListView() {
   };
 
   return (
+    // WCAG 1.3.1 + WAI-ARIA APG: the page-level <section> already wrapped
+    // the view but was unlabeled — the SR landmarks rotor surfaced an
+    // anonymous "section" entry with no name. Bind aria-labelledby to the
+    // visible <h1> "Custom Skills" so users routing by landmarks (NVDA D,
+    // JAWS R, VoiceOver rotor → Landmarks) jump to a named region. Mirrors
+    // PR #266 (PluginListView) and the dashboard region-landmark sweep
+    // (#262/#263/#264/#265).
     <section
       data-testid="skill-list-view"
+      aria-labelledby="skill-list-view-heading"
       className="flex h-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-text-primary">
+          <h1
+            id="skill-list-view-heading"
+            className="text-2xl font-semibold text-text-primary"
+          >
             Custom Skills
           </h1>
           <button
