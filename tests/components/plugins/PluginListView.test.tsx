@@ -249,6 +249,22 @@ describe("PluginListView", () => {
     expect(btn).toHaveAttribute("title");
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): the Install Plugin button is rendered
+  // `disabled` with a long `title` tooltip explaining the CLI workaround.
+  // Sighted users get that hint on hover, but a screen-reader user navigating
+  // by buttons hears only "Install Plugin, button, dimmed" — leaving them to
+  // assume the app is broken with no recoverable instruction. Mirror the gist
+  // of the visual tooltip into the accessible name. Mirrors PR #181
+  // (QuickActions), PR #183 (SessionListPanel new-session), PR #184
+  // (SessionInfoBar actions).
+  it("Install Plugin button announces its (not yet wired) status via aria-label (WCAG 4.1.2)", () => {
+    render(<PluginListView />);
+    const btn = screen.getByTestId("install-plugin-btn");
+    expect(btn.getAttribute("aria-label")).toBe(
+      "Install Plugin (not yet wired — use the CLI)",
+    );
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): each header button has a fully readable
   // text label ("Install Plugin", "Check for Updates"), so the leading
   // lucide icon is decorative — without aria-hidden, screen readers may
