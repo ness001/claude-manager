@@ -21,7 +21,11 @@ import {
 import type { SessionMeta } from "../../lib/session-types";
 import { SessionCard } from "./SessionCard";
 import { SessionSearch } from "./SessionSearch";
-import { ViewModeToggle } from "./ViewModeToggle";
+import {
+  ViewModeToggle,
+  VIEW_MODE_PANEL_ID,
+  viewModeTabId,
+} from "./ViewModeToggle";
 
 /** Spec §17.8 — switch to virtualization when the list exceeds 50 entries. */
 const VIRTUAL_THRESHOLD = 50;
@@ -213,85 +217,99 @@ export function SessionListPanel() {
       <ViewModeToggle />
       <SessionSearch />
 
-      {filtered.length === 0 ? (
-        <div
-          data-testid="session-list-empty"
-          role="status"
-          aria-live="polite"
-          className="flex-1 flex items-center justify-center text-xs text-text-muted px-2 text-center"
-        >
-          {sessions.length === 0
-            ? "No sessions found"
-            : `No matches for "${searchQuery}"`}
-        </div>
-      ) : useVirtual ? (
-        <div
-          ref={scrollRef}
-          data-testid="virtual-scroller"
-          className="flex-1 overflow-auto"
-        >
+      {/* tabpanel for the ViewModeToggle's role="tab" buttons. The same
+          panel renders for all three view modes — its content re-groups
+          rather than swapping — so aria-labelledby points at whichever tab
+          is currently active. WAI-ARIA APG explicitly permits this many-
+          tabs-to-one-panel mapping when content is contextual to the
+          active tab. Without this, the role="tab" buttons announce a
+          relationship that has no DOM target (WCAG 4.1.2). */}
+      <div
+        id={VIEW_MODE_PANEL_ID}
+        role="tabpanel"
+        aria-labelledby={viewModeTabId(viewMode)}
+        className="flex-1 flex flex-col min-h-0"
+      >
+        {filtered.length === 0 ? (
           <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              position: "relative",
-              width: "100%",
-            }}
+            data-testid="session-list-empty"
+            role="status"
+            aria-live="polite"
+            className="flex-1 flex items-center justify-center text-xs text-text-muted px-2 text-center"
           >
-            {virtualizer.getVirtualItems().map((vi) => {
-              const row = rows[vi.index];
-              const baseStyle = {
-                position: "absolute" as const,
-                top: 0,
-                left: 0,
-                width: "100%",
-                transform: `translateY(${vi.start}px)`,
-              };
-              if (row.kind === "header") {
-                return (
-                  <h3
-                    key={row.key}
-                    data-testid="group-header"
-                    style={baseStyle}
-                    className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted"
-                  >
-                    {row.label}{" "}
-                    <span className="text-text-muted/70">({row.count})</span>
-                  </h3>
-                );
-              }
-              return (
-                <SessionCard
-                  key={row.key}
-                  session={row.session}
-                  selected={row.session.sessionId === selectedId}
-                  style={baseStyle}
-                />
-              );
-            })}
+            {sessions.length === 0
+              ? "No sessions found"
+              : `No matches for "${searchQuery}"`}
           </div>
-        </div>
-      ) : (
-        <div className="flex-1 overflow-auto flex flex-col gap-1">
-          {groups.map((g) => (
-            <div key={g.key} className="flex flex-col gap-1">
-              <h3
-                data-testid="group-header"
-                className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted"
-              >
-                {g.label}{" "}
-                <span className="text-text-muted/70">({g.sessions.length})</span>
-              </h3>
-              {g.sessions.map((s) => (
-                <SessionCard
-                  key={s.sessionId}
-                  session={s}
-                  selected={s.sessionId === selectedId}
-                />
-              ))}
+        ) : useVirtual ? (
+          <div
+            ref={scrollRef}
+            data-testid="virtual-scroller"
+            className="flex-1 overflow-auto"
+          >
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                position: "relative",
+                width: "100%",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((vi) => {
+                const row = rows[vi.index];
+                const baseStyle = {
+                  position: "absolute" as const,
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${vi.start}px)`,
+                };
+                if (row.kind === "header") {
+                  return (
+                    <h3
+                      key={row.key}
+                      data-testid="group-header"
+                      style={baseStyle}
+                      className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted"
+                    >
+                      {row.label}{" "}
+                      <span className="text-text-muted/70">({row.count})</span>
+                    </h3>
+                  );
+                }
+                return (
+                  <SessionCard
+                    key={row.key}
+                    session={row.session}
+                    selected={row.session.sessionId === selectedId}
+                    style={baseStyle}
+                  />
+                );
+              })}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="flex-1 overflow-auto flex flex-col gap-1">
+            {groups.map((g) => (
+              <div key={g.key} className="flex flex-col gap-1">
+                <h3
+                  data-testid="group-header"
+                  className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted"
+                >
+                  {g.label}{" "}
+                  <span className="text-text-muted/70">({g.sessions.length})</span>
+                </h3>
+                {g.sessions.map((s) => (
+                  <SessionCard
+                    key={s.sessionId}
+                    session={s}
+                    selected={s.sessionId === selectedId}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

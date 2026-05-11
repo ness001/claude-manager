@@ -116,4 +116,22 @@ describe("ViewModeToggle", () => {
     // fireEvent.keyDown returns false if defaultPrevented; we want it true (not prevented).
     expect(ev).toBe(true);
   });
+
+  // WCAG 4.1.2 (Name, Role, Value) + WAI-ARIA Tabs APG: each role="tab"
+  // must have an id (so aria-labelledby on the panel can target it) and
+  // an aria-controls pointing at the role="tabpanel" it controls.
+  // Without aria-controls, SR users hear "tab" but have no programmatic
+  // affordance for "go to controlled element" (NVDA browse-mode "controls"
+  // key, JAWS follow-controls). All three tabs share one panel — the
+  // panel content re-groups in place rather than swapping.
+  it("each tab has an id and aria-controls pointing at the shared tabpanel", () => {
+    render(<ViewModeToggle />);
+    for (const mode of ["my", "project", "timeline"] as const) {
+      const btn = screen.getByTestId(`view-mode-${mode}`);
+      expect(btn.id).toBe(`view-mode-tab-${mode}`);
+      expect(btn.getAttribute("aria-controls")).toBe(
+        "session-list-panel-tabpanel",
+      );
+    }
+  });
 });

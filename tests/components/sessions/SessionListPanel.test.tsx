@@ -236,4 +236,23 @@ describe("SessionListPanel", () => {
     expect(panel.tagName).toBe("ASIDE");
     expect(panel.getAttribute("aria-label")).toBe("Session list");
   });
+
+  // WCAG 4.1.2 (Name, Role, Value) + WAI-ARIA Tabs APG: ViewModeToggle
+  // renders role="tab" buttons; each has aria-controls pointing here. The
+  // session-list scroll region must therefore render role="tabpanel" with
+  // a matching id and aria-labelledby pointing at the active tab. Without
+  // it, the role="tab" semantics announce a relationship that has no DOM
+  // target. The panel re-groups in place rather than swapping, so the
+  // labelledby tracks whichever tab is currently active.
+  it("session-list scroll region is a tabpanel labelled by the active tab", () => {
+    useSessionStore.setState({
+      sessions: [makeSession({ sessionId: "x", displayName: "X" })],
+      viewMode: "project",
+    });
+    render(<SessionListPanel />);
+    const panel = document.getElementById("session-list-panel-tabpanel");
+    expect(panel).not.toBeNull();
+    expect(panel!.getAttribute("role")).toBe("tabpanel");
+    expect(panel!.getAttribute("aria-labelledby")).toBe("view-mode-tab-project");
+  });
 });
