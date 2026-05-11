@@ -51,7 +51,18 @@ export function McpServerDetail({ server }: McpServerDetailProps) {
 
       {server.tools && server.tools.length > 0 && (
         <Row label="Tools">
-          <ul data-testid="detail-tools" className="list-inside list-disc">
+          {/* WAI-ARIA APG + WCAG 1.3.1: an unlabeled <ul> exposes role+count
+              but not purpose. Multiple expanded MCP cards on the same panel
+              produce several "list with N items" entries in the SR rotor with
+              no way to tell them apart. `aria-label` scopes the list to the
+              owning server name so SR users can route to the correct one.
+              Mirrors the labeled-collection sweep (#235/#236/#237/#254/#255/
+              #257/#259). */}
+          <ul
+            data-testid="detail-tools"
+            aria-label={`Tools exposed by ${server.name}`}
+            className="list-inside list-disc"
+          >
             {server.tools.map((t) => (
               <li key={t}>{t}</li>
             ))}
