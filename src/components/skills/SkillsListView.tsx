@@ -168,14 +168,26 @@ export function SkillsListView() {
           No results for "{searchQuery}"
         </div>
       ) : (
-        <div
+        // WCAG 1.3.1 (Info and Relationships): the cards form a list of N
+        // skills semantically, but were previously emitted as a flat
+        // <div><div/></div> sequence — SR users navigating by lists (NVDA
+        // "L", JAWS "L", VoiceOver rotor → Lists) heard nothing for this
+        // collection and the count ("list, N items") was lost. Promote the
+        // container to a labeled <ul> so AT can land on it via the rotor
+        // and announce the count. Mirrors ModelDonut's donut-legend
+        // (PR #117 / aria-label "Model usage breakdown") and SystemHealth's
+        // indicator list (PR #230 / "System health indicators").
+        <ul
           data-testid="skill-grid"
+          aria-label="Custom skills"
           className="flex flex-col gap-2 overflow-auto"
         >
           {filtered.map((s) => (
-            <SkillCard key={s.dirPath} skill={s} />
+            <li key={s.dirPath}>
+              <SkillCard skill={s} />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       <aside

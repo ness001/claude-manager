@@ -8,6 +8,7 @@ import {
   render,
   screen,
   act,
+  within,
 } from "@testing-library/react";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
@@ -137,6 +138,31 @@ describe("SkillsListView", () => {
     expect(empty.textContent).toContain("No custom skills found");
     expect(empty.textContent).toContain("~/.claude/skills/");
     expect(empty.textContent).toContain("SKILL.md");
+  });
+
+  // WCAG 1.3.1 (Info and Relationships): the cards form a list of N
+  // skills semantically, but were previously emitted as a flat
+  // <div><div/></div> sequence — SR users navigating by lists (NVDA "L",
+  // JAWS "L", VoiceOver rotor → Lists) heard nothing for this collection
+  // and the count was lost. Promote to a labeled <ul> + <li> wrappers so
+  // the rotor surfaces "list, N items" with a name. Mirrors ModelDonut
+  // donut-legend (PR #117) and SystemHealth indicator list (PR #230).
+  it("skill cards render inside a labeled <ul> with <li> wrappers (WCAG 1.3.1)", () => {
+    useSkillStore.setState({
+      skills: [
+        makeSkill({ name: "alpha", description: "first" }),
+        makeSkill({ name: "beta", description: "second", dirPath: "/h/b" }),
+      ],
+    });
+    render(<SkillsListView />);
+    const list = screen.getByRole("list", { name: "Custom skills" });
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("data-testid")).toBe("skill-grid");
+    // Each card is wrapped in its own <li>, exposed as "listitem".
+    const items = within(list).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    // The card nests inside the <li>, not next to it.
+    expect(items[0].querySelector("[data-testid='skill-card']")).not.toBeNull();
   });
 
   // a11y: the empty-state message ("No custom skills found at ~/.claude/skills/")
