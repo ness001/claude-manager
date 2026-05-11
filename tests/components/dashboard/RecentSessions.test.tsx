@@ -66,6 +66,18 @@ describe("RecentSessions", () => {
     expect(screen.getByText("No recent sessions")).toBeInTheDocument();
   });
 
+  // WCAG 4.1.3 (Status Messages): the empty-state copy must be announced
+  // by AT when it appears (or when the list transitions empty after a
+  // refresh). role="status" + aria-live="polite" is the canonical pairing
+  // every other empty-state in the codebase already uses.
+  it("empty state exposes role=status + aria-live=polite (WCAG 4.1.3)", () => {
+    render(<RecentSessions data={[]} />);
+    const empty = screen.getByTestId("recent-sessions-empty");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("aria-live")).toBe("polite");
+    expect(empty.textContent).toBe("No recent sessions");
+  });
+
   it("uses shared timeAgo() format", () => {
     // Five minutes ago → "5m ago".
     render(

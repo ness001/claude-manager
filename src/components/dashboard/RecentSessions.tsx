@@ -48,7 +48,21 @@ export function RecentSessions({ data }: RecentSessionsProps) {
       </div>
 
       {data.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-xs text-text-muted">
+        // WCAG 4.1.3 (Status Messages): when the dashboard mounts with no
+        // recent sessions (fresh install, all sessions archived) or
+        // transitions to empty after a refresh, SR users get no audible
+        // cue that the empty-state message replaced the list. Other empty
+        // states in the codebase (PluginListView, McpPanel, SkillsListView,
+        // SessionListPanel) already use role="status" + aria-live="polite"
+        // so the announcement fires once when the message appears.
+        // Mirrors PR #214 (PluginSkills/Hooks/Agents tabs) and the
+        // PluginListView empty-state PR family.
+        <div
+          data-testid="recent-sessions-empty"
+          role="status"
+          aria-live="polite"
+          className="flex-1 flex items-center justify-center text-xs text-text-muted"
+        >
           No recent sessions
         </div>
       ) : (
