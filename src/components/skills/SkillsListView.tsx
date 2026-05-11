@@ -73,7 +73,12 @@ export function SkillsListView() {
           </button>
         </div>
         <div className="flex gap-3 text-xs text-text-muted">
-          <span data-testid="stat-skill-count">{skills.length} skills</span>
+          {/* Pluralize so SR + sighted users don't see "1 skills". Mirrors
+            * PR #87 (SessionCard), PR #90 (SystemHealth), PR #133
+            * (RecentSessions), PR #219 (PluginCard counts). */}
+          <span data-testid="stat-skill-count">
+            {skills.length} {skills.length === 1 ? "skill" : "skills"}
+          </span>
           <code
             data-testid="stat-skills-path"
             className="rounded bg-bg-tertiary px-1.5 py-0.5"

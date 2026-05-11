@@ -89,10 +89,27 @@ describe("SkillsListView", () => {
       ],
     });
     render(<SkillsListView />);
-    expect(screen.getByTestId("stat-skill-count").textContent).toBe("2 skills");
+    expect(screen.getByTestId("stat-skill-count").textContent?.trim()).toBe("2 skills");
     expect(screen.getByTestId("stat-skills-path").textContent).toBe(
       "~/.claude/skills/",
     );
+  });
+
+  // Defect: count rendered as "1 skills" — bare plural with no n=1 special-case.
+  // Mirrors PR #87 (SessionCard), PR #90 (SystemHealth), PR #133 (RecentSessions),
+  // PR #219 (PluginCard skill/agent/hook counts).
+  it.each([
+    [0, "0 skills"],
+    [1, "1 skill"],
+    [2, "2 skills"],
+  ])("skill count pluralization: %i → %s", (n, expected) => {
+    useSkillStore.setState({
+      skills: Array.from({ length: n }, (_, i) =>
+        makeSkill({ name: `s${i}`, dirPath: `/h/.claude/skills/s${i}` }),
+      ),
+    });
+    render(<SkillsListView />);
+    expect(screen.getByTestId("stat-skill-count").textContent?.trim()).toBe(expected);
   });
 
   it("search filters cards", () => {
