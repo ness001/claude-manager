@@ -41,7 +41,16 @@ export function ContentArea() {
   return (
     <main
       aria-label={SECTION_LABEL[activeSection]}
-      className="flex-1 overflow-auto bg-bg-primary"
+      // WCAG 2.1.1 (Keyboard): the <main> landmark is the only scroll
+      // container for sections whose content overflows the viewport (e.g.
+      // long plugin / skill grids, the conversation viewer's outer wrap).
+      // Mouse / trackpad users could scroll it via the wheel; keyboard-only
+      // users could not — <main> is not focusable by default. Without
+      // tabIndex={0} the clipped content below the fold was unreachable
+      // without a mouse. Mirrors the same fix on the conversation-scroller
+      // (already lives) and the AssistantMessage <pre> blocks (PR #195).
+      tabIndex={0}
+      className="flex-1 overflow-auto bg-bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
     >
       <Component />
     </main>

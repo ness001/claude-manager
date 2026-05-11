@@ -82,4 +82,18 @@ describe("ContentArea", () => {
       expect(main.getAttribute("aria-label")).toBe(label);
     },
   );
+
+  // WCAG 2.1.1 (Keyboard): <main> is the scroll container for any section
+  // whose content overflows the viewport. Without tabIndex={0} keyboard-only
+  // users cannot focus it and thus cannot arrow-scroll — the clipped content
+  // below the fold is unreachable without a mouse. Mirrors the
+  // conversation-scroller tabIndex=0 treatment and PR #195 (AssistantMessage
+  // <pre> blocks).
+  it("main landmark is keyboard-focusable for arrow-scroll (WCAG 2.1.1)", () => {
+    render(<ContentArea />);
+    const main = screen.getByRole("main");
+    expect(main.getAttribute("tabindex")).toBe("0");
+    expect(main.className).toContain("focus-visible:ring-2");
+    expect(main.className).toContain("focus-visible:ring-accent");
+  });
 });
