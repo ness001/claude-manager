@@ -155,4 +155,22 @@ describe("McpServerDetail", () => {
     expect(commandDd?.tagName).toBe("DD");
     expect(commandDd?.querySelector("[data-testid=detail-command]")).not.toBeNull();
   });
+
+  // a11y: WAI-ARIA APG + WCAG 1.3.1 — the Tools <ul> must carry an
+  // aria-label scoped to the owning server so multiple expanded MCP cards
+  // on the same panel produce SR-distinguishable lists. Mirrors the
+  // labeled-collection sweep (#235/#236/#237/#254/#255/#257/#259).
+  it("Tools <ul> carries an aria-label scoped to the server name", () => {
+    const withTools = {
+      ...FIX_CONNECTED,
+      tools: ["read_file", "write_file"],
+    };
+    render(<McpServerDetail server={withTools} />);
+    const list = screen.getByTestId("detail-tools");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe(
+      `Tools exposed by ${FIX_CONNECTED.name}`,
+    );
+    expect(list.querySelectorAll("li")).toHaveLength(2);
+  });
 });
