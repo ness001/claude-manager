@@ -54,9 +54,20 @@ export function SessionsSection() {
   return (
     <section
       data-testid="sessions-section"
-      aria-label="Sessions"
+      aria-labelledby="sessions-heading"
       className="flex h-full"
     >
+      {/* WCAG 1.3.1 / 2.4.6 — every other top-level section (Dashboard,
+          Plugins, Skills, MCP, Settings) renders a top-level <h1> so SR
+          users can navigate via the headings list (NVDA "H", JAWS "H").
+          SessionsSection had no h1 anywhere — only the section's
+          aria-label. This breaks the headings hierarchy: the inner panel
+          headers (e.g. SessionListPanel group <h3>s) leap from nothing.
+          Render an sr-only h1 to plug the gap (mirrors DashboardSection
+          line 62-64) without disturbing the split-pane visual layout. */}
+      <h1 id="sessions-heading" className="sr-only">
+        Sessions
+      </h1>
       {showSkeleton ? <SessionListSkeleton /> : <SessionListPanel />}
       <SessionDetailPanel />
     </section>
