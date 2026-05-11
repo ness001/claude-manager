@@ -131,7 +131,18 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
             "omits title when startedAt is empty" test) — there's no
             absolute timestamp to surface. */}
         <span data-testid="time-ago" title={startedAtAbsolute}>{timeLabel === "" ? "—" : timeLabel}</span>
-        <span data-testid="message-count">
+        <span
+          data-testid="message-count"
+          // WCAG 4.1.2 (Name, Role, Value): the visible text "5 msgs"
+          // is a bare count — SR users hear it as an opaque string with
+          // no semantic context (could be unread-count, queued-count,
+          // tag-count, …). Sighted users infer "messages" from the card
+          // layout. Mirror that into the accessible name with a
+          // "Messages: …" prefix so the badge announces self-contained.
+          // Same pattern as SessionInfoBar message-count-badge (PR #228)
+          // and AssistantMessage model-badge (PR #247).
+          aria-label={`Messages: ${session.messageCount}`}
+        >
           {session.messageCount} {session.messageCount === 1 ? "msg" : "msgs"}
         </span>
       </div>
