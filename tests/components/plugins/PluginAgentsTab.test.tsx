@@ -51,4 +51,53 @@ describe("PluginAgentsTab", () => {
     render(<PluginAgentsTab agents={[]} />);
     expect(screen.getByTestId("agents-empty")).toBeInTheDocument();
   });
+
+  // WCAG 1.3.1 (Info and Relationships): "model: <value>" and "tools:
+  // <value>" are key/value pairs. The previous flat-<span> rendering hid
+  // that relationship from AT — SR users heard one undifferentiated string.
+  // <dl>/<dt>/<dd> exposes the term-description association so screen
+  // readers can announce them as discrete pairs and navigate them via the
+  // rotor. Mirrors PR #199 (PluginHooksTab event/command).
+  it("model + tools render as <dl>/<dt>/<dd> term-description pairs (WCAG 1.3.1)", () => {
+    render(
+      <PluginAgentsTab
+        agents={[
+          {
+            name: "agent-1",
+            description: "the agent",
+            model: "claude-sonnet-4-6",
+            tools: ["Read", "Bash"],
+          },
+        ]}
+      />,
+    );
+    const model = screen.getByTestId("agent-model");
+    const tools = screen.getByTestId("agent-tools");
+    // Each pair lives inside a <dl> and uses <dt> for the term, <dd> for
+    // the value. Querying via tagName keeps the assertion semantic-pure.
+    expect(model.closest("dl")).not.toBeNull();
+    expect(tools.closest("dl")).not.toBeNull();
+    expect(model.querySelector("dt")?.textContent).toBe("model:");
+    expect(model.querySelector("dd")?.textContent).toBe("claude-sonnet-4-6");
+    expect(tools.querySelector("dt")?.textContent).toBe("tools:");
+    expect(tools.querySelector("dd")?.textContent).toBe("Read, Bash");
+  });
+
+  // The <dl> wrapper must not appear when neither model nor tools is set —
+  // an empty key/value list announces nothing useful and just creates an
+  // extra DOM landmark for SR users to step through.
+  it("does not render the <dl> when neither model nor tools is set", () => {
+    render(
+      <PluginAgentsTab
+        agents={[
+          {
+            name: "agent-bare",
+            description: "no model, no tools",
+          },
+        ]}
+      />,
+    );
+    const row = screen.getByTestId("agent-row");
+    expect(row.querySelector("dl")).toBeNull();
+  });
 });
