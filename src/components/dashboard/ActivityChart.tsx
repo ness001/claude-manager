@@ -201,9 +201,24 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
           data-testid="activity-stale-banner"
           data-staleness-days={stalenessDays}
           role="alert"
-          className="flex items-center gap-2 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-2 py-1 text-xs text-text-primary"
+          // WCAG 1.4.11 (Non-text Contrast): the banner originally used
+          // bare Tailwind palette `yellow-500` (#eab308) for both the
+          // border, tinted background, and AlertTriangle icon. On the
+          // light-mode card-bg (white) blend, the icon's #eab308 stroke
+          // gives ~1.7:1 contrast — well below the 3:1 floor for non-text
+          // graphics — so the warning's primary visual signal is barely
+          // perceptible against the pale yellow tint. The bare
+          // `yellow-500` also bypasses this codebase's theme-token
+          // convention (every other warning UI uses `--color-status-amber`
+          // which is theme-aware: #d97706 light / #fab387 dark) so the
+          // banner doesn't swap correctly between themes. Switch to the
+          // existing amber token: in light mode #d97706 on the same
+          // bg-status-amber/10 blend is ~4.0:1 (well above the 3:1 non-
+          // text floor), and the dark theme already had adequate contrast
+          // because #fab387 is a pale color on dark surfaces.
+          className="flex items-center gap-2 rounded-md border border-status-amber/40 bg-status-amber/10 px-2 py-1 text-xs text-text-primary"
         >
-          <AlertTriangle size={12} className="shrink-0 text-yellow-500" aria-hidden />
+          <AlertTriangle size={12} className="shrink-0 text-status-amber" aria-hidden />
           <span>
             Chart data is {stalenessDays} days old. Claude Code CLI writes
             <code className="mx-1 rounded bg-bg-tertiary px-1">~/.claude/stats-cache.json</code>
