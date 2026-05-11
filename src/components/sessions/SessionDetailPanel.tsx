@@ -29,8 +29,18 @@ export function SessionDetailPanel() {
   }
 
   return (
-    <div
+    // WCAG 2.4.1 (Bypass Blocks) + 1.3.1 (Info and Relationships): the
+    // detail pane sits as a sibling of <aside aria-label="Session list">
+    // inside SessionsSection. The list pane already exposes a named
+    // landmark — without one here, SR users navigating regions (NVDA "D",
+    // VoiceOver rotor → Landmarks) could jump to "Session list" but had
+    // no way to jump to the detail pane by name. Promote the wrapper to
+    // <section aria-label="Session detail"> so the rotor surfaces "region,
+    // Session detail" alongside its sibling. Mirrors the SessionListPanel
+    // <aside aria-label="Session list"> binding.
+    <section
       data-testid="session-detail-panel"
+      aria-label="Session detail"
       className="flex flex-1 flex-col min-w-0"
     >
       <SessionInfoBar session={session} />
@@ -46,6 +56,6 @@ export function SessionDetailPanel() {
           No conversation file available for this session.
         </div>
       )}
-    </div>
+    </section>
   );
 }
