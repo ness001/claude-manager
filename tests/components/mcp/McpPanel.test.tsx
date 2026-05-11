@@ -318,6 +318,22 @@ describe("McpPanel", () => {
     expect(alert.textContent).toContain("claude binary not found in PATH");
   });
 
+  // Functional bug: the store's `error` field is shared by loadServers,
+  // addServer, updateServer, removeServer AND refreshStatus. The
+  // original banner copy "Couldn't refresh MCP status: …" was accurate
+  // only for refresh failures — a Remove failure surfaced as a
+  // misleading "refresh" alert. Pin both positive (source-agnostic
+  // prefix present) and negative (no "refresh" wording) so a future
+  // refactor can't silently regress the misleading copy.
+  it("error banner prefix is source-agnostic, not 'refresh'-specific", () => {
+    useMcpStore.setState({ error: "write_mcp_server failed: EACCES" });
+    render(<McpPanel />);
+    const alert = screen.getByTestId("mcp-refresh-error");
+    expect(alert.textContent).toContain("MCP error:");
+    expect(alert.textContent).toContain("write_mcp_server failed: EACCES");
+    expect(alert.textContent).not.toMatch(/refresh/i);
+  });
+
   it("does not render the error alert when error is null", () => {
     useMcpStore.setState({ error: null });
     render(<McpPanel />);
