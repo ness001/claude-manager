@@ -160,6 +160,15 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
       <div
         data-testid="activity-chart"
         data-empty="true"
+        // a11y: the "No activity yet" copy appears asynchronously after the
+        // dashboard's stats-cache resolves to an empty/missing payload.
+        // Without a live region, screen-reader users get silence and can't
+        // tell whether the load is still pending, errored, or resolved-with-
+        // zero-data. `polite` waits for a natural pause rather than
+        // interrupting. Mirrors PRs #154 (PluginListView), #155 (McpPanel),
+        // #207 (SkillsListView), #212 (SessionDetailPanel).
+        role="status"
+        aria-live="polite"
         className="flex h-full min-h-[240px] flex-col items-center justify-center rounded-md border border-border bg-card-bg p-4 text-sm text-text-muted"
       >
         No activity yet

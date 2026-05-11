@@ -76,6 +76,7 @@ export function RecentSessions({ data }: RecentSessionsProps) {
                   #176, #179). Skip when the timestamp is missing/0 to
                   avoid an empty-tooltip artifact. */}
               <span
+                data-testid="recent-session-time"
                 className="text-[11px] text-text-muted tabular-nums shrink-0"
                 title={
                   s.startedAt > 0
@@ -83,7 +84,13 @@ export function RecentSessions({ data }: RecentSessionsProps) {
                     : undefined
                 }
               >
-                {timeAgo(s.startedAt)}
+                {/* When `startedAt` is 0/missing (e.g. ENDED sessions with no
+                    PID file), `timeAgo()` returns "" — leaving an empty span
+                    where the time-ago badge should be. Sighted users see a
+                    layout glitch; SR users hear nothing for that field.
+                    Render an em-dash placeholder so the slot stays
+                    visibly populated. Mirrors PR #210 (SessionCard). */}
+                {s.startedAt > 0 ? timeAgo(s.startedAt) : "—"}
               </span>
               <span
                 data-testid="recent-session-msg-count"
