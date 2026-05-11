@@ -53,13 +53,25 @@ export function PluginListView() {
   };
 
   return (
+    // WCAG 1.3.1 + WAI-ARIA APG: the page-level <section> already wrapped
+    // the view but was unlabeled — the SR landmarks rotor surfaced an
+    // anonymous "section" entry with no name. Bind aria-labelledby to the
+    // visible <h1> "Plugins" so users routing by landmarks (NVDA D, JAWS R,
+    // VoiceOver rotor → Landmarks) jump to a named region. Mirrors the
+    // dashboard region-landmark sweep (#262/#263/#264/#265).
     <section
       data-testid="plugin-list-view"
+      aria-labelledby="plugin-list-view-heading"
       className="flex h-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-text-primary">Plugins</h1>
+          <h1
+            id="plugin-list-view-heading"
+            className="text-2xl font-semibold text-text-primary"
+          >
+            Plugins
+          </h1>
           <div className="flex gap-2">
             {/* TODO(ui-defect-sweep#L295): wire Install Plugin to a `claude
               * plugins install <name>` IPC. Tracked in
@@ -95,6 +107,26 @@ export function PluginListView() {
               }}
               disabled={isChecking || plugins.length === 0}
               aria-busy={isChecking}
+              // Sighted users see no tooltip when disabled — they have to
+              // infer "no plugins to check" from the empty grid below.
+              // Mirror the disabling reason into the accessible name +
+              // tooltip so SR users + sighted users alike hear/see why
+              // the button is grey instead of just "Check for Updates,
+              // button, dimmed". Mirrors PR #181 (QuickActions),
+              // PR #183 (SessionListPanel new-session), PR #184
+              // (SessionInfoBar actions). The aria-busy already conveys
+              // the in-flight case ("Checking…") so no aria-label is
+              // needed for that state.
+              aria-label={
+                plugins.length === 0 && !isChecking
+                  ? "Check for Updates (no plugins installed)"
+                  : undefined
+              }
+              title={
+                plugins.length === 0 && !isChecking
+                  ? "No plugins installed"
+                  : undefined
+              }
               className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <RefreshCw size={14} aria-hidden="true" className={isChecking ? "animate-spin" : ""} />

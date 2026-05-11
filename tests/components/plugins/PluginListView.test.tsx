@@ -352,6 +352,35 @@ describe("PluginListView", () => {
     );
   });
 
+  // WCAG 4.1.2 (Name, Role, Value): the Check-for-Updates button is disabled
+  // when no plugins are installed (nothing to check). Sighted users can infer
+  // "no plugins → nothing to update" from the empty grid below, but SR users
+  // navigating by buttons hear only "Check for Updates, button, dimmed" with
+  // no explanation and reasonably conclude the app is broken. Mirror the
+  // disabling reason into aria-label + title so both audiences get the same
+  // affordance. Mirrors PR #181 (QuickActions), #183 (SessionListPanel new-
+  // session), #184 (SessionInfoBar actions), and the Install Plugin stub
+  // above. The hint must clear once plugins exist (button becomes enabled).
+  it("Check for Updates exposes aria-label hint when disabled because no plugins (WCAG 4.1.2)", () => {
+    usePluginStore.setState({ plugins: [] });
+    render(<PluginListView />);
+    const btn = screen.getByTestId("check-updates-btn") as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute("aria-label")).toBe(
+      "Check for Updates (no plugins installed)",
+    );
+    expect(btn.getAttribute("title")).toBe("No plugins installed");
+  });
+
+  it("Check for Updates clears aria-label hint when plugins exist", () => {
+    usePluginStore.setState({ plugins: [makePlugin({ name: "p1" })] });
+    render(<PluginListView />);
+    const btn = screen.getByTestId("check-updates-btn") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(btn.getAttribute("aria-label")).toBeNull();
+    expect(btn.getAttribute("title")).toBeNull();
+  });
+
   // WCAG 4.1.2 (Name, Role, Value): each header button has a fully readable
   // text label ("Install Plugin", "Check for Updates"), so the leading
   // lucide icon is decorative — without aria-hidden, screen readers may
@@ -492,5 +521,22 @@ describe("PluginListView", () => {
       resolveInvoke([]);
       await Promise.resolve();
     });
+  });
+
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — the page-level <section> must be a
+  // labelled landmark bound to the visible <h1> so SR rotor users routing
+  // by landmarks (NVDA D, JAWS R, VoiceOver rotor → Landmarks) jump to a
+  // named region instead of an anonymous "section". Mirrors the dashboard
+  // region-landmark sweep (#262/#263/#264/#265).
+  it("root <section> is a labelled region bound to the visible <h1> heading", () => {
+    render(<PluginListView />);
+    const root = screen.getByTestId("plugin-list-view");
+    expect(root.tagName).toBe("SECTION");
+    const labelledBy = root.getAttribute("aria-labelledby");
+    expect(labelledBy).not.toBeNull();
+    const heading = document.getElementById(labelledBy!);
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H1");
+    expect(heading!.textContent).toBe("Plugins");
   });
 });
