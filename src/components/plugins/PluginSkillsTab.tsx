@@ -27,7 +27,18 @@ export function PluginSkillsTab({ skills }: PluginSkillsTabProps) {
           data-testid="skill-row"
           className="flex flex-col gap-0.5 rounded-md border border-border p-2"
         >
-          <span className="text-sm font-medium text-text-primary">
+          {/* Name row: `truncate` keeps long bundled-skill names from
+              breaking the card layout (qualified or namespaced skills
+              regularly run 60+ chars), and the matching `title` lets
+              sighted users recover the hidden tail on hover. Mirrors
+              PR #225 (PluginAgentsTab name) and the broader truncation-
+              recovery family (#167/#170/#171/#175/#223/#224 + PluginCard
+              + SkillCard name). */}
+          <span
+            data-testid="skill-name"
+            className="truncate text-sm font-medium text-text-primary"
+            title={s.name}
+          >
             {s.name}
           </span>
           <span className="text-xs text-text-secondary">{s.description}</span>
