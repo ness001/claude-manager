@@ -59,6 +59,17 @@ describe("PluginDetailView", () => {
     }
   });
 
+  // a11y: WAI-ARIA Tabs Pattern — the tablist needs an aria-label to
+  // disambiguate it from the other tablists in the app (Plugins / Skills
+  // / MCP / Settings each have their own). Mirrors the labeled-collection
+  // sweep (#235/#236/#237/#238/#239/#240/#254/#255/#257).
+  it("tablist carries an aria-label scoped to the plugin name", () => {
+    render(<PluginDetailView plugin={makeDetail({ name: "alpha" })} />);
+    const tablist = screen.getByTestId("tab-bar");
+    expect(tablist.getAttribute("role")).toBe("tablist");
+    expect(tablist.getAttribute("aria-label")).toBe("alpha sections");
+  });
+
   it("default tab is Skills", () => {
     render(<PluginDetailView plugin={makeDetail()} />);
     expect(screen.getByTestId("skills-list")).toBeInTheDocument();

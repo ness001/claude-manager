@@ -163,10 +163,18 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
         </p>
       )}
 
+      {/* WAI-ARIA Tabs Pattern: a tablist with multiple instances on a
+          page (Plugins / Skills / MCP / Settings each have their own tab
+          UIs) needs `aria-label` so the SR rotor can disambiguate them.
+          Without it NVDA/VoiceOver announce three undifferentiated
+          "tablist with 3 tabs" entries. The label is scoped by plugin
+          name so multiple plugin detail views stay unambiguous. Mirrors
+          the labeled-collection sweep (#235/#236/#237/#238/#239/#240/#254/#255/#257). */}
       <nav
         data-testid="tab-bar"
         className="flex gap-2 border-b border-border"
         role="tablist"
+        aria-label={`${plugin.name} sections`}
       >
         {TABS.map((t, i) => (
           <button
