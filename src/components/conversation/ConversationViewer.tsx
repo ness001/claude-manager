@@ -357,6 +357,15 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
         // keyboard users land in the turn input below and have no way to
         // scroll prior turns into view.
         tabIndex={0}
+        // WAI-ARIA APG + WCAG 1.3.1: a focusable, named scroll container
+        // without a role lands on the AT tree as a generic clickable —
+        // SR users hear "Conversation, clickable" instead of "Conversation,
+        // region". `role="region"` (paired with the existing aria-label)
+        // promotes the pane to a navigable landmark surfaced in the
+        // landmarks list / rotor (NVDA "D", VoiceOver rotor → Landmarks).
+        // Per WAI-ARIA, role="region" requires an accessible name —
+        // `aria-label="Conversation"` satisfies that.
+        role="region"
         aria-label="Conversation"
         // `pb-14` reserves bottom padding equal to the floating `turn-nav`
         // widget's height + offset (≈28px tall + 8px bottom-2 = 36px) so

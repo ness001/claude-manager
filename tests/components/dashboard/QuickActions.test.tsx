@@ -1,7 +1,7 @@
 // Tests for QuickActions — T2.12.
 
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { QuickActions } from "../../../src/components/dashboard/QuickActions";
 
@@ -90,5 +90,40 @@ describe("QuickActions", () => {
     for (const [id, label] of cases) {
       expect(screen.getByTestId(id).getAttribute("aria-label")).toBe(label);
     }
+  });
+
+  // WCAG 1.3.1 (Info and Relationships): the four action buttons form a
+  // coherent group under the "Quick Actions" heading. Without a labelled
+  // <ul>, screen-reader rotor users get no list count and no programmatic
+  // tie between heading and buttons. Mirrors PRs #235 / #236 / #237 / #230.
+  it("wraps action buttons in a <ul aria-labelledby> with one <li> per action", () => {
+    render(<QuickActions />);
+    const list = screen.getByTestId("quick-actions-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-labelledby")).toBe("quick-actions-heading");
+    const heading = screen.getByRole("heading", { name: "Quick Actions", level: 3 });
+    expect(heading.id).toBe("quick-actions-heading");
+    const byRole = screen.getByRole("list", { name: "Quick Actions" });
+    expect(byRole).toBe(list);
+    const items = within(list).getAllByRole("listitem");
+    expect(items).toHaveLength(4);
+    items.forEach((li) => {
+      expect(li.querySelector("button")).not.toBeNull();
+    });
+  });
+
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — promote the card root to a labelled
+  // <section> bound to the visible <h3> via aria-labelledby so it appears
+  // in the SR rotor's landmarks list. Mirrors PRs #262 (ModelDonut),
+  // #263 (SystemHealth), and the broader region-landmark sweep.
+  it("card root is a labelled <section> region bound to the visible <h3> heading", () => {
+    render(<QuickActions />);
+    const root = screen.getByTestId("quick-actions");
+    expect(root.tagName).toBe("SECTION");
+    expect(root.getAttribute("aria-labelledby")).toBe("quick-actions-heading");
+    const heading = document.getElementById("quick-actions-heading");
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H3");
+    expect(heading!.textContent).toBe("Quick Actions");
   });
 });

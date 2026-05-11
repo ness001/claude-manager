@@ -162,7 +162,21 @@ export function McpServerCard({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      {/* WAI-ARIA Toolbar pattern: this row is a group of related action
+        * buttons (View Tools / View Logs / Retry / Cancel / Edit / Remove)
+        * operating on the same MCP server. Without role="toolbar" + an
+        * accessible name, SR users hear them as a flat sequence of
+        * unrelated controls indistinguishable from any other button strip.
+        * role="toolbar" is the correct ARIA primitive for a button group.
+        * Mirrors SessionInfoBar action row (PR #246). The aria-label
+        * embeds the server name so the toolbar is uniquely identifiable
+        * when several cards are rendered in the same scope group. */}
+      <div
+        role="toolbar"
+        aria-label={`Actions for ${server.name}`}
+        data-testid="mcp-actions-toolbar"
+        className="flex flex-wrap gap-2"
+      >
         {server.status === "connected" && (
           <>
             <ActionButton

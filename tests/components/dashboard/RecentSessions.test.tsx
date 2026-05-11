@@ -93,6 +93,22 @@ describe("RecentSessions", () => {
     expect(heading.tagName).toBe("H3");
   });
 
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — promote the card root to a labelled
+  // <section> bound to the visible <h3> via aria-labelledby so it appears
+  // in the SR rotor's landmarks list. Mirrors PRs #262 (ModelDonut),
+  // #263 (SystemHealth), #264 (QuickActions), and the broader region-
+  // landmark sweep.
+  it("card root is a labelled <section> region bound to the visible <h3> heading", () => {
+    render(<RecentSessions data={[]} />);
+    const root = screen.getByTestId("recent-sessions");
+    expect(root.tagName).toBe("SECTION");
+    expect(root.getAttribute("aria-labelledby")).toBe("recent-sessions-heading");
+    const heading = document.getElementById("recent-sessions-heading");
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H3");
+    expect(heading!.textContent).toBe("Recent Sessions");
+  });
+
   it("rows are non-interactive: no onClick + no hover-bg cue (spec §4.1 — only 'View All Sessions' is the documented affordance)", () => {
     // Defect: previously the row had `hover:bg-bg-tertiary` implying it was
     // clickable, but no click handler was wired. Either remove the misleading
@@ -126,6 +142,28 @@ describe("RecentSessions", () => {
     );
     const cell = screen.getByTestId("recent-session-msg-count");
     expect(cell.textContent).toBe(expected);
+  });
+
+  // WCAG 4.1.2 — bare "5 msgs" is opaque to SR users; mirror the visual
+  // "messages" cue into the accessible name. Same pattern as SessionCard
+  // (PR #250), SessionInfoBar message-count-badge, and AssistantMessage
+  // model-badge (PR #247).
+  it("recent-session-msg-count announces 'Messages: <n>' to assistive tech", () => {
+    render(
+      <RecentSessions
+        data={[
+          {
+            sessionId: "s",
+            displayName: "n",
+            messageCount: 17,
+            startedAt: Date.now(),
+          },
+        ]}
+      />,
+    );
+    expect(
+      screen.getByTestId("recent-session-msg-count").getAttribute("aria-label"),
+    ).toBe("Messages: 17");
   });
 
   // Defect: row name has `truncate`, so long session names get clipped with
@@ -343,5 +381,21 @@ describe("RecentSessions", () => {
     expect(
       screen.getByTestId("recent-session-row").getAttribute("aria-label"),
     ).toBe("(untitled): 2 msgs");
+  });
+
+  // WCAG 1.3.1 (Info and Relationships): the <ul> rendered without an
+  // accessible name, so screen-reader rotor users hit "list, 8 items" with
+  // no hint of what the list represents. Bind to the existing visible
+  // <h3> via aria-labelledby so the rotor announces "list, 8 items, Recent
+  // Sessions". Mirrors PRs #235 / #236 / #237 / #238 / #230.
+  it("recent-sessions <ul> is labelled by the Recent Sessions heading", () => {
+    render(<RecentSessions data={makeRows(3)} />);
+    const list = screen.getByTestId("recent-sessions-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-labelledby")).toBe("recent-sessions-heading");
+    const heading = screen.getByRole("heading", { name: "Recent Sessions", level: 3 });
+    expect(heading.id).toBe("recent-sessions-heading");
+    const byRole = screen.getByRole("list", { name: "Recent Sessions" });
+    expect(byRole).toBe(list);
   });
 });

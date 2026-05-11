@@ -272,24 +272,50 @@ export function SessionListPanel() {
         </div>
       ) : (
         <div className="flex-1 overflow-auto flex flex-col gap-1">
-          {groups.map((g) => (
-            <div key={g.key} className="flex flex-col gap-1">
-              <h3
-                data-testid="group-header"
-                className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted"
-              >
-                {g.label}{" "}
-                <span className="text-text-muted/70">({g.sessions.length})</span>
-              </h3>
-              {g.sessions.map((s) => (
-                <SessionCard
-                  key={s.sessionId}
-                  session={s}
-                  selected={s.sessionId === selectedId}
-                />
-              ))}
-            </div>
-          ))}
+          {groups.map((g) => {
+            // WCAG 1.3.1 (Info and Relationships): each group's cards form
+            // a labelled list under the <h3> group header but were emitted
+            // as flat sibling <SessionCard> <div>s — SR rotor's Lists view
+            // (NVDA/JAWS "L", VoiceOver rotor → Lists) heard nothing for
+            // the collection and the per-group count was lost. Promote
+            // each group's cards into <ul aria-labelledby={header-id}> with
+            // one <li> per card so the rotor surfaces "list, N items, <group
+            // label>". Mirrors PRs #235/#236/#237/#238/#239/#240/#241.
+            //
+            // NOTE: only the non-virtual branch is wrapped — the virtual
+            // branch above renders headers and cards interleaved with
+            // absolute positioning, where wrapping individual cards in <li>
+            // outside a <ul> would be invalid HTML and re-grouping would
+            // require restructuring the virtualizer output. The non-virtual
+            // branch (≤50 sessions) is the overwhelmingly common case.
+            const headerId = `session-group-${g.key}`;
+            return (
+              <div key={g.key} className="flex flex-col gap-1">
+                <h3
+                  id={headerId}
+                  data-testid="group-header"
+                  className="px-2 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted"
+                >
+                  {g.label}{" "}
+                  <span className="text-text-muted/70">({g.sessions.length})</span>
+                </h3>
+                <ul
+                  data-testid={`session-group-list-${g.key}`}
+                  aria-labelledby={headerId}
+                  className="flex flex-col gap-1"
+                >
+                  {g.sessions.map((s) => (
+                    <li key={s.sessionId}>
+                      <SessionCard
+                        session={s}
+                        selected={s.sessionId === selectedId}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       )}
     </aside>

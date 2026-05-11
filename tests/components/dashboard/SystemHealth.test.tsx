@@ -144,6 +144,22 @@ describe("SystemHealth", () => {
     expect(heading.tagName).toBe("H3");
   });
 
+  // a11y: WCAG 1.3.1 + WAI-ARIA APG — promote the card root to a labelled
+  // <section> bound to the visible <h3> via aria-labelledby so it appears
+  // in the SR rotor's landmarks list. Mirrors PR #262 (ModelDonut) and
+  // the broader region-landmark sweep (#245 / #256 / #261).
+  it("card root is a labelled <section> region bound to the visible <h3> heading", () => {
+    render(<SystemHealth skipApiCheck />);
+    const root = screen.getByTestId("system-health");
+    expect(root.tagName).toBe("SECTION");
+    const labelledBy = root.getAttribute("aria-labelledby");
+    expect(labelledBy).not.toBeNull();
+    const heading = document.getElementById(labelledBy!);
+    expect(heading).not.toBeNull();
+    expect(heading!.tagName).toBe("H3");
+    expect(heading!.textContent).toBe("System Health");
+  });
+
   // WCAG 2.4.6 (Headings and Labels) / 1.3.1 (Info and Relationships):
   // screen-reader users navigating by lists (NVDA "L", JAWS "L") would hear
   // "list, 4 items" with no clue this is the system-health breakdown — the

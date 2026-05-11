@@ -43,6 +43,15 @@ describe("PluginSkillsTab", () => {
     expect(screen.getByTestId("skills-empty")).toBeInTheDocument();
   });
 
+  // WCAG 2.4.6 / 1.3.1 — bare <ul> is "list, N items" with no name.
+  // Companion fix in this PR for PluginAgentsTab + PluginHooksTab.
+  it("skills list has aria-label 'Bundled skills'", () => {
+    render(<PluginSkillsTab skills={[{ name: "s1", description: "d" }]} />);
+    const list = screen.getByTestId("skills-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe("Bundled skills");
+  });
+
   // a11y: plugin tabs are async-rendered (skills/hooks/agents data loads
   // when the user clicks into a plugin). Empty-state text appears in-place
   // without any AT cue. role="status" + aria-live="polite" makes screen

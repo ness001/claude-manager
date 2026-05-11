@@ -418,4 +418,21 @@ describe("SessionInfoBar", () => {
       screen.getByTestId("entrypoint-badge").getAttribute("aria-label"),
     ).toBe("Entrypoint: interactive");
   });
+
+  // WAI-ARIA Toolbar pattern: the row of action buttons (View Live / Resume /
+  // Stop / Archive / …) is a related control group. Without role="toolbar" +
+  // an accessible name, SR users hear them as a flat sequence of unrelated
+  // buttons, indistinguishable from any other strip on the page.
+  it("action row is a named toolbar landmark (a11y: button-group context)", () => {
+    useSessionStore.setState({
+      sessions: [makeSession({ sessionId: "x", state: "ended" })],
+      selectedId: "x",
+    });
+    render(<SessionInfoBar session={makeSession({ sessionId: "x", state: "ended" })} />);
+    const tb = screen.getByTestId("session-actions-toolbar");
+    expect(tb.getAttribute("role")).toBe("toolbar");
+    expect(tb.getAttribute("aria-label")).toBe("Session actions");
+    const byRole = screen.getByRole("toolbar", { name: "Session actions" });
+    expect(byRole).toBe(tb);
+  });
 });

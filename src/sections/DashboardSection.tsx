@@ -78,21 +78,43 @@ export function DashboardSection() {
       ) : null}
 
       {/* Row 1 — 4 stat cards */}
-      <div data-testid="dashboard-row-1" className="grid grid-cols-4 gap-4">
-        <StatCard value={totalSessions} label="Sessions" accent="green" />
-        <StatCard value={totalMessages} label="Messages" accent="blue" />
-        <StatCard
-          value={longestSession?.messageCount ?? 0}
-          label="Longest Session"
-          accent="yellow"
-          sublabel={longestSession?.name || undefined}
-        />
-        <StatCard
-          value={formatDate(activeSince)}
-          label="Active Since"
-          accent="mauve"
-        />
-      </div>
+      {/* WCAG 1.3.1 (Info and Relationships): the four stat cards form a
+          logical group of "key statistics" but were emitted as flat sibling
+          <StatCard>s inside a non-semantic <div className="grid">. SR users
+          navigating by lists (NVDA/JAWS "L", VoiceOver rotor → Lists) heard
+          nothing for this collection — the count was lost and the cards had
+          no programmatic group label. Promote the grid container to a
+          <ul aria-label="Key statistics"> with one <li> per card so the
+          rotor surfaces "list, 4 items, Key statistics". CSS Grid is
+          element-agnostic — <ul> with display:grid lays out identically.
+          Mirrors PRs #235/#236/#237/#238/#239 and #230. */}
+      <ul
+        data-testid="dashboard-row-1"
+        aria-label="Key statistics"
+        className="grid grid-cols-4 gap-4"
+      >
+        <li>
+          <StatCard value={totalSessions} label="Sessions" accent="green" />
+        </li>
+        <li>
+          <StatCard value={totalMessages} label="Messages" accent="blue" />
+        </li>
+        <li>
+          <StatCard
+            value={longestSession?.messageCount ?? 0}
+            label="Longest Session"
+            accent="yellow"
+            sublabel={longestSession?.name || undefined}
+          />
+        </li>
+        <li>
+          <StatCard
+            value={formatDate(activeSince)}
+            label="Active Since"
+            accent="mauve"
+          />
+        </li>
+      </ul>
 
       {/* Row 2 — Activity (60%) + Model donut (40%) */}
       <div

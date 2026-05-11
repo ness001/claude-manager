@@ -106,6 +106,22 @@ describe("PluginCard", () => {
     expect(screen.getByTestId("remove-btn")).toBeInTheDocument();
   });
 
+  // WAI-ARIA Toolbar pattern: Reinstall + Remove are a related control
+  // group operating on the same broken plugin. Without role="toolbar" +
+  // a plugin-scoped name, SR users walking a list of broken plugins hear
+  // identical button pairs with no per-card disambiguation. Mirrors PR
+  // #248 (McpServerCard actions toolbar).
+  it("broken-plugin recovery actions form a named toolbar landmark scoped to the plugin name", () => {
+    const p = makePlugin({ state: "broken", name: "broken-x" });
+    render(<PluginCard plugin={p} selected={false} />);
+    const tb = screen.getByTestId("plugin-broken-actions-toolbar");
+    expect(tb.getAttribute("role")).toBe("toolbar");
+    expect(tb.getAttribute("aria-label")).toBe("Recovery actions for broken-x");
+    expect(
+      screen.getByRole("toolbar", { name: "Recovery actions for broken-x" }),
+    ).toBe(tb);
+  });
+
   // Reinstall has no IPC backing yet — render it disabled with an
   // explanatory tooltip rather than as a clickable lie.
   it("Reinstall button is disabled with an explanatory title (no IPC backing yet)", () => {
@@ -296,5 +312,14 @@ describe("PluginCard", () => {
       render(<PluginCard plugin={makePlugin({ hookCount: n })} selected={false} />);
       expect(screen.getByTestId("hook-count").textContent?.trim()).toBe(expected);
     });
+  });
+
+  // WCAG 4.1.2 — bare version string is opaque to SR users; mirror the
+  // visual "version" cue into the accessible name.
+  it("version-pill announces 'Version: <v>' to assistive tech", () => {
+    render(<PluginCard plugin={makePlugin({ version: "2.4.1" })} selected={false} />);
+    expect(
+      screen.getByTestId("version-pill").getAttribute("aria-label"),
+    ).toBe("Version: 2.4.1");
   });
 });

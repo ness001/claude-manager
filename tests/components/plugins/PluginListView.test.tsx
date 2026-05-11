@@ -2,7 +2,7 @@
 // (spec §17.6), and the Check-for-Updates handler invokes the IPC.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, act } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, act, within } from "@testing-library/react";
 
 import { PluginListView } from "../../../src/components/plugins/PluginListView";
 import { usePluginStore } from "../../../src/stores/plugin-store";
@@ -113,6 +113,38 @@ describe("PluginListView", () => {
     expect(screen.getByTestId("stat-disabled").textContent).toBe("1 disabled");
   });
 
+  // WCAG 1.3.1 / 4.1.2 — three flat sibling stat spans wrapped in a non-
+  // semantic <div> are invisible to SR list-rotor and each bare span ("5
+  // installed") is opaque without a role prefix. Promote to a labeled <ul>
+  // with per-<li> aria-labels so the rotor surfaces "list, 3 items, Plugin
+  // counts" and each item announces "Installed: 5". Mirrors PR #235
+  // (SkillsListView), PR #236 (plugin grid), PR #230 (SystemHealth).
+  it("plugin counts render as a labeled <ul> with per-stat aria-labels (WCAG 1.3.1)", () => {
+    usePluginStore.setState({
+      plugins: [
+        makePlugin({ name: "p1", state: "active" }),
+        makePlugin({ name: "p2", state: "active" }),
+        makePlugin({ name: "p3", state: "disabled" }),
+      ],
+    });
+    render(<PluginListView />);
+    const list = screen.getByTestId("plugin-stats-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-label")).toBe("Plugin counts");
+
+    const installed = screen.getByTestId("stat-installed");
+    expect(installed.tagName).toBe("LI");
+    expect(installed.getAttribute("aria-label")).toBe("Installed: 3");
+
+    const active = screen.getByTestId("stat-active");
+    expect(active.tagName).toBe("LI");
+    expect(active.getAttribute("aria-label")).toBe("Active: 2");
+
+    const disabled = screen.getByTestId("stat-disabled");
+    expect(disabled.tagName).toBe("LI");
+    expect(disabled.getAttribute("aria-label")).toBe("Disabled: 1");
+  });
+
   it("search filters the grid and shows a no-matches message", () => {
     usePluginStore.setState({
       plugins: [
@@ -126,6 +158,30 @@ describe("PluginListView", () => {
     expect(screen.getAllByTestId("plugin-card")).toHaveLength(1);
     fireEvent.change(search, { target: { value: "zzz" } });
     expect(screen.getByTestId("no-matches")).toBeInTheDocument();
+  });
+
+  // WCAG 1.3.1 (Info and Relationships): the populated grid was previously
+  // <div data-testid="plugin-grid"> with sibling <div> cards — SR users
+  // navigating by lists (NVDA "L", JAWS "L", VoiceOver rotor → Lists)
+  // heard nothing for this collection and the count was lost. Promote to
+  // a labeled <ul> + <li> wrappers so the rotor surfaces "list, N items"
+  // with a name. Mirrors PR #235 (SkillsListView) and PR #230
+  // (SystemHealth).
+  it("plugin cards render inside a labeled <ul> with <li> wrappers (WCAG 1.3.1)", () => {
+    usePluginStore.setState({
+      plugins: [
+        makePlugin({ name: "alpha" }),
+        makePlugin({ name: "beta", installPath: "/p/b" }),
+      ],
+    });
+    render(<PluginListView />);
+    const list = screen.getByRole("list", { name: "Installed plugins" });
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("data-testid")).toBe("plugin-grid");
+    const items = within(list).getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    // Each card nests inside its own <li> rather than sitting next to it.
+    expect(items[0].querySelector("[data-testid='plugin-card']")).not.toBeNull();
   });
 
   // a11y: the no-matches message appears as the user types into the search
