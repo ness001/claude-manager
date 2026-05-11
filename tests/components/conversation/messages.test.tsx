@@ -218,6 +218,34 @@ describe("ToolCallBlock", () => {
     expect(body.textContent).toContain("file1");
   });
 
+  // WCAG 2.1.1 (Keyboard): the Input / Output <pre> blocks have
+  // overflow-auto so wide tool payloads (long bash commands, deeply-nested
+  // JSON, base64-encoded results) clip horizontally and mouse users can
+  // scroll. Keyboard-only users could not — <pre> is not focusable by
+  // default. Mirrors the same fix on AssistantMessage <pre> blocks
+  // (PR #195) and the conversation-scroller (already in tree).
+  it("Input / Output <pre> blocks are keyboard-focusable for horizontal scroll (WCAG 2.1.1)", () => {
+    render(
+      <ToolCallBlock
+        toolName="Bash"
+        toolInput={{ cmd: "very long command line that will overflow horizontally" }}
+        toolOutput={"a".repeat(500)}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("tool-call-toggle"));
+    for (const { tid, label } of [
+      { tid: "tool-call-input-pre", label: "Tool input" },
+      { tid: "tool-call-output-pre", label: "Tool output" },
+    ]) {
+      const pre = screen.getByTestId(tid);
+      expect(pre.getAttribute("tabindex")).toBe("0");
+      expect(pre.getAttribute("role")).toBe("region");
+      expect(pre.getAttribute("aria-label")).toBe(label);
+      expect(pre.className).toContain("focus-visible:ring-2");
+      expect(pre.className).toContain("focus-visible:ring-accent");
+    }
+  });
+
   it("uses the error border + shows Error label when isError is true", () => {
     render(
       <ToolCallBlock
