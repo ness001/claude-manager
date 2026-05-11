@@ -169,9 +169,20 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
         // #207 (SkillsListView), #212 (SessionDetailPanel).
         role="status"
         aria-live="polite"
-        className="flex h-full min-h-[240px] flex-col items-center justify-center rounded-md border border-border bg-card-bg p-4 text-sm text-text-muted"
+        className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
       >
-        No activity yet
+        {/* WCAG 1.3.1 / 2.4.6: sibling dashboard sections (SystemHealth,
+            ModelDonut, RecentSessions, QuickActions) all expose an <h3>
+            section heading so SR users can navigate to them via the
+            headings list (NVDA "H", JAWS "H"). ActivityChart was the only
+            one missing — SR rotor users would skip past the chart silently.
+            Mirrors PRs #61, #63, #64. */}
+        <h3 className="text-xs uppercase tracking-wide text-text-muted">
+          Activity
+        </h3>
+        <div className="flex flex-1 items-center justify-center text-sm text-text-muted">
+          No activity yet
+        </div>
       </div>
     );
   }
@@ -202,6 +213,13 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
           </span>
         </div>
       ) : null}
+
+      {/* WCAG 1.3.1 / 2.4.6: section heading mirroring SystemHealth /
+          ModelDonut / RecentSessions / QuickActions so SR users can
+          locate the chart via the headings list. */}
+      <h3 className="text-xs uppercase tracking-wide text-text-muted">
+        Activity
+      </h3>
 
       <div className="flex items-center justify-between gap-2">
         <div
