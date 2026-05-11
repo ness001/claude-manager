@@ -344,4 +344,20 @@ describe("RecentSessions", () => {
       screen.getByTestId("recent-session-row").getAttribute("aria-label"),
     ).toBe("(untitled): 2 msgs");
   });
+
+  // WCAG 1.3.1 (Info and Relationships): the <ul> rendered without an
+  // accessible name, so screen-reader rotor users hit "list, 8 items" with
+  // no hint of what the list represents. Bind to the existing visible
+  // <h3> via aria-labelledby so the rotor announces "list, 8 items, Recent
+  // Sessions". Mirrors PRs #235 / #236 / #237 / #238 / #230.
+  it("recent-sessions <ul> is labelled by the Recent Sessions heading", () => {
+    render(<RecentSessions data={makeRows(3)} />);
+    const list = screen.getByTestId("recent-sessions-list");
+    expect(list.tagName).toBe("UL");
+    expect(list.getAttribute("aria-labelledby")).toBe("recent-sessions-heading");
+    const heading = screen.getByRole("heading", { name: "Recent Sessions", level: 3 });
+    expect(heading.id).toBe("recent-sessions-heading");
+    const byRole = screen.getByRole("list", { name: "Recent Sessions" });
+    expect(byRole).toBe(list);
+  });
 });
