@@ -264,4 +264,19 @@ describe("SessionCard", () => {
     );
     expect(screen.getByTestId("time-ago").hasAttribute("title")).toBe(false);
   });
+
+  // UX: when `startedAt` is missing/unparseable (common for ENDED sessions
+  // with no PID file), `timeAgo()` returns "" — leaving the time slot
+  // visually empty. Sighted users see a layout glitch; SR users hear
+  // silence on that field. Render an em-dash placeholder so the slot is
+  // visibly populated and AT users get a non-empty announcement.
+  it("time-ago span shows an em-dash placeholder when startedAt is empty", () => {
+    render(
+      <SessionCard
+        session={makeSession({ startedAt: "" })}
+        selected={false}
+      />,
+    );
+    expect(screen.getByTestId("time-ago").textContent).toBe("—");
+  });
 });
