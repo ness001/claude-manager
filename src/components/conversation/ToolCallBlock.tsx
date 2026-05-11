@@ -28,9 +28,28 @@ export function ToolCallBlock({
     : "border-l-status-blue";
 
   return (
-    <div
+    // WCAG 1.3.1 (Info and Relationships) / 4.1.2 (Name, Role, Value):
+    // sighted users see a clearly bordered block (left-border accent
+    // color, distinct background) that visually groups the tool name +
+    // chevron toggle + collapsible body into a single "tool call" unit.
+    // SR users previously got nothing — the outer <div> had no role, so
+    // landmark/region rotors (NVDA "D", JAWS region nav, VoiceOver rotor
+    // → Landmarks) skipped right past it, and conversations with many
+    // tool calls were a flat sequence of ungrouped buttons + prose.
+    // Promote the bubble to a named region landmark scoped to the tool
+    // name — when isError is true, the label folds the error state in
+    // so the rotor reads "region, Tool call failed: Bash" and a SR user
+    // can jump to the next failed call without expanding bodies one by
+    // one. Mirrors UserMessage (line 23-28: role="region" +
+    // aria-labelledby) and SummaryBanner. The body's existing
+    // aria-controls / aria-expanded relationship on the toggle is
+    // unaffected.
+    <section
       data-testid="tool-call-block"
       data-error={isError ? "true" : "false"}
+      aria-label={
+        isError ? `Tool call failed: ${toolName || "tool"}` : `Tool call: ${toolName || "tool"}`
+      }
       className={`rounded-md border-l-4 ${borderClass} bg-bg-secondary px-3 py-2 text-sm`}
     >
       <button
@@ -105,6 +124,6 @@ export function ToolCallBlock({
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }
