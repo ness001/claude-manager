@@ -62,22 +62,27 @@ describe("PluginDetailView", () => {
   it("default tab is Skills", () => {
     render(<PluginDetailView plugin={makeDetail()} />);
     expect(screen.getByTestId("skills-list")).toBeInTheDocument();
-    expect(screen.queryByTestId("agents-list")).toBeNull();
-    expect(screen.queryByTestId("hooks-list")).toBeNull();
+    // All three panels mount (WAI-ARIA Tabs Pattern + IDREF resolution); only
+    // the active one is visible. Inactive panels are toggled via `hidden`.
+    expect(screen.getByTestId("tabpanel-skills").hasAttribute("hidden")).toBe(false);
+    expect(screen.getByTestId("tabpanel-agents").hasAttribute("hidden")).toBe(true);
+    expect(screen.getByTestId("tabpanel-hooks").hasAttribute("hidden")).toBe(true);
   });
 
   it("clicking Agents tab shows agent rows", () => {
     render(<PluginDetailView plugin={makeDetail()} />);
     fireEvent.click(screen.getByTestId("tab-agents"));
     expect(screen.getByTestId("agents-list")).toBeInTheDocument();
-    expect(screen.queryByTestId("skills-list")).toBeNull();
+    expect(screen.getByTestId("tabpanel-agents").hasAttribute("hidden")).toBe(false);
+    expect(screen.getByTestId("tabpanel-skills").hasAttribute("hidden")).toBe(true);
   });
 
   it("clicking Hooks tab shows hook rows", () => {
     render(<PluginDetailView plugin={makeDetail()} />);
     fireEvent.click(screen.getByTestId("tab-hooks"));
     expect(screen.getByTestId("hooks-list")).toBeInTheDocument();
-    expect(screen.queryByTestId("skills-list")).toBeNull();
+    expect(screen.getByTestId("tabpanel-hooks").hasAttribute("hidden")).toBe(false);
+    expect(screen.getByTestId("tabpanel-skills").hasAttribute("hidden")).toBe(true);
   });
 
   it("Open in File Browser invokes shell.open with the install path", () => {
@@ -233,6 +238,45 @@ describe("PluginDetailView", () => {
       expect(agentsTab.getAttribute("aria-controls")).toBe(
         agentsPanel.getAttribute("id"),
       );
+    });
+
+    // Regression for the 2/3-dangling-IDREF defect: previously only the
+    // active tab's panel was rendered, so the OTHER two tabs' aria-controls
+    // pointed at ids that did not exist anywhere in the document. Per
+    // WAI-ARIA, every IDREF must resolve to an element in the DOM. Per the
+    // WAI-ARIA Tabs Pattern, all panels should live in the DOM with
+    // visibility toggled via the `hidden` attribute. Mirrors PR #189
+    // (ToolCallBlock) and PR #191 (McpServerCard) IDREF-class fixes.
+    it("ALL three tabs' aria-controls resolve to a real panel (no dangling IDREFs)", () => {
+      render(<PluginDetailView plugin={makeDetail()} />);
+      // Default state: skills is the active tab. The previous bug only
+      // exposed itself for the two INACTIVE tabs — agents + hooks.
+      for (const tabName of ["skills", "agents", "hooks"] as const) {
+        const tab = screen.getByTestId(`tab-${tabName}`);
+        const controlsId = tab.getAttribute("aria-controls");
+        expect(controlsId).toBeTruthy();
+        const panel = document.getElementById(controlsId!);
+        expect(panel, `tab-${tabName} aria-controls must resolve`).not.toBeNull();
+        expect(panel!.getAttribute("role")).toBe("tabpanel");
+        expect(panel!.getAttribute("aria-labelledby")).toBe(tab.getAttribute("id"));
+      }
+    });
+
+    // Visibility model: all three panels are in the DOM (so IDREFs resolve)
+    // but only the active one is visible — inactive panels are toggled off
+    // via the `hidden` attribute (which browsers treat as
+    // `display:none !important`, so flex layout excludes them too).
+    it("inactive tabpanels are hidden via the `hidden` attribute; only one is visible", () => {
+      render(<PluginDetailView plugin={makeDetail()} />);
+      // Skills active by default.
+      expect(screen.getByTestId("tabpanel-skills").hasAttribute("hidden")).toBe(false);
+      expect(screen.getByTestId("tabpanel-agents").hasAttribute("hidden")).toBe(true);
+      expect(screen.getByTestId("tabpanel-hooks").hasAttribute("hidden")).toBe(true);
+      // Switch to agents → only agents is visible.
+      fireEvent.click(screen.getByTestId("tab-agents"));
+      expect(screen.getByTestId("tabpanel-skills").hasAttribute("hidden")).toBe(true);
+      expect(screen.getByTestId("tabpanel-agents").hasAttribute("hidden")).toBe(false);
+      expect(screen.getByTestId("tabpanel-hooks").hasAttribute("hidden")).toBe(true);
     });
   });
 });
