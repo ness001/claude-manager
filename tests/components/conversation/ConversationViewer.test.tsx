@@ -453,4 +453,18 @@ describe("ConversationViewer", () => {
     expect(scroller.className).toContain("focus-visible:ring-2");
     expect(scroller.className).toContain("focus-visible:ring-accent");
   });
+
+  // a11y: WAI-ARIA + WCAG 1.3.1 — a focusable named scroll container
+  // without a role announces as a generic clickable. `role="region"` +
+  // the existing aria-label promotes the pane to a proper landmark in
+  // the SR rotor's landmarks list. Mirrors the region-landmark family
+  // (UserMessage / SummaryBanner / SessionDetailPanel #245 / ToolCallBlock
+  // #256).
+  it("conversation scroller is exposed as a region landmark (WCAG 1.3.1)", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    const scroller = await screen.findByTestId("conversation-scroller");
+    expect(scroller.getAttribute("role")).toBe("region");
+    expect(scroller.getAttribute("aria-label")).toBe("Conversation");
+  });
 });
