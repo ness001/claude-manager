@@ -7,370 +7,203 @@
 
 ## 1. Why this document exists
 
-Claude Manager is a Tauri v2 desktop app — a real frontend/backend project where:
+Claude Manager is a Tauri v2 desktop app — a real frontend/backend project. Strong unit coverage on both halves did not stop the April–May 2026 dashboard RCA from shipping four bugs visible the moment the app launched. The gap was not "not enough tests"; it was the absence of a coherent layering model. This document defines that model so future tests are placed where they earn their cost, and so silent drift across the frontend/backend boundary is caught at unit-test speed instead of in production.
 
-- **Frontend** (`src/`) is React 19 + TypeScript running inside an embedded WebView2 (Windows) / WebKit (other OSes).
-- **Backend** (`src-tauri/src/`) is Rust compiled to native code, running in the same `.exe` process group.
-- The two halves talk only through the **Tauri IPC bridge**: 15 functions decorated with `#[tauri::command]` on the Rust side, called from TypeScript via `invoke("command_name", args)`.
+It is a methodology — principles, layer responsibilities, and what each layer must and must not do. It deliberately does **not** specify which files to create, which command names to test first, or which percentage of coverage to enforce. Those are decisions for the implementation plans that follow this design.
 
-Today the project has strong unit coverage on both halves, weak cross-module coverage on the Rust side, no internal IPC contract, and a single E2E spec that isn't even wired into `package.json`. The April–May 2026 dashboard RCA proved that the gaps cost real shipping bugs — four of them visible the moment the app launched, none of which any test caught.
+## 2. Project shape that the methodology is built on
 
-This document defines the test architecture the team will follow going forward. It is a blueprint and team agreement, not (yet) a hard phase gate.
+The methodology assumes — and is shaped by — these architectural facts about the project. If any of them change, the methodology should be revisited.
 
-## 2. Mental model: two pyramids joined by one contract
+- **Frontend half:** TypeScript + React 19, running inside an embedded WebView (WebView2 on Windows, WebKit elsewhere). Lives under `src/`. Includes UI components, client-side state stores, and pure parsers/loaders.
+- **Backend half:** Rust, compiled to native code, running in the same `.exe` process. Lives under `src-tauri/src/`. Owns all filesystem access, process inspection, and parsing of external on-disk artifacts.
+- **The bridge:** Tauri's IPC mechanism (`#[tauri::command]` on Rust, `invoke()` on TypeScript). JSON-serialized in both directions. This is the only path between the two halves.
+- **External boundary:** the project reads files owned by other tools (Claude Code's `~/.claude/` tree, `~/.claude.json`, etc.). The on-disk format of those files is a contract the project does not own.
+- **Cross-platform reality:** Tauri v2 supports Windows + Linux + macOS for the app itself, but the WebDriver-based E2E tooling (`tauri-driver`) supports only Windows and Linux. macOS dev machines can run everything except E2E.
+
+## 3. Methodology
+
+### 3.1 The two-pyramid model
+
+Because the frontend and backend are two languages, two runtimes, and two test frameworks, the project does not have one test pyramid — it has **two**, one per half:
 
 ```
                   ┌────────────────────────────────────┐
-                  │  E2E (tauri-driver + WebdriverIO)  │   real webview · real Rust · real FS
-                  │  golden paths + RCA regression     │   the ONLY layer that crosses IPC
+                  │  E2E                               │   real app process
+                  │  (only layer that crosses IPC)     │
                   └────────────────────────────────────┘
                           ▲                  ▲
               ┌───────────┘                  └───────────┐
               │                                          │
    ┌──────────────────────┐                  ┌──────────────────────┐
-   │  Frontend            │                  │  Rust                │
+   │  Frontend            │                  │  Backend             │
    │  Integration         │                  │  Integration         │
-   │  loader+store+ui     │                  │  src-tauri/tests/    │
-   │  (mocked invoke)     │                  │  (tmpdir, no Tauri)  │
    └──────────────────────┘                  └──────────────────────┘
               ▲                                          ▲
               │   ╔══════════════════════════════════╗   │
-              │   ║  IPC Schema (single source)      ║   │
-              │   ║  schemars → JSON Schema files    ║   │
+              │   ║  IPC Contract (single source)    ║   │
               │   ║  both sides validate against it  ║   │
               │   ╚══════════════════════════════════╝   │
               ▲                                          ▲
    ┌──────────────────────┐                  ┌──────────────────────┐
-   │  Frontend Units      │                  │  Rust Units          │
-   │  components/stores/  │                  │  inline #[test]      │
-   │  pure lib            │                  │  pure logic only     │
+   │  Frontend Units      │                  │  Backend Units       │
    └──────────────────────┘                  └──────────────────────┘
 ```
 
-Two key ideas:
-
-1. **Two independent pyramids.** Frontend has its own unit + integration layers; Rust has its own. Each half can be developed and tested without the other being runnable.
-2. **One contract spine.** The IPC schema is the single source of truth for what crosses the bridge. Both sides validate their fixtures against it, so frontend mocks cannot silently drift from Rust reality.
-
-E2E is the only layer that actually exercises the IPC bridge end-to-end. That makes it the most valuable layer for catching wiring bugs — and the most expensive, so it stays small and intentional.
-
-## 3. Layer-by-layer specification
-
-### 3.1 Frontend unit tests
-
-**Tool:** Vitest + jsdom + `@testing-library/react`
-**Location:** `tests/` (mirrors `src/`)
-**Command:** `npm test`
-**Status today:** ~50 specs, healthy
-
-**What belongs here:**
-- Single-component rendering and interaction (`tests/components/**`)
-- Pure store reducers / selectors (`tests/stores/**`)
-- Pure parsers and utilities (`tests/lib/**`, `tests/styles/**`)
-
-**What does NOT belong here:**
-- Anything that requires real Tauri IPC (→ E2E)
-- Multi-module flows like loader→store→component (→ frontend integration)
-- Real `~/.claude/` disk access (→ Rust IT or E2E)
-
-**Rules:**
-- Mock at the module boundary, not inside. Specifically, mock `@tauri-apps/api/core`'s `invoke` — never reach into store internals.
-- Mock fixtures for `invoke` return values **must validate against the IPC schema** (see §3.5). Tests that violate this fail.
-- No network, no filesystem, no timers without `vi.useFakeTimers()`.
-- Speed budget: full suite under 30 seconds.
-
-### 3.2 Rust unit tests
-
-**Tool:** built-in `cargo test`, inline `#[cfg(test)] mod tests`
-**Location:** inside each module file under `src-tauri/src/`
-**Command:** `cd src-tauri && cargo test --lib`
-**Status today:** ~37 tests across `sessions/`, `plugins/`, `mcp/`, `skills/`
-
-**What belongs here:**
-- Pure parsing, transformation, derivation logic (e.g. `sessions/parser.rs`, `sessions/pid.rs::is_alive`)
-- Small helper functions whose only inputs are values
-
-**What does NOT belong here:**
-- Anything that touches the filesystem (→ Rust integration)
-- Anything that needs `tauri::State` or `AppHandle` (→ Rust integration with `mock_app`, only if absolutely needed)
-- Anything that depends on the host's real `~/.claude/` (→ E2E)
-
-**Rules:**
-- Inline tests use only the fixtures already present under `src-tauri/tests/fixtures/` (read-only) — they do not create temp dirs.
-- Speed budget: full unit suite under 5 seconds.
-- Hard coverage target for pure parsers: **100% line coverage** on `sessions/parser.rs` and equivalents. Other modules have no enforced percentage.
-
-### 3.3 Frontend integration tests
-
-**Tool:** Vitest + jsdom + `@testing-library/react`
-**Location:** new directory `tests/integration/`
-**Command:** `npm test` (same runner as unit; separated by directory convention)
-**Status today:** does not exist
-
-**Purpose:** prove that loader → store → component wires up correctly, on the same JS runtime, without crossing IPC.
-
-**What a typical integration test looks like:**
-```
-tests/integration/
-  session-flow.test.tsx
-    // 1. Mock invoke to return canned discover_sessions + read_pid_files
-    //    (fixtures validated against the IPC schema)
-    // 2. Render <SessionsSection /> wrapped in its real store provider
-    // 3. Wait for the list to populate
-    // 4. Click a SessionCard
-    // 5. Assert <SessionDetailPanel /> shows the right data
-```
-
-**Specs to create (in priority order):**
-1. `session-flow.test.tsx` — list → select → detail panel
-2. `plugin-toggle.test.tsx` — toggle plugin → `write_plugin_enabled` invoked → store reflects new state
-3. `mcp-add-server.test.tsx` — submit form → `write_mcp_server` invoked → list refreshes
-4. `dashboard-load.test.tsx` — initial load → all six widgets render with non-placeholder data
-
-**What does NOT belong here:**
-- Real `invoke` calls (→ E2E)
-- Mocking the store under test (that's what unit tests do — integration uses the real store)
-- Asserting on internal store state instead of observable UI (that's a unit-test smell)
-
-**Rules:**
-- Use real Zustand stores, real loaders, real components. Mock only the IPC boundary.
-- Speed budget: full integration suite under 60 seconds.
-
-### 3.4 Rust integration tests
-
-**Tool:** Cargo's built-in `tests/` directory + `assert_fs` crate + `tempfile`
-**Location:** `src-tauri/tests/*.rs` (each file is a separate test binary)
-**Command:** `cd src-tauri && cargo test --tests`
-**Status today:** only `src-tauri/tests/fixtures/` exists — no actual `.rs` test binaries
-
-**Purpose:** prove that each `#[tauri::command]` function correctly reads and writes the filesystem layout it expects, using a temp directory that mirrors `~/.claude/`. The command function is called **directly as a regular Rust function** — no Tauri runtime is started.
-
-**Why no Tauri runtime?**
-- Speed: starting `mock_app` adds hundreds of ms per test
-- Simplicity: the value of these tests is the FS contract, not the Tauri plumbing
-- Serialization concerns (does my struct survive the IPC round-trip?) are covered by the schema contract layer (§3.5), not by re-running every test through a mock app
-
-**Files to create (one per command module):**
-- `src-tauri/tests/sessions_commands.rs` — `discover_sessions`, `read_pid_files`, `read_jsonl_file`
-- `src-tauri/tests/plugins_commands.rs` — `read_installed_plugins`, `read_settings_enabled_plugins`, `read_plugin_contents`, `write_plugin_enabled`, `check_plugin_updates`
-- `src-tauri/tests/mcp_commands.rs` — `read_claude_json`, `read_mcp_json`, `write_mcp_server`, `remove_mcp_server`, `check_mcp_status`
-- `src-tauri/tests/skills_commands.rs` — `scan_custom_skills`
-
-**Pattern (all files follow this):**
-```rust
-// src-tauri/tests/sessions_commands.rs
-use assert_fs::prelude::*;
-use claude_manager_lib::sessions::commands::discover_sessions;
-
-#[tokio::test]
-async fn discover_sessions_returns_empty_when_no_claude_dir() {
-    let fake_home = assert_fs::TempDir::new().unwrap();
-    let result = discover_sessions(fake_home.path().to_path_buf()).await;
-    assert_eq!(result.unwrap(), vec![]);
-}
-
-#[tokio::test]
-async fn discover_sessions_finds_projects_and_jsonl_files() {
-    let fake_home = assert_fs::TempDir::new().unwrap();
-    fake_home.child(".claude/projects/proj-a/abc.jsonl").touch().unwrap();
-    fake_home.child(".claude/projects/proj-a/def.jsonl").touch().unwrap();
-
-    let result = discover_sessions(fake_home.path().to_path_buf()).await.unwrap();
-    assert_eq!(result.len(), 2);
-}
-```
-
-**Prerequisite refactor:** today many commands hardcode `dirs::home_dir()`. They must be refactored to accept an injectable home path (production wires `dirs::home_dir()`, tests inject a `TempDir`). This is a one-time investment.
-
-**Rules:**
-- Always use `TempDir` — never touch the real `~/.claude/`.
-- Use `assert_fs::prelude::*` for fluent path assertions (`child("foo").assert(predicate::path::exists())`).
-- Test the unhappy paths: missing files, malformed JSON, permission errors (where reasonable on Windows).
-- Speed budget: full Rust integration suite under 30 seconds.
-
-### 3.5 IPC contract layer (the spine)
-
-This is **not a test layer**, it's a generated artifact that both halves of the project depend on. It is the single most important addition this design proposes.
-
-**The problem it solves:**
-> Rust renames a return-type field from `sessionId` to `session_id`. The Rust unit tests pass (Rust types are consistent with themselves). The frontend unit tests pass (`vi.mock` still returns the old field name). Production breaks the moment a real user opens the app.
-
-**Tool:** [`schemars`](https://docs.rs/schemars/) (Rust → JSON Schema) + [`ajv`](https://ajv.js.org/) (TS JSON Schema validator)
-**Schema location:** `src-tauri/schemas/*.json` (generated, committed)
-**Frontend consumption:** `tests/fixtures/ipc/*.json` validated against the matching schema in test setup
-
-**Workflow:**
-
-1. Every Rust type used in an IPC command's args or return value derives `JsonSchema`:
-   ```rust
-   #[derive(Serialize, Deserialize, JsonSchema)]
-   pub struct DiscoveredSession {
-       pub project_dir: String,
-       pub jsonl_path: String,
-       // ...
-   }
-   ```
-
-2. A small Cargo binary `src-tauri/src/bin/export-schemas.rs` writes one JSON Schema file per command, e.g.:
-   ```
-   src-tauri/schemas/
-     discover_sessions.args.json
-     discover_sessions.return.json
-     read_pid_files.args.json
-     read_pid_files.return.json
-     ...
-   ```
-   Run via `cargo run --bin export-schemas`.
-
-3. A pre-commit hook (or CI step) runs `cargo run --bin export-schemas` and fails the commit if the generated files differ from what's committed. This guarantees the schema is always current with the Rust types.
-
-4. Frontend test setup loads each schema and exposes a helper:
-   ```typescript
-   // tests/setup.ts (additions)
-   import Ajv from "ajv";
-   const ajv = new Ajv();
-   export function validateIpcFixture(commandName: "discover_sessions" | ..., side: "args" | "return", fixture: unknown) {
-     const schema = loadSchema(`${commandName}.${side}.json`);
-     const valid = ajv.validate(schema, fixture);
-     if (!valid) throw new Error(`IPC fixture for ${commandName}.${side} does not match schema: ${ajv.errorsText()}`);
-   }
-   ```
-
-5. Every frontend unit/integration test that mocks `invoke` MUST pipe its fixture through `validateIpcFixture` first. If Rust changes a field name, the next `cargo run --bin export-schemas` updates the schema, the frontend fixture stops validating, the test goes red — drift is caught at unit-test speed, not at E2E speed or in production.
-
-**Scope:** both directions — args (frontend → Rust) and return values (Rust → frontend). Pure tagged-union (`enum`) variants are part of the schema. We deliberately do NOT generate TypeScript type definitions (no `ts-rs` / `typeshare`) — the schema is the contract; the TS types remain hand-authored to stay readable. The mismatch risk is bounded by the validate-the-fixture rule.
-
-**One-time cost:** add `schemars` dependency, decorate ~20 structs/enums, write the export binary (~50 lines), add the pre-commit hook, add the `validateIpcFixture` helper, update existing frontend mocks to use it.
-
-### 3.6 E2E tests
-
-**Tool:** WebdriverIO + tauri-driver + Mocha
-**Location:** `tests/e2e/*.spec.ts`
-**Command:** `npm run test:e2e` (to be added to `package.json`)
-**Status today:** `wdio.conf.ts` configured, `tsconfig.e2e.json` exists, one spec (`dashboard.spec.ts`) written, **no `package.json` script wires it up**
-
-**Two distinct buckets of E2E specs:**
-
-#### Bucket A — Golden Path Smokes (one per section, ~6 total)
-
-Each section gets exactly one smoke spec that proves: app launches, the section's main panel renders with real data, the section's primary interaction works. These are the R3 phase-end gate from `CLAUDE.md`.
-
-| Section   | Spec file                          | Primary assertions                                                          |
-|-----------|------------------------------------|-----------------------------------------------------------------------------|
-| Dashboard | `tests/e2e/dashboard.smoke.spec.ts`| All 6 widgets render; ActivityChart latest tick within 7 days               |
-| Sessions  | `tests/e2e/sessions.smoke.spec.ts` | Session list populates; clicking a card opens detail panel                  |
-| Plugins   | `tests/e2e/plugins.smoke.spec.ts`  | Plugin list populates; toggling one persists to settings.json               |
-| Skills    | `tests/e2e/skills.smoke.spec.ts`   | Custom skills enumerate from `~/.claude/skills/`                            |
-| MCP       | `tests/e2e/mcp.smoke.spec.ts`      | MCP server list populates from `~/.claude.json`; add-server form opens      |
-| Settings  | `tests/e2e/settings.smoke.spec.ts` | Theme toggle persists across launches; section reachable via Ctrl+,         |
-
-#### Bucket B — RCA Regression Tests (grows by one per shipped production bug)
-
-Every production bug that escaped lower layers gets a permanent E2E spec named after the incident. The current `dashboard.spec.ts` is the first — covers the four bugs from the 2026-05-09 RCA. Future regressions live alongside it (e.g. `dashboard-rca-2026-05-09.spec.ts`, `sessions-rca-2026-06-xx.spec.ts`).
-
-**Rules for both buckets:**
-- E2E tests use the **real** `~/.claude/` of the machine running them — they make no attempt to inject a fake home. This is a deliberate inversion of the Rust-integration rule in §3.4: integration tests need isolation to be deterministic; E2E exists to catch bugs that only manifest with real-world data shapes.
-- A required CI/dev step seeds a minimum corpus into `~/.claude/` if it's empty (so a fresh machine still has something to discover). Seed script lives in `scripts/_test/seed-claude-home.ps1`.
-- Speed budget: full E2E suite under 5 minutes on local Windows. If it grows beyond that, split smoke vs regression in CI.
-- Selector preference: `data-testid` > ARIA role + name > visible text. Never CSS class selectors.
-
-**Cross-platform constraint:**
-- tauri-driver supports Windows + Linux only. macOS is not supported by Tauri v2.x as of this writing.
-- CI matrix: `windows-latest` + `ubuntu-latest`. macOS dev machines run unit + integration only.
-
-### 3.7 Source-of-truth contract tests (already exist, keep them)
-
-`tests/sources-of-truth/` (11 specs) pins the on-disk format of files Claude Manager *reads* but does not own — `sessions/{pid}.json`, `~/.claude.json`, `settings.json`, the JSONL session format, etc. This layer is **complementary** to the IPC contract layer in §3.5:
-
-| Layer                | Owns?    | Catches                                      |
-|----------------------|----------|----------------------------------------------|
-| SoT contracts (§3.7) | external | Claude Code changes its on-disk format       |
-| IPC contracts (§3.5) | internal | Our own Rust ↔ TS bridge silently drifts     |
-
-Both layers stay and they complement each other — SoT guards the external boundary, IPC schema guards the internal one. This document does not propose any changes to the SoT layer.
-
-## 4. Test type mapping by component
-
-| Concern                                | Unit (FE) | Unit (Rust) | IT (FE) | IT (Rust) | E2E |
-|----------------------------------------|-----------|-------------|---------|-----------|-----|
-| React component renders                | ✓         |             |         |           |     |
-| Zustand store reducer                  | ✓         |             |         |           |     |
-| Pure TS parser (jsonl-parser, time)    | ✓         |             |         |           |     |
-| Rust pure parser (session JSONL)       |           | ✓           |         |           |     |
-| Rust PID file → `is_alive` derivation  |           | ✓           |         |           |     |
-| Loader → store → component flow        |           |             | ✓       |           |     |
-| `discover_sessions` reads a real dir   |           |             |         | ✓         |     |
-| `write_plugin_enabled` mutates JSON    |           |             |         | ✓         |     |
-| IPC schema fixture validation          | ✓         |             | ✓       |           |     |
-| App boots + Dashboard widgets render   |           |             |         |           | ✓   |
-| Session click → detail panel updates   |           |             | ✓       |           | ✓   |
-| Theme toggle persists across launches  |           |             |         |           | ✓   |
-| RCA regression                         |           |             |         |           | ✓   |
-
-The dual-checkmark rows (session click; schema validation) are intentional: integration covers the wiring, E2E covers the cross-process reality.
-
-## 5. CI matrix and speed budgets
-
-| Stage             | Runs                                                          | OS                  | Budget    | Trigger              |
-|-------------------|---------------------------------------------------------------|---------------------|-----------|----------------------|
-| Lint / typecheck  | `tsc --noEmit`, `cargo check`                                 | ubuntu              | < 2 min   | every push           |
-| Schema drift gate | `cargo run --bin export-schemas` + `git diff --exit-code`     | ubuntu              | < 1 min   | every push           |
-| Unit (FE)         | `npm test`                                                    | ubuntu              | < 30 s    | every push           |
-| Unit (Rust)       | `cargo test --lib`                                            | ubuntu              | < 30 s    | every push           |
-| Integration (FE)  | `npm test -- tests/integration`                               | ubuntu              | < 60 s    | every push           |
-| Integration (Rust)| `cargo test --tests`                                          | windows + ubuntu    | < 30 s    | every push           |
-| E2E smoke         | `npm run test:e2e -- --suite smoke`                           | windows + ubuntu    | < 5 min   | every push (PR only) |
-| E2E regression    | `npm run test:e2e -- --suite regression`                      | windows + ubuntu    | < 5 min   | nightly + pre-release|
-
-The schema-drift gate is the cheapest meaningful protection in the whole matrix — if it ever fails, two halves of the codebase are about to disagree.
-
-## 6. Coverage policy
-
-**Enforced (CI fails below these):**
-- `src-tauri/src/sessions/parser.rs` — 100% line coverage. This is the JSONL parser; every variant matters.
-- `src-tauri/src/sessions/pid.rs` — 100% line coverage. PID liveness derivation drives the entire ALIVE state.
-
-**Recommended (no CI gate):**
-- Anything else under `src-tauri/src/` — aim for 80%, don't sweat the last 20%.
-- `src/lib/` parsers and loaders — same, 80% target.
-
-**Not measured:**
-- React components, Zustand stores — coverage % isn't a useful proxy for UI correctness; observable-behavior tests are.
-
-## 7. Forbidden anti-patterns
-
-These mirror `CLAUDE.md` §"Executing a plan task" rule 7 and add testing-specific extensions:
-
-- `it.skip` / `xit` / `#[ignore]` without an open issue link in the comment
-- `expect.assertions(0)` or any pattern that lets a test "pass" with no checks
-- Mocking the thing under test (e.g. mocking the Zustand store in a store unit test)
-- Snapshot tests for HTML output — assert behavior, not markup
-- E2E tests that mock `invoke` — that defeats the entire point of the layer
-- Integration tests that don't validate their IPC fixtures against the schema
-- Comments like "this test is flaky, retry it 3 times" — flakiness is a bug, fix the root cause
-
-## 8. Migration roadmap
-
-This is the order to bring the test architecture up to the design. Each step is a separate plan / phase, not part of this design doc.
-
-1. **Add `test:e2e` + `test:e2e:build` scripts to `package.json`.** Wire `dashboard.spec.ts` into CI. (R3 was already supposed to enforce this.)
-2. **Build the IPC contract layer.** Add `schemars` to Rust deps, decorate command-related types with `#[derive(JsonSchema)]`, write `export-schemas` binary, commit generated schemas, add the pre-commit drift gate, add `validateIpcFixture` helper, retrofit existing frontend mocks.
-3. **Build the Rust integration suite.** Refactor commands to accept injectable home paths; write `sessions_commands.rs`, `plugins_commands.rs`, `mcp_commands.rs`, `skills_commands.rs`.
-4. **Build the frontend integration suite.** Write the four specs listed in §3.3.
-5. **Fill in the E2E golden-path bucket.** Write the five remaining section smokes from §3.6 Bucket A.
-
-Steps are mostly independent — 2/3/4/5 can parallelize across worktrees once 1 unblocks CI.
-
-## 9. Glossary (because terminology bites)
+Two ideas drive the picture:
+
+1. **Each half has its own unit and integration layers, owned by its own tooling and runnable in isolation.** Frontend tests do not need Rust to be built; Rust tests do not need a browser. Either half can be worked on while the other is broken.
+2. **E2E is the only layer that crosses the IPC bridge.** Anything that needs both halves alive in the same process is, by definition, an E2E test. This is a definitional rule, not a stylistic preference — it determines where every test belongs.
+
+The contract layer in the middle is not a test layer; see §3.6.
+
+### 3.2 Unit layer (both halves)
+
+**Purpose:** prove that a single unit of code behaves correctly in isolation.
+
+**Boundary:** one module. Mocks live at module boundaries, never inside them. A unit test never mocks the thing it is testing.
+
+**What goes here:**
+- A pure function or parser with value-in / value-out semantics.
+- A single UI component rendered with canned props.
+- A single state-store reducer or selector with no I/O.
+
+**What does not go here:**
+- Any test that requires multiple modules to collaborate (→ integration).
+- Any test that touches the real filesystem, network, or system clock without a fake (→ integration if isolated, E2E if real).
+- Any test that needs the IPC bridge alive (→ E2E).
+
+**Speed expectation:** the entire unit suite for a half runs in seconds, not minutes. If it slows past that, something has leaked in and needs to move up a layer.
+
+### 3.3 Integration layer (both halves)
+
+This is the layer most prone to terminology confusion, so the definition is explicit:
+
+**Purpose:** prove that multiple modules in **one half** of the app collaborate correctly, without crossing the IPC bridge.
+
+A frontend integration test wires a loader, a store, and a component together and exercises a user-visible flow — the IPC boundary is mocked, the rest is real. A backend integration test wires the relevant modules together and runs them against a filesystem fixture (a temp directory standing in for the part of the host filesystem the code expects to read).
+
+**Boundary:** one half of the app, multiple modules, real collaboration between them.
+
+**What goes here:**
+- A flow that starts in one module and ends in another within the same half (e.g. "render a list, click an item, see the detail panel update").
+- A backend command function exercised against a temp-directory fixture that mirrors the on-disk layout it expects.
+- Anything where the bug class is "two modules each behave correctly in isolation but don't connect properly".
+
+**What does not go here:**
+- Tests that mock the very thing they claim to integrate. If a frontend integration test mocks its store, it is a unit test in disguise.
+- Tests that reach across the IPC bridge for real. The whole point of this layer is to be fast and runnable without the other half being alive.
+- Tests that depend on data on the real host filesystem. Integration tests must construct their own isolated fixtures so they are deterministic and parallelisable.
+
+**Speed expectation:** the integration suite for a half runs in tens of seconds. It is slower than unit but still cheap enough to run on every push.
+
+**Why this layer exists at all:** the dashboard RCA was full of bugs where each unit was individually correct but the wiring between them was wrong — a button correctly rendered as `disabled`, a chart correctly rendering whatever data it received, a loader correctly fetching data that nothing was subscribing to. Integration is the layer that catches "everything compiles, every unit passes, the feature still doesn't work."
+
+### 3.4 E2E layer
+
+**Purpose:** prove that the real app, with both halves alive and the real IPC bridge in between, does what a user expects.
+
+**Boundary:** the whole app, the whole process, the real filesystem.
+
+**What goes here:**
+- A small set of **golden-path smokes**: launch the app, navigate to each top-level section, confirm its primary content renders and its primary interaction works.
+- **Regression tests** for production bugs that escaped the lower layers. Every such bug earns a permanent E2E spec; the suite grows by one per incident.
+
+**What does not go here:**
+- Anything a lower layer could have caught. E2E is the slowest, most expensive layer; using it for things integration could cover wastes the budget and makes the CI loop painful.
+- Exhaustive permutation testing. E2E proves "the lights turn on", not "every combination of inputs produces the correct output" — that is unit/integration territory.
+- Tests that mock the IPC bridge. If `invoke` is mocked, the test is no longer end-to-end and belongs one layer down.
+
+**Speed expectation:** the E2E suite finishes in a small number of minutes. If it grows beyond a tolerable wall-clock, split smoke from regression so PRs only pay for smoke.
+
+**Realism rule:** E2E uses the real host filesystem — it does not inject a fake home directory. This is a deliberate inversion of the integration-layer rule, because the value of E2E is catching bugs that only appear against real-world data shapes. A small seed script may populate the host with a minimum corpus when none exists.
+
+**Tooling constraint:** the WebDriver-based tooling only supports Windows and Linux. macOS development is fine but cannot run E2E locally, so the suite cannot be a hard gate on macOS PRs.
+
+### 3.5 Source-of-truth contracts (external boundary)
+
+The project reads files written by other tools — most importantly Claude Code's on-disk artifacts. The shape of those files is a contract owned by an external party. A dedicated layer of tests pins that shape, using verbatim (redacted) copies of real files as fixtures.
+
+This layer already exists and is healthy. It is mentioned in the methodology for completeness and to distinguish it from the IPC contract (§3.6), which guards an entirely different boundary.
+
+**Rule:** these fixtures are read-only references to reality. They are not edited to make a failing test pass — if a fixture stops matching reality, that is itself the signal worth investigating.
+
+### 3.6 IPC contract (internal boundary, the spine)
+
+This is the single most important addition the methodology proposes and the layer most likely to be skipped because it is not "a test layer" in the usual sense.
+
+**The problem it solves.** When two halves of a project are written in different languages with hand-maintained types on each side, mocks drift. Suppose the backend renames a returned field. The backend unit tests pass (the Rust types are consistent with themselves). The frontend unit tests pass (their mocks still return the old field name). Production breaks the first time a user opens the app — and only E2E would have caught it, slowly.
+
+**The fix.** Treat the IPC bridge as a contract with a single source of truth that both halves depend on. The contract is a machine-readable schema, generated from the half that owns the data shape (the backend), committed to the repo, and used by both sides at test time:
+
+- The backend generates the schema as part of its build or as a separate command.
+- Any frontend test that mocks an IPC call must validate its mock fixture against the schema before using it. A drifted mock fails the test the first time it runs.
+- A drift gate (pre-commit hook or CI step) regenerates the schema and fails if the committed copy is stale, guaranteeing the schema is always current with the backend types.
+
+**Scope.** Both directions — what the frontend sends in, and what the backend sends back. Including enums and tagged unions, since those are the most common silent-drift surface.
+
+**What is deliberately not done.** Generating TypeScript type definitions from Rust is *not* proposed. The hand-written TS types remain the source of truth for compile-time ergonomics in the frontend; the schema is the source of truth for runtime correctness across the bridge. The two are kept aligned by the validate-fixtures rule, not by code generation. This is a trade-off in favour of frontend readability and against one more generated artifact to maintain.
+
+**Why it is not "a test layer".** Schemas are not tests — they are an artifact tests consume. But its placement in the model is exactly between the two unit layers because that is where it does its work: it makes a frontend unit test (which mocks the backend) accountable to the backend's real shape, without requiring the backend to be alive.
+
+### 3.7 The mapping discipline
+
+Given the layers above, every new test must have an obvious home before it is written. The mapping rules are:
+
+| If the test needs…                                       | …it belongs in… |
+|----------------------------------------------------------|-----------------|
+| Only one module, value-in / value-out                    | Unit            |
+| Multiple modules in one half collaborating               | Integration     |
+| The real filesystem of the host, real data shapes        | E2E             |
+| The IPC bridge alive in the same process                 | E2E             |
+| To pin the shape of an externally owned file             | SoT contract    |
+| To stop frontend mocks from drifting from backend reality| IPC contract    |
+
+A test that fits two rows is a sign the test is too broad and should be split. A test that fits no row is a sign the methodology has a gap worth examining.
+
+## 4. Forbidden anti-patterns
+
+These apply uniformly across all layers. They are listed because each has bitten this project or projects like it.
+
+- **Skipping or "soft-passing" tests** — disabling specs without an open issue link, asserting nothing, or wrapping the assertion in a try/catch that swallows failures. A test that can't fail isn't a test.
+- **Mocking the thing under test** — a unit test for a store that mocks the store. The mock will always agree with itself; the production code never runs.
+- **Snapshot-on-markup tests** — assertions on serialized HTML. They lock in incidental structure, break on every refactor, and provide no behavioral guarantee.
+- **Mocked IPC in E2E** — defeats the entire purpose of the layer. If the bridge isn't real, the test is integration.
+- **Real-filesystem reads in unit or integration tests** — couples tests to host state and breaks parallelism. Integration uses fakes; only E2E uses the real host.
+- **Unvalidated IPC mock fixtures** — once the contract layer exists, every mock must validate against it. An unchecked mock is the drift waiting to happen.
+- **Flake-tolerant retries** — wrapping a test in a "retry 3 times" loop is treating a real bug (non-determinism) as cosmetic. The right answer is always to fix the root cause.
+
+## 5. Coverage policy
+
+Coverage as a number is not a useful proxy for correctness, and chasing a global percentage produces tests that exist to pass coverage rather than to catch bugs. The methodology takes a stricter stance on a few high-leverage areas and is deliberately silent on the rest:
+
+- **Pure parsers and derivation functions** — areas where a single missed branch becomes a class of production bug — should be held to full line coverage. Which modules qualify is a decision for the implementation plans.
+- **Everywhere else** — coverage is a diagnostic, not a target. Use it to find untested code worth testing, not to satisfy a gate.
+
+The corollary: missing tests in a high-leverage area are a release blocker; missing tests elsewhere are a tech-debt note.
+
+## 6. Speed budget as a design constraint
+
+Speed is part of the architecture, not an afterthought. The faster a layer is, the more often developers run it, the earlier bugs are caught. The methodology assumes:
+
+- Unit suites finish so fast they can run on save during development.
+- Integration suites finish fast enough to run on every push without breaking flow.
+- E2E suites finish in single-digit minutes; if they grow past that, smoke and regression are split so PRs only pay for smoke.
+
+If a layer's suite consistently exceeds its budget, the response is to investigate what has leaked in from a slower-layer concern — not to relax the budget.
+
+## 7. Glossary
+
+Because the term *integration test* is used in two incompatible ways across the industry, this glossary fixes the meanings used in this document.
 
 | Term                  | In this project, it means                                                                 |
 |-----------------------|--------------------------------------------------------------------------------------------|
-| Frontend              | Code under `src/` — TS + React, runs in WebView2                                          |
-| Backend / Rust        | Code under `src-tauri/src/` — Rust, runs as native code in the same exe                   |
-| IPC bridge            | The Tauri-provided JSON channel between the two; the only way they communicate            |
+| Frontend              | The TypeScript + React half, running in the embedded WebView                              |
+| Backend               | The Rust half, running as native code in the app process                                  |
+| IPC bridge            | The Tauri-provided JSON channel between the two halves                                    |
 | Unit test             | Tests one module in isolation, mocks at module boundaries                                  |
-| Integration test      | Tests multiple modules in *one half* of the app collaborating (no IPC crossing)            |
+| Integration test      | Tests multiple modules in **one half** of the app collaborating, no IPC crossing           |
 | E2E test              | Tests the real app process, real IPC, real filesystem                                      |
-| Contract test (SoT)   | Pins the format of files written by Claude Code (external systems)                         |
-| Contract (IPC schema) | Pins the shape of args/returns crossing our own Rust ↔ TS bridge (internal)               |
-| Smoke test            | A small, fast, high-signal test that proves "the thing turns on and the lights work"      |
+| SoT contract          | Pins the on-disk format of files written by external tools                                 |
+| IPC contract          | Pins the shape of args / returns crossing the internal frontend/backend bridge             |
+| Smoke test            | Small, fast, high-signal test that proves "the thing turns on and the lights work"        |
