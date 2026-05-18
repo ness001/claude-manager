@@ -136,7 +136,7 @@ export interface PidFileData {
   pid: number;
   sessionId: string;
   cwd: string;
-  startedAt: string;
+  startedAt: number;
   kind: SessionKind;
   entrypoint: string;
 }
@@ -156,7 +156,7 @@ export interface SessionMeta {
   version?: string;
   permissionMode?: PermissionMode;
   gitBranch?: string;
-  startedAt: string;
+  startedAt: number;
   durationMs: number;
   entrypoint: string;
   kind: SessionKind;

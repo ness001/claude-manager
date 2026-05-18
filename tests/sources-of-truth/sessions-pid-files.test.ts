@@ -12,7 +12,7 @@
 // type mismatch (gotcha "rust-startedat-type-mismatch" in the YAML) cannot
 // be hidden by a passing test suite.
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -159,13 +159,15 @@ describe("source of truth: ~/.claude/sessions/{pid}.json", () => {
   it("type-level: PidFileData fields are pinned (compile-time check)", () => {
     // `expectTypeOf` is the project convention for type-only assertions
     // (CLAUDE.md "Executing a plan task" rule 6). We pin the shape of
-    // the existing PidFileData interface here so accidental drift in
+    // the PidFileData interface here so accidental drift in
     // src/lib/session-types.ts will fail the build, not just this test.
+    // Historical note: this field was incorrectly typed `string` for a
+    // while — see gotcha "rust-startedat-type-mismatch" in the YAML.
     type Expected = {
       pid: number;
       sessionId: string;
       cwd: string;
-      startedAt: string; // the *declared* (buggy) type — see gotcha "rust-startedat-type-mismatch"
+      startedAt: number; // epoch ms — matches the on-disk JSON shape
       kind: SessionKind;
       entrypoint: string;
     };
