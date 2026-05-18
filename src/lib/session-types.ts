@@ -11,8 +11,17 @@
 /** Lifecycle of a session — see spec §5.3. */
 export type SessionState = "alive" | "ended" | "orphaned" | "archived";
 
-/** How the session was started. */
-export type SessionKind = "interactive" | "headless" | "sdk";
+/**
+ * How the session was started.
+ *
+ * The canonical values observed in real Claude Code transcripts are
+ * `interactive`, `headless`, and `sdk` — plus `print` (the CLI's `-p`
+ * one-shot mode, which the source-of-truth fixture catches). We keep
+ * the union open (`| (string & {})`) so unknown values flow through
+ * verbatim rather than being silently rewritten to "interactive";
+ * UI code should treat any unrecognized value as an opaque label.
+ */
+export type SessionKind = "interactive" | "headless" | "sdk" | "print" | (string & {});
 
 /** Permission mode declared in the JSONL `permission-mode` line. */
 export type PermissionMode = "default" | "acceptEdits" | "bypassPermissions" | "plan";

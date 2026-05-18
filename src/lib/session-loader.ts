@@ -115,8 +115,11 @@ function coercePermissionMode(s: string | null | undefined): PermissionMode | un
 }
 
 function coerceSessionKind(s: string | null | undefined): SessionKind {
-  if (s === "interactive" || s === "headless" || s === "sdk") return s;
-  // Real Claude Code emits "interactive" or "print"; anything else falls back.
+  // Pass unknown values through verbatim — never silently rewrite to
+  // "interactive". Real CLI emits values outside the documented enum
+  // (e.g. "print" for `-p` one-shot mode), and clobbering them here
+  // hides whatever surfaces next.
+  if (typeof s === "string" && s.length > 0) return s as SessionKind;
   return "interactive";
 }
 

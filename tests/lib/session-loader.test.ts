@@ -443,4 +443,23 @@ describe("session-loader: loadSingleSession", () => {
       /unknown sessionId/i,
     );
   });
+
+  // Regression: coerceSessionKind used to silently rewrite anything outside
+  // the documented {interactive,headless,sdk} set to "interactive" — so the
+  // real-world "print" value (CLI -p one-shot mode) was indistinguishable
+  // from a normal interactive session in the UI. The coercer must now pass
+  // unknown values through verbatim.
+  it("preserves unknown kind values rather than rewriting to 'interactive'", async () => {
+    const printDiscovered = { ...baseDiscovered, kind: "print" };
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === "discover_sessions") return [printDiscovered];
+      if (cmd === "read_pid_files") return [];
+      throw new Error(`unexpected invoke ${cmd}`);
+    });
+    dbSelectMock.mockResolvedValue([]);
+    dbExecuteMock.mockResolvedValue(undefined);
+
+    const [meta] = await loadAllSessions();
+    expect(meta.kind).toBe("print");
+  });
 });
