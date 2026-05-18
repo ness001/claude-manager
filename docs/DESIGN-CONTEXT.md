@@ -55,10 +55,16 @@ These were discovered by 8 paired agents (4 proposers + 4 verifiers) doing deep 
 - Trust tracking: `enabledMcpjsonServers` / `disabledMcpjsonServers` arrays per project entry
 
 ### 2.2 sessions-index.json is STALE
-- 17/20 JSONL files are NOT in the index
-- 12 entries point to missing files
-- **Use as speed hint only**, never as primary data source
-- Correct approach: enumerate JSONL files directly from `~/.claude/projects/*/`
+- Real shape (per `docs/sources-of-truth/sessions-index-cache-json.yaml`):
+  `{"version":1,"entries":[{"sessionId":"…","isSidechain":…,…}]}`.
+  A legacy shape `{"sessions":[{"id":"…",…}]}` may exist in long-running
+  installs; the overlay reader accepts both but prefers `entries`.
+- Index is heavily out of sync: in observed snapshots **every entry's
+  `fullPath` pointed to a missing or relocated JSONL** — 100% dangling.
+  Treat the file as a soft hint for `summary` / `firstPrompt`, never as
+  the authoritative session list.
+- **Use as speed hint only**, never as primary data source.
+- Correct approach: enumerate JSONL files directly from `~/.claude/projects/*/`.
 
 ### 2.3 PID Files are Ephemeral
 - Location: `~/.claude/sessions/{pid}.json`
@@ -105,13 +111,13 @@ Must use `cmd.exe /c "tasklist ..."` or `powershell.exe -Command "..."` for proc
 | pid | `sessions/{pid}.json` (filename + field) | number | File only exists while alive |
 | sessionId | `sessions/{pid}.json` | UUID string | Primary key for resume |
 | cwd | `sessions/{pid}.json` | string (path) | Used for project grouping |
-| startedAt | `sessions/{pid}.json` | number (unix ms) | |
-| kind | `sessions/{pid}.json` | string | "interactive" or "print" |
+| startedAt | `sessions/{pid}.json` | number (unix ms) | Always integer epoch ms — see `docs/sources-of-truth/sessions-pid-files.yaml` gotcha `rust-startedat-type-mismatch`. The TS/Rust types were briefly typed `string`, which silently broke serde deserialization. |
+| kind | `sessions/{pid}.json` | string | Canonical: `interactive` \| `headless` \| `sdk` \| `print`. **Unknown values must flow through verbatim** — the loader used to rewrite them to `interactive`, masking real `print` sessions. |
 | entrypoint | `sessions/{pid}.json` | string | "cli" \| "vscode" etc. |
 | firstPrompt | JSONL parse (index is stale) | string | First user message |
 | summary | JSONL summary type or index | string | AI-generated |
 | messageCount | Computed from JSONL | number | Count user+assistant only |
-| isSidechain | sessions-index.json | boolean | Sub-agent sessions, hide from main list |
+| isSidechain | sessions-index.json | boolean | Sub-agent sessions, hide from main list. Real shape stores this under `entries[].isSidechain` keyed by `sessionId` — see §2.2 for the wrapper. |
 | permissionMode | JSONL first "permission-mode" line | string | 6 values |
 | model | JSONL assistant message → message.model | string | e.g. "claude-opus-4.6-1m" |
 | version | JSONL any message → version field | string | CLI version e.g. "2.1.98" |
@@ -244,7 +250,7 @@ Precedence: project > local > user. Same name at multiple scopes → most specif
 - **Recent sessions:** Last 8, clickable
 - **Quick actions:** New Session, Resume Latest, Open CWD, Rebuild Stats
 - **System health:** MCP status, plugin count, API reachable, CLI version
-- Data from `stats-cache.json` — has `costUSD`, `hourCounts` (GitHub-style heatmap), `dailyActivity`, `dailyModelTokens`
+- Data from `stats-cache.json` — `hourCounts` (GitHub-style heatmap), `dailyActivity`, `dailyModelTokens`. `costUSD` is stored **only per model** under `modelUsage[<model>].costUSD` — there is no top-level `costUSD` key in schema v2. Sum across models to compute the total spent (see `docs/sources-of-truth/stats-cache-json.yaml` gotcha `costusd-location-mismatch`).
 
 ---
 
