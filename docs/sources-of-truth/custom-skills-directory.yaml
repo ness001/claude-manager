@@ -1,0 +1,249 @@
+# Source of Truth: Custom Skills Directory
+#
+# Investigator: inv-custom-skills-directory (task #3, team sot-investigation)
+# Peer reviewer: inv-plugin-marketplace (task #4)
+#
+# This documents the on-disk interface that Claude Code exposes to claude-manager
+# for "custom skills" — standalone skills NOT bundled inside a plugin. They are
+# auto-loaded into every Claude Code session.
+#
+# Distinct from PLUGIN-BUNDLED skills, which live under
+# `~/.claude/plugins/cache/<marketplace>/<version>/plugins/<plugin>/skills/<skill>/SKILL.md`
+# and are owned by a plugin. Plugin-bundled skills are out of scope for this
+# source of truth and are surfaced through the Plugins panel, not the Custom
+# Skills panel (see spec §7 and SkillsListView.tsx info-box copy).
+#
+# Spec: docs/superpowers/specs/2026-05-03-claude-manager-design.md §7
+# Design context: docs/DESIGN-CONTEXT.md §4 (last paragraph), §13
+# Implementations:
+#   - Wire shape:   src/lib/skill-types.ts            (interface CustomSkill)
+#   - Rust scanner: src-tauri/src/skills/commands.rs  (scan_custom_skills, scan_dir, read_frontmatter)
+#   - UI consumer:  src/components/skills/SkillsListView.tsx
+
+id: custom-skills-directory
+title: Custom Skills Directory (~/.claude/skills/)
+owner: claude-code-cli
+consumer: claude-manager (read-only)
+
+# --------------------------------------------------------------------------
+# Location: each custom skill is a DIRECTORY, not a file.
+# --------------------------------------------------------------------------
+location:
+  # The container that holds all custom-skill directories. claude-manager scans
+  # this folder's immediate children.
+  root:
+    pattern: "~/.claude/skills/"
+    platform_root:
+      windows: "%USERPROFILE%\\.claude\\skills\\"
+      macos:   "$HOME/.claude/skills/"
+      linux:   "$HOME/.claude/skills/"
+  # Each immediate subdirectory is one custom skill. The directory name is
+  # also the effective name when frontmatter.name is missing/empty.
+  skill_dir:
+    pattern: "~/.claude/skills/{skill-dir}/"
+    notes: |
+      - Must be a directory (Rust scanner: path.is_dir() guard).
+      - The directory MAY contain ancillary files such as LICENSE.txt,
+        references/, scripts/, assets/ — see skill-creator SKILL.md
+        "Anatomy of a Skill". Only `SKILL.md` is required for the directory
+        to be recognized as a custom skill.
+  # The required metadata + body file inside each skill dir.
+  skill_md:
+    pattern: "~/.claude/skills/{skill-dir}/SKILL.md"
+    required: true
+    notes: |
+      Directories without a SKILL.md are silently skipped by the scanner
+      (src-tauri/src/skills/commands.rs:43-45). No error is surfaced.
+
+# --------------------------------------------------------------------------
+# File shape: YAML frontmatter fence + markdown body.
+# --------------------------------------------------------------------------
+file_shape:
+  encoding: utf-8
+  line_endings: "LF or CRLF accepted (Rust uses .lines() which handles both)"
+  frontmatter:
+    delimiter: "---"
+    placement: "first line of the file must be exactly `---` (after trim). A second `---` terminates the block."
+    format: "YAML 1.1 subset (key: value pairs only — see parser_caveats below)"
+    required: true
+    notes: |
+      The Rust scanner uses a minimal hand-rolled parser
+      (src-tauri/src/skills/commands.rs:74-100) that only understands
+      flat `key: value` pairs and strips surrounding "double" or 'single'
+      quotes. It does NOT understand nested keys, multi-line scalars,
+      block lists, or anchors. Custom skills today (e.g. ado-pr-review,
+      notes, skill-creator) all conform to this flat shape.
+  body:
+    format: markdown
+    required: false  # nothing breaks if the body is empty; the SkillCard still renders
+    notes: |
+      Body content is not parsed by claude-manager — only displayed-on-demand
+      via the "Open in VS Code" / "Open in File Browser" actions. It IS read
+      by Claude Code itself when the skill triggers in a session.
+
+# --------------------------------------------------------------------------
+# Frontmatter fields, as consumed by claude-manager.
+# --------------------------------------------------------------------------
+fields:
+  name:
+    type: string
+    required: false
+    fallback: "{skill-dir} (the directory name)"
+    notes: |
+      The skill-creator SKILL.md describes `name` as required for authors,
+      but claude-manager treats it as OPTIONAL because the Rust scanner
+      falls back to the directory name when the field is missing OR empty
+      after trim (commands.rs:55-59). This is a deliberate read-side
+      tolerance, not a contract change.
+    examples:
+      - "ado-pr-review"
+      - "skill-creator"
+      - "notes"
+  description:
+    type: string
+    required: false
+    fallback: "\"\" (empty string)"
+    notes: |
+      The skill-creator SKILL.md describes `description` as the PRIMARY
+      triggering mechanism for Claude Code itself, so authors should
+      always set it. claude-manager tolerates absence (defaults to empty
+      string) so a partial/broken SKILL.md still renders a card instead
+      of disappearing.
+    examples:
+      - "Review Azure DevOps pull requests by analyzing code diffs..."
+  # Fields outside {name, description} are NOT extracted by claude-manager
+  # even when present (e.g. skill-creator's `license: Complete terms in
+  # LICENSE.txt`). They are preserved on disk and ignored by the scanner.
+
+# --------------------------------------------------------------------------
+# Derived fields computed by claude-manager on scan.
+# --------------------------------------------------------------------------
+derivedFields:
+  effectiveName:
+    formula: |
+      const trimmed = (frontmatter.name ?? "").trim();
+      effectiveName = trimmed.length > 0 ? trimmed : dirName;
+    source: "src-tauri/src/skills/commands.rs:55-59 (Rust); mirror logic in tests."
+    notes: |
+      Both an explicitly-empty `name: ` and an absent `name:` key fall
+      back to the directory name. Whitespace-only `name: "   "` also
+      falls back, because the trim happens BEFORE the empty check.
+  dirPath:
+    formula: "absolute path of {skill-dir}, OS-native separators"
+  skillMdPath:
+    formula: "{dirPath}/SKILL.md"
+  sortOrder:
+    formula: "alphabetical ascending by effectiveName"
+    source: "src-tauri/src/skills/commands.rs:68 (out.sort_by(...))"
+
+# --------------------------------------------------------------------------
+# Wire shape returned by the `scan_custom_skills` IPC command.
+# Must match src/lib/skill-types.ts CustomSkill exactly.
+# --------------------------------------------------------------------------
+wire_shape:
+  ipc_command: scan_custom_skills
+  returns: "CustomSkillEntry[]"
+  fields:
+    name:         { type: string, source: "fields.name OR derivedFields.effectiveName" }
+    description:  { type: string, source: "fields.description, trimmed, '' on absence" }
+    dirPath:      { type: string, source: "absolute path of {skill-dir}" }
+    skillMdPath:  { type: string, source: "{dirPath}/SKILL.md" }
+  serde_naming: camelCase  # rename_all = "camelCase" on the Rust struct
+
+# --------------------------------------------------------------------------
+# Gotchas — non-obvious things that have bitten or could bite.
+# --------------------------------------------------------------------------
+gotchas:
+  - id: skill-is-a-directory
+    summary: |
+      Each custom skill is a DIRECTORY, not a single file. A loose
+      `~/.claude/skills/foo.md` is NOT a custom skill — it is silently
+      ignored. Authors who treat skills like commands (single .md files)
+      will see nothing in the Custom Skills panel.
+  - id: distinct-from-plugin-bundled
+    summary: |
+      Custom skills (~/.claude/skills/) are a separate interface from
+      plugin-bundled skills (inside a plugin's skills/ subdir). The
+      `scan_custom_skills` IPC command only walks ~/.claude/skills/ and
+      never returns plugin-bundled skills. Surface this distinction in
+      UI copy (see SkillsListView's info box).
+  - id: tolerant-of-missing-name
+    summary: |
+      Authors documented `name` as required, but claude-manager falls
+      back to the directory name. Don't assume frontmatter.name is
+      present in downstream code — always use effectiveName.
+  - id: frontmatter-parser-is-minimal
+    summary: |
+      The Rust frontmatter reader only understands flat `key: value`
+      pairs and strips surrounding straight quotes. Nested YAML, multi-
+      line scalars (`|`, `>`), and block lists will parse INCORRECTLY
+      (the value will be the empty string after the colon, or the
+      key/value split will fail). All known custom skills use flat shape.
+  - id: missing-leading-fence-skips-entry
+    summary: |
+      If the first non-blank line is not `---`, the entire file is
+      considered to have no frontmatter and the directory is dropped
+      from the result (commands.rs:77). A leading BOM or blank line
+      before the fence will therefore exclude the skill.
+  - id: not-the-same-as-skill-creator-validation
+    summary: |
+      The skill-creator skill's package validator enforces stricter
+      rules (name conventions, description quality, file organization).
+      claude-manager does NOT validate — it only displays whatever
+      parses. A skill that fails skill-creator validation can still
+      appear in the Custom Skills panel.
+  - id: case-sensitivity
+    summary: |
+      The required filename is `SKILL.md` (uppercase). On Windows the
+      filesystem is case-insensitive so `skill.md` happens to work, but
+      on macOS (default APFS case-insensitive) and Linux (case-
+      sensitive) only `SKILL.md` matches. Treat uppercase as canonical.
+
+# --------------------------------------------------------------------------
+# Failure modes — what happens when something is wrong on disk.
+# --------------------------------------------------------------------------
+failure_modes:
+  root_missing:
+    behavior: "scan_custom_skills returns Ok(Vec::new()) — empty list, no error."
+    source: "src-tauri/src/skills/commands.rs:27-29 (claude_home check)"
+    ui: "Empty state: 'No custom skills found at ~/.claude/skills/. Create a skill directory...'"
+  root_unreadable:
+    behavior: "scan_dir returns empty Vec when read_dir fails (commands.rs:33-35)."
+    ui: "Same empty state — failure is silent."
+  skill_dir_without_skill_md:
+    behavior: "Directory skipped silently."
+  skill_md_unreadable:
+    behavior: "read_frontmatter returns None → directory skipped silently."
+  malformed_frontmatter_missing_fence:
+    behavior: "Directory skipped silently."
+  malformed_frontmatter_unterminated:
+    behavior: "Parser keeps reading to EOF; partial keys captured. Entry still returned."
+  empty_name_field:
+    behavior: "effectiveName falls back to dirName."
+  empty_description_field:
+    behavior: "description == ''. Card still renders."
+
+# --------------------------------------------------------------------------
+# Test coverage pointers (kept loose — actual assertions live in
+# tests/sources-of-truth/custom-skills-directory.test.ts).
+# --------------------------------------------------------------------------
+test_coverage:
+  fixture_root: "tests/sources-of-truth/fixtures/custom-skills-directory/"
+  fixtures:
+    - "example-skill/SKILL.md           — both name + description present"
+    - "example-skill-no-name/SKILL.md   — frontmatter without `name`, exercises fallback"
+  asserts:
+    - "SKILL.md exists in each fixture directory"
+    - "Frontmatter delimited by `---` on first line and a closing `---`"
+    - "Frontmatter parses as flat key:value map"
+    - "effectiveName resolves to frontmatter.name when present"
+    - "effectiveName falls back to directory name when frontmatter.name is absent"
+    - "CustomSkill wire shape from src/lib/skill-types.ts type-checks against the fixture-derived records"
+
+references:
+  - "docs/superpowers/specs/2026-05-03-claude-manager-design.md §7 Custom Skills"
+  - "docs/DESIGN-CONTEXT.md §4 (last paragraph), §13 Key File Paths"
+  - "src/lib/skill-types.ts"
+  - "src-tauri/src/skills/commands.rs"
+  - "src/components/skills/SkillsListView.tsx"
+  - "~/.claude/skills/skill-creator/SKILL.md (canonical authoring guide)"

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c:*)",
+      "WebFetch(domain:docs.anthropic.com)"
+    ]
+  },
+  "enabledPlugins": {
+    "ralph-loop@claude-plugins-official": true
+  }
+}
