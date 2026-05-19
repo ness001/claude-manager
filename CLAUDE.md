@@ -10,6 +10,7 @@ These rules apply to every turn in this repo:
 2. **Invoke `andrej-karpathy-skills:karpathy-guidelines`** before writing or editing any code. It applies to all coding tasks here, not just edge cases.
 3. **Decide whether to dispatch a subagent** before starting non-trivial work. Use the Agent tool when a task involves broad exploration, reading many files, or generating large intermediate output that would otherwise consume the main context window. Skip it for narrowly-targeted reads/edits where the file path is already known. When in doubt, state the reasoning briefly so Ness can redirect.
 4. **Always verify on your own** before reporting work as complete. For UI or runtime changes, actually run the app (e.g., `npx tauri dev`, or `cargo build` + launch + screenshot via `scripts/_test/helper.ps1`) and confirm the change visually — don't stop at `tsc` / `cargo check`. Typechecking proves it compiles, not that it works. Hand back to Ness only after you've seen the result yourself.
+5. **Chat-reply language (applies to chat responses, not code/docs/commits):** 叙述用中文,但所有 technical terms / tool names / API names / code identifiers 保留英文原文。不要把 "smoke test"、"integration test"、"IPC bridge"、"dependency" 之类翻译成中文(例如"冒烟测试""集成测试""桥""依赖")。
 
 ## Project
 
