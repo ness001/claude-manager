@@ -124,7 +124,7 @@ A frontend integration test wires a loader, a store, and a component together an
 
 The project reads files written by other tools — most importantly Claude Code's on-disk artifacts. The shape of those files is a contract owned by an external party. A dedicated layer of tests pins that shape, using verbatim (redacted) copies of real files as fixtures.
 
-This layer already exists and is healthy. It is mentioned in the methodology for completeness and to distinguish it from the IPC contract (§3.6), which guards an entirely different boundary.
+This layer already exists and is healthy, living under `tests/sources-of-truth/`. It is mentioned in the methodology for completeness and to distinguish it from the IPC contract (§3.6), which guards an entirely different boundary.
 
 **Rule:** these fixtures are read-only references to reality. They are not edited to make a failing test pass — if a fixture stops matching reality, that is itself the signal worth investigating.
 
@@ -204,6 +204,6 @@ Because the term *integration test* is used in two incompatible ways across the 
 | Unit test             | Tests one module in isolation, mocks at module boundaries                                  |
 | Integration test      | Tests multiple modules in **one half** of the app collaborating, no IPC crossing           |
 | E2E test              | Tests the real app process, real IPC, real filesystem                                      |
-| SoT contract          | Pins the on-disk format of files written by external tools                                 |
+| SoT contract          | **Source-of-truth contract** — pins the on-disk format of files written by external tools |
 | IPC contract          | Pins the shape of args / returns crossing the internal frontend/backend bridge             |
 | Smoke test            | Small, fast, high-signal test that proves "the thing turns on and the lights work"        |
