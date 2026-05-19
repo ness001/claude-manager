@@ -67,9 +67,9 @@ The original question. Three layers, all confirmed:
 - Cannot detect Bug 3 (button onClick is no-op) — tests assert "button is clickable", not "click does anything observable"
 - Cannot detect Bug 4 (props never passed) — component tests instantiate the component WITH props, masking that the parent doesn't pass them
 
-The PowerShell smoke scripts in `scripts/_test/` (helper.ps1, t313-smoke.ps1, etc.) take screenshots and use UIAutomation to click — but contain **zero assertions**. They are visual aids for a human reviewer, not gates.
+The PowerShell smoke scripts that used to live in `scripts/_test/` (`t29-smoke.ps1`, `t313-smoke.ps1`, etc.) took screenshots and used UIAutomation to click — but contained **zero assertions**. They were visual aids for a human reviewer, not gates, and were removed once the WebdriverIO + tauri-driver E2E layer landed (see `docs/superpowers/specs/2026-05-18-test-architecture-design.md` §3.4). The reusable Win32 helpers (`scripts/_test/helper.ps1`, `snap-*.ps1`, `click-rail.ps1`) remain for ad-hoc debugging.
 
-There is **no Playwright, no WebDriverIO, no tauri-driver** anywhere in the repo. CI runs `npm test` (vitest) only.
+There is **no Playwright, no WebDriverIO, no tauri-driver** anywhere in the repo (at the time of this RCA — addressed by the test architecture spec linked above). CI runs `npm test` (vitest) only.
 
 ### 3.2 Plan Verification gates are written as static checks, not behavioral assertions
 
