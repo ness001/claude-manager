@@ -88,7 +88,7 @@ interface RecentRow {
  * tokens descending. Empty input yields an empty array (donut renders an
  * empty state in that case — handled by the component layer).
  */
-function aggregateModelUsage(
+export function aggregateModelUsage(
   daily: { tokensByModel: Record<string, number> }[],
 ): ModelUsageEntry[] {
   const totals = new Map<string, number>();
