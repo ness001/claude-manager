@@ -24,7 +24,13 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     css: false,
     // Worktrees are nested copies of this repo. Without excluding them, vitest
-    // picks up their tests too and runs each suite multiple times.
-    exclude: ["**/node_modules/**", "**/dist/**", "**/.worktrees/**"],
+    // picks up their tests too and runs each suite multiple times. E2E specs
+    // are owned by WebdriverIO (npm run test:e2e), not vitest.
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.worktrees/**",
+      "**/tests/e2e/**",
+    ],
   },
 });

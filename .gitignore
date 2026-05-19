@@ -36,3 +36,7 @@ scripts/_test/out/
 
 # Git worktrees (per superpowers:using-git-worktrees skill)
 .worktrees/
+
+# WebdriverIO E2E logs/artifacts
+.wdio-logs/
+wdio-logs/
