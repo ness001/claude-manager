@@ -73,6 +73,53 @@ Phases are executed by ralph-loop + subagent-driven-development. See `docs/AUTO-
 - `scripts/auto-pr.sh <phase-number>` — push branch + create/update PR for a completed phase.
 - `scripts/sync-pool.sh [branch]` — fetch + reset + npm install + build for a worktree (idempotent via `.pool-synced-at-<SHA>` markers; refuses dirty trees without `--force`).
 
+### Parallel work via git worktrees
+
+When multiple agents/people may be editing this repo at the same time, isolate your work in a **git worktree** so your uncommitted changes can't collide with theirs on disk. Logical merge conflicts still get resolved at PR time — worktrees only remove the physical "stepping on each other's files" problem.
+
+**When to use one:**
+- You're told another agent / ralph-loop / human is currently changing files in `claude-manager/`.
+- You're starting a long-running task (multi-hour or multi-commit) and want to keep the primary working directory free for Ness.
+- You're dispatching parallel subagents that each need their own working directory.
+
+For small, fast, single-commit edits in an otherwise idle repo, a normal feature branch is fine — skip the worktree.
+
+**Naming (pick meaningful names — these show up in `git worktree list`, branch lists, and PR titles):**
+- **Worktree directory:** `../claude-manager-<short-purpose>` (sibling of the main checkout). Examples: `../claude-manager-dashboard-fix`, `../claude-manager-T2.4-sessions-list`, `../claude-manager-ipc-contract`. Avoid generic names like `wt1`, `tmp`, `work`.
+- **Branch:** match the work. Use `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, or for plan tasks `feat/T<phase>.<num>-<slug>` (e.g. `feat/T2.4-sessions-list`). The slug should let a stranger guess what the branch does without opening it.
+- **One branch per worktree.** Same branch can't be checked out in two worktrees simultaneously.
+
+**Lifecycle:**
+
+```bash
+# 1. Create (from up-to-date master)
+git fetch origin
+git worktree add ../claude-manager-<short-purpose> -b <branch-name> origin/master
+
+# 2. Work inside the worktree — everything (build, test, tauri dev) runs there
+cd ../claude-manager-<short-purpose>
+npm install   # worktrees don't share node_modules; install once per worktree
+
+# 3. Keep up with master to minimize merge pain (do this periodically, not just at the end)
+git fetch origin
+git rebase origin/master      # resolve any conflicts now, in small batches
+
+# 4. Commit + PR via the standard auto-pipeline (rule #7 in "Working with Ness")
+#    — push, gh pr create, gh pr merge --auto --squash --delete-branch
+
+# 5. After PR merges, clean up from the main checkout
+cd /c/Users/lianli/claude-manager
+git worktree remove ../claude-manager-<short-purpose>
+git worktree prune                       # cleans stale entries if directory was deleted manually
+```
+
+**Rules:**
+1. **Never `git checkout` the other worktree's branch** in the main checkout — git will refuse, and even forcing it defeats the isolation.
+2. **Rebase early and often** against `origin/master`. A worktree that lives for days without rebasing is a guaranteed conflict.
+3. **Don't share `node_modules` / `target/` / `dist/`** across worktrees via symlinks — let each worktree have its own to avoid bizarre build-state corruption.
+4. **Remove the worktree after the PR merges.** Don't let stale worktrees pile up; `git worktree list` should reflect only active work.
+5. **If you discover an existing worktree you didn't create, leave it alone and ask Ness** — it's probably another agent's in-progress work.
+
 ### Executing a plan task (applies to every `T<phase>.<num>` task)
 
 These rules let `scripts/ralph-task.sh <task-id>` work uniformly across all phases — keep the per-task prompt small by relying on these standing rules.
