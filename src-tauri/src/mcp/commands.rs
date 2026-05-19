@@ -294,4 +294,116 @@ mod tests {
         let f = FakeRunner;
         assert_eq!(f.run().unwrap(), "fake-output");
     }
+
+    // `remove_mcp_server` resolves `~/.claude.json` from USERPROFILE/HOME, so
+    // tests must redirect those env vars to a temp home. Serialize via shared
+    // mutex; restore originals via RAII guard.
+    use std::sync::{Mutex, OnceLock};
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+    struct EnvGuard {
+        keys: Vec<(&'static str, Option<std::ffi::OsString>)>,
+    }
+    impl EnvGuard {
+        fn capture(keys: &[&'static str]) -> Self {
+            Self {
+                keys: keys
+                    .iter()
+                    .map(|k| (*k, std::env::var_os(k)))
+                    .collect(),
+            }
+        }
+    }
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            for (k, v) in &self.keys {
+                match v {
+                    Some(val) => std::env::set_var(k, val),
+                    None => std::env::remove_var(k),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn remove_local_scope_drops_entry_and_preserves_siblings() {
+        let _lk = env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let _g = EnvGuard::capture(&["USERPROFILE", "HOME"]);
+        let home = tmp_dir("remove-local-present");
+        std::env::set_var("USERPROFILE", &home);
+        std::env::remove_var("HOME");
+
+        let cwd = "C:\\projects\\demo";
+        let original = serde_json::json!({
+            "theme": "dark",
+            "projects": {
+                cwd: {
+                    "mcpServers": {
+                        "doomed": {"type": "stdio", "command": "x"},
+                        "keeper": {"type": "stdio", "command": "y"}
+                    }
+                },
+                "C:\\projects\\other": {
+                    "mcpServers": {"untouched": {"type": "stdio"}}
+                }
+            }
+        });
+        fs::write(
+            home.join(".claude.json"),
+            serde_json::to_string_pretty(&original).unwrap(),
+        )
+        .unwrap();
+
+        remove_mcp_server("local".to_string(), "doomed".to_string(), cwd.to_string())
+            .unwrap();
+
+        let after: Value =
+            serde_json::from_str(&fs::read_to_string(home.join(".claude.json")).unwrap())
+                .unwrap();
+        assert_eq!(after["theme"], "dark");
+        assert!(after["projects"][cwd]["mcpServers"]
+            .get("doomed")
+            .is_none());
+        assert_eq!(
+            after["projects"][cwd]["mcpServers"]["keeper"]["command"],
+            "y"
+        );
+        assert_eq!(
+            after["projects"]["C:\\projects\\other"]["mcpServers"]["untouched"]["type"],
+            "stdio"
+        );
+    }
+
+    #[test]
+    fn remove_local_scope_noop_when_project_path_missing() {
+        let _lk = env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let _g = EnvGuard::capture(&["USERPROFILE", "HOME"]);
+        let home = tmp_dir("remove-local-missing");
+        std::env::set_var("USERPROFILE", &home);
+        std::env::remove_var("HOME");
+
+        // `projects` has a DIFFERENT cwd; the target cwd path doesn't exist.
+        let original = r#"{"theme":"light","projects":{"C:\\elsewhere":{"mcpServers":{"x":{"type":"stdio"}}}}}"#;
+        fs::write(home.join(".claude.json"), original).unwrap();
+
+        remove_mcp_server(
+            "local".to_string(),
+            "ghost".to_string(),
+            "C:\\not\\there".to_string(),
+        )
+        .unwrap();
+
+        let after: Value =
+            serde_json::from_str(&fs::read_to_string(home.join(".claude.json")).unwrap())
+                .unwrap();
+        // Nothing removed; sibling project untouched.
+        assert_eq!(after["theme"], "light");
+        assert_eq!(
+            after["projects"]["C:\\elsewhere"]["mcpServers"]["x"]["type"],
+            "stdio"
+        );
+        assert!(after["projects"].get("C:\\not\\there").is_none());
+    }
 }
