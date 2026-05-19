@@ -1,0 +1,175 @@
+# ============================================================================
+# SECURITY WARNING
+# ----------------------------------------------------------------------------
+# This file documents ~/.claude/config.json, which contains SECRETS.
+#
+#   - NEVER log values from this file.
+#   - NEVER commit real values (the fixture in tests/sources-of-truth/fixtures/
+#     uses an obviously-redacted stub; see the fixture-guard test).
+#   - NEVER include values in error messages, telemetry, crash reports, or
+#     debug dumps. Redact before any user-visible surface.
+#   - On the reveal/copy UI surface, gate behind an explicit user action and
+#     auto-hide after a short timeout per spec §11.1 + §9.2.
+# ============================================================================
+
+id: config-json-api-key
+title: Claude Code API key & API base URL config
+path: ~/.claude/config.json
+format: json
+owner: shared
+# "shared" = the file is OWNED by the Claude Code CLI but READ (and optionally
+# written via the reveal/copy/edit affordances) by claude-manager. We never
+# initialize this file ourselves; we expect the CLI to have created it during
+# `claude` first-run / login.
+
+claudeManagerAccess: read
+# Per spec §9.2 (General/API section) and §11.1 (first-launch prerequisites
+# check), claude-manager reads `primaryApiKey` to:
+#   1. Verify the API key is configured (first-launch check).
+#   2. Display the key in Settings > General with a mask + reveal toggle +
+#      "Copy" action.
+# Reveal & copy MUST be implemented via a Rust-side IPC command (capability
+# allowlisted in src-tauri/capabilities/default.json) so the secret never sits
+# in renderer memory longer than necessary. Writes (edit-in-place) are also
+# Rust-mediated; see plan T4.6 (`read_config_json` / `write_config_json`).
+
+# ---------------------------------------------------------------------------
+# Spec / context references
+# ---------------------------------------------------------------------------
+references:
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §9.2 (Settings — General/API row)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §11.1 (First-launch prerequisites — API key check)
+  - docs/DESIGN-CONTEXT.md §7 (Settings sources table)
+  - docs/DESIGN-CONTEXT.md §13 (Key file paths — `config.json` listed under `~/.claude/`)
+  - docs/superpowers/plans/2026-05-03-phase4-dialogs-polish.md (T4.6 read_config_json / write_config_json IPC, T4.7 General settings UI)
+
+# ---------------------------------------------------------------------------
+# Schema (top-level object)
+#
+# Field set documented here is the union of:
+#   (a) fields actually observed on disk during this investigation
+#       (~/.claude/config.json on the investigator's machine), and
+#   (b) fields referenced by the spec/design context that may legitimately
+#       appear in the file on other machines.
+#
+# Only KEY NAMES are documented — no observed values are reproduced here, in
+# keeping with the security warning at the top of this file.
+# ---------------------------------------------------------------------------
+schema:
+  type: object
+  fields:
+    - name: primaryApiKey
+      type: string
+      required: true
+      sensitive: true
+      description: >
+        The Anthropic API token used by the Claude Code CLI. Format is
+        typically `sk-ant-...` for first-party Anthropic keys, but may be a
+        gateway/proxy token (any opaque string) when a custom
+        ANTHROPIC_BASE_URL is in use. Treat as opaque; never parse beyond a
+        prefix sanity check.
+      observedOnDisk: true
+
+    - name: ANTHROPIC_BASE_URL
+      type: string
+      required: false
+      sensitive: false
+      description: >
+        Optional override for the Anthropic API endpoint. When present,
+        first-launch's API-reachability check (spec §11.1) HEADs this URL
+        instead of the default https://api.anthropic.com. The same value may
+        also live in `settings.json` under `env.ANTHROPIC_BASE_URL`; if both
+        exist, the precedence is whatever the CLI itself resolves to — do
+        NOT silently merge in the manager.
+      observedOnDisk: false
+
+# ---------------------------------------------------------------------------
+# Manager access pattern (Rust-side, per spec §11.1)
+# ---------------------------------------------------------------------------
+access:
+  read:
+    command: read_config_json (planned in T4.6)
+    returns: { primaryApiKey: string, ANTHROPIC_BASE_URL?: string }
+    rendererExposure: >
+      The renderer receives the values for the General Settings form, but the
+      key is rendered MASKED by default; reveal is a user-gesture-only toggle
+      that auto-hides after ~10 seconds.
+  write:
+    command: write_config_json (planned in T4.6)
+    notes: >
+      Atomic write (tmp file + rename). Preserve any unknown fields by
+      round-tripping through a `serde_json::Value` rather than a strict
+      struct — Claude Code may add new fields between releases.
+  reveal_copy:
+    notes: >
+      "Reveal" and "Copy to clipboard" must be wired through a dedicated IPC
+      command so the secret is not held in renderer JS state any longer than
+      necessary. Clipboard contents should be cleared after ~30 seconds.
+
+# ---------------------------------------------------------------------------
+# Gotchas
+# ---------------------------------------------------------------------------
+gotchas:
+  - id: not-in-repo-cant-be-gitignored
+    severity: info
+    description: >
+      `~/.claude/config.json` lives in the user's HOME directory, OUTSIDE the
+      claude-manager repository tree. The project `.gitignore` therefore does
+      NOT (and cannot meaningfully) reference it — there is no path by which
+      `git add` could pick it up from this repo. Verified during investigation:
+      the project `.gitignore` has no entry for `config.json` (and does not
+      need one). The real risk is a contributor copying the file's contents
+      into the fixture; the fixture-guard test (see
+      tests/sources-of-truth/config-json-api-key.test.ts) defends against
+      that vector by asserting the fixture's `primaryApiKey` matches /REDACTED/i.
+
+  - id: minimal-on-fresh-install
+    severity: info
+    description: >
+      On the investigator's machine the file currently contains ONLY
+      `primaryApiKey`. The CLI does not write `ANTHROPIC_BASE_URL` unless the
+      user has explicitly configured a custom endpoint. Code that reads this
+      file MUST treat every field except `primaryApiKey` as optional, and must
+      also tolerate `primaryApiKey` being absent (file freshly created, login
+      not yet completed).
+
+  - id: do-not-log
+    severity: critical
+    description: >
+      Never include the parsed config in log lines, panic messages, Tauri
+      `eprintln!`, or analytics. The Rust IPC command should redact the value
+      in any error-return path (e.g., wrap parse errors so they do not echo
+      file contents).
+
+  - id: opaque-token-shape
+    severity: warning
+    description: >
+      Do not hard-validate the token format beyond a soft prefix check
+      (`sk-ant-` is typical). Gateway / Bedrock / Vertex setups put arbitrary
+      tokens here. A strict regex would lock out legitimate users.
+
+  - id: shared-writer-conflict
+    severity: warning
+    description: >
+      The Claude Code CLI also writes this file (on login/relogin). If the
+      manager writes concurrently with a CLI relogin, last-writer-wins. The
+      write path should re-read the file immediately before serializing, so
+      foreign fields added by the CLI between read and write are preserved.
+
+# ---------------------------------------------------------------------------
+# Fixture & test
+# ---------------------------------------------------------------------------
+fixture:
+  path: tests/sources-of-truth/fixtures/config-json-api-key.json
+  notes: >
+    Fully synthetic. The `primaryApiKey` value is a redacted stub
+    (`sk-ant-REDACTED-FIXTURE-VALUE`) and the test asserts /REDACTED/i so a
+    future contributor cannot silently swap in their real key.
+
+test:
+  path: tests/sources-of-truth/config-json-api-key.test.ts
+  asserts:
+    - primaryApiKey is a string
+    - primaryApiKey starts with `sk-ant-`
+    - primaryApiKey matches /REDACTED/i (fixture-safety guard)
+    - When `ANTHROPIC_BASE_URL` is present, it is a string and parses as a URL

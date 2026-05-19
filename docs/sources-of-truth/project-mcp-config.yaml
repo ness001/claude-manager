@@ -1,0 +1,352 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Source of truth: <project-root>/.mcp.json
+# (per-project MCP server definitions, scope=project, committed to git)
+# Task #10  •  Investigator: inv-project-mcp-config
+# ─────────────────────────────────────────────────────────────────────────────
+
+id: project-mcp-config
+title: <project-root>/.mcp.json — per-project MCP server definitions (project scope)
+owner: shared           # the file is created by users/teams and committed to git;
+                        # Claude Manager READS it only (writes go to ~/.claude.json
+                        # for trust/enablement, not to .mcp.json itself).
+claudeManagerAccess: read-only
+
+# ─── RELATIONSHIP TO claude-json-config ──────────────────────────────────────
+# This source of truth is the project-scope half of the MCP config story.
+# The user- and local-scope halves live in `~/.claude.json` and are
+# documented in `claude-json-config.yaml` (task #5). The two files together
+# define the full MCP server graph; precedence resolution joins them.
+related:
+  - id: claude-json-config
+    path: "~/.claude.json"
+    relationship: |
+      Holds USER scope (`$.mcpServers.<name>`) and LOCAL scope
+      (`$.projects["<cwd>"].mcpServers.<name>`). Also holds the trust
+      maps (`enabledMcpjsonServers` / `disabledMcpjsonServers`) that
+      apply to the project-scope servers defined HERE in `.mcp.json`.
+
+# ─── CORRECTION BANNER ───────────────────────────────────────────────────────
+corrections:
+  - id: two-wire-formats-exist
+    severity: high
+    summary: |
+      `.mcp.json` exists in TWO on-disk wire formats. Any reader MUST
+      handle both, or it will silently drop servers for half the user
+      population.
+        • MODERN (preferred):  { "mcpServers": { "<name>": { ... } } }
+        • LEGACY (no wrapper):  { "<name>": { "type": "...", ... } }
+      The legacy form is detected by the ABSENCE of an `mcpServers` key
+      AND the presence of at least one top-level value that is a plain
+      object with a `type` field. See `normalization.format_detection`.
+    enforced_by:
+      - "src/lib/mcp-loader.ts (loadMcpServers, step 3: `parsed.mcpServers ?? <fallback>`)"
+      - "tests/sources-of-truth/project-mcp-config.test.ts"
+
+  - id: trust-state-is-NOT-in-this-file
+    severity: high
+    summary: |
+      Trust (enabled / disabled) for project-scope servers is NOT stored
+      in `.mcp.json`. It lives back in `~/.claude.json` under
+      `$.projects["<cwd>"].enabledMcpjsonServers` and `.disabledMcpjsonServers`.
+      Reading `.mcp.json` alone yields the server list; the trust flag must
+      be cross-referenced from the user config.
+    correct: |
+      Project-scope servers are surfaced from `.mcp.json`; their
+      `isTrusted` flag is computed by `mcp-loader.ts` step 4 from the
+      paired `~/.claude.json` arrays.
+
+  - id: precedence-is-project-greater-than-local-greater-than-user
+    severity: high
+    summary: |
+      When the same server `name` appears in `.mcp.json` AND in
+      `~/.claude.json` at any other scope, the entry from `.mcp.json`
+      (project scope) WINS. The shadowed entries from local/user
+      scope are still loaded but marked `isOverridden: true` with
+      `overriddenBy: "project"`.
+    enforced_by:
+      - "src/lib/mcp-loader.ts (scopeRank = { project: 3, local: 2, user: 1 })"
+
+# ─── FILE LOCATION ───────────────────────────────────────────────────────────
+location:
+  path: "<project-root>/.mcp.json"
+  resolver: "src-tauri/src/mcp/commands.rs::read_mcp_json (joins project_root + \".mcp.json\")"
+  presence: |
+    Optional. The file may legitimately be absent — `read_mcp_json`
+    returns the empty string for ENOENT, and the loader treats empty
+    string as "no project-scope servers". Never error on absence.
+  scope_owned_by_this_file: project
+  committed_to_git: true        # contrast with `~/.claude.json` which is per-user.
+
+# ─── WRITERS ─────────────────────────────────────────────────────────────────
+writers:
+  - actor: Project maintainer / repo owner (human, editor)
+    writes: every key
+    when: project is set up; new MCP servers are added/removed for the team
+  - actor: Claude Code CLI (`claude mcp add --scope project ...`)
+    writes: "$.mcpServers.<name> (always emits MODERN format)"
+    when: user runs `claude mcp add` with project scope inside the repo
+  - actor: Claude Manager (this app)
+    writes: NEVER — claude-manager is a READER for this file in v1.
+    note: |
+      Project-scope writes are intentionally NOT implemented in
+      `src-tauri/src/mcp/commands.rs::write_mcp_server` — that function
+      returns an Err for `scope == "project"` with the message
+      "project scope writes belong in <root>/.mcp.json, not ~/.claude.json".
+      Trust/enablement WRITES happen in `~/.claude.json` (claude-json-config).
+
+# ─── FORMATS — both must be supported by every reader ────────────────────────
+formats:
+
+  modern:
+    description: |
+      Preferred wire format. Servers live under the top-level `mcpServers`
+      key, identical in shape to `~/.claude.json` → `$.mcpServers`. The
+      Claude Code CLI emits this form for `claude mcp add --scope project`.
+    detection: "Top-level key `mcpServers` is present (and is an object)."
+    shape:
+      type: object
+      required: [mcpServers]
+      properties:
+        mcpServers:
+          type: object
+          additionalProperties:
+            $ref: "#/definitions/McpServerEntry"
+    example: |
+      {
+        "mcpServers": {
+          "xcodebuildmcp": {
+            "command": "npx",
+            "args": ["-y", "xcodebuildmcp@latest", "mcp"],
+            "env": {
+              "XCODEBUILDMCP_ENABLED_WORKFLOWS": "simulator,ui-automation"
+            }
+          },
+          "cloudflare-api": {
+            "type": "http",
+            "url": "https://mcp.cloudflare.com/mcp"
+          }
+        }
+      }
+    real_world_samples:
+      - "C:/Users/lianli/.codex/.tmp/plugins/plugins/build-ios-apps/.mcp.json"
+      - "C:/Users/lianli/.codex/.tmp/plugins/plugins/cloudflare/.mcp.json"
+
+  legacy:
+    description: |
+      Older wire format used by hand-edited `.mcp.json` files and by some
+      community templates. The TOP-LEVEL keys ARE the server names (no
+      `mcpServers` wrapper). Each value is an `McpServerEntry` discriminated
+      by its `type` field exactly as in the modern format.
+    detection: |
+      Top-level key `mcpServers` is ABSENT. At least one top-level value
+      is a plain object containing a `type` field. Top-level keys whose
+      values are scalars or objects WITHOUT a `type` field are ignored
+      (they are not server definitions).
+    shape:
+      type: object
+      additionalProperties:
+        oneOf:
+          - $ref: "#/definitions/McpServerEntry"
+          - description: "Non-server top-level key (ignored by reader)"
+    example: |
+      {
+        "playwright": {
+          "type": "stdio",
+          "command": "npx",
+          "args": ["-y", "@playwright/mcp@latest"],
+          "env": {}
+        },
+        "internal-bus": {
+          "type": "sse",
+          "url": "https://bus.internal.example/mcp",
+          "headers": { "Authorization": "Bearer ${BUS_TOKEN}" }
+        }
+      }
+    notes: |
+      Because the legacy form has no wrapper, a key that LOOKS like a
+      server but lacks a `type` field is filtered out by the loader (see
+      `mcp-loader.ts` line ~156-162: filter requires `"type" in v`).
+      This means the loader CANNOT auto-recover a legacy server whose
+      `type` was omitted — author MUST write `"type": "stdio"` explicitly
+      in the legacy form, even though the modern form defaults to stdio.
+
+# ─── SCHEMA — McpServerEntry (shared by both formats) ────────────────────────
+definitions:
+
+  McpServerEntry:
+    description: |
+      One MCP server config. Identical schema across both wire formats
+      and across all three scopes (user / local / project). The `type`
+      field discriminates the transport. Default `type` when omitted is
+      "stdio" (see `mcp-loader.ts::coerceType`). NOTE: legacy format
+      relies on `type` being present for format detection, so the default
+      only applies once the entry is known to be a server.
+    oneOf:
+      - $ref: "#/definitions/McpStdioServer"
+      - $ref: "#/definitions/McpSseServer"
+      - $ref: "#/definitions/McpHttpServer"
+
+  McpStdioServer:
+    type: object
+    required: [command]
+    properties:
+      type:    { const: stdio, default: stdio }
+      command: { type: string, description: "Executable path or PATH-resolved name." }
+      args:
+        type: array
+        items: { type: string }
+      env:
+        type: object
+        additionalProperties: { type: string }
+        description: "Spec §8.2 mandates {} when empty. Loader inserts {} if missing."
+    forbidden_fields: [url, headers]
+
+  McpSseServer:
+    type: object
+    required: [type, url]
+    properties:
+      type:    { const: sse }
+      url:     { type: string, format: uri }
+      headers:
+        type: object
+        additionalProperties: { type: string }
+        description: "Values may contain `${ENV_VAR}` placeholders expanded at spawn time."
+      env:
+        type: object
+        additionalProperties: { type: string }
+    forbidden_fields: [command, args]
+
+  McpHttpServer:
+    type: object
+    required: [type, url]
+    properties:
+      type:    { const: http }
+      url:     { type: string, format: uri }
+      headers:
+        type: object
+        additionalProperties: { type: string }
+      env:
+        type: object
+        additionalProperties: { type: string }
+    forbidden_fields: [command, args]
+
+# ─── NORMALIZATION (how Claude Manager folds both formats into one shape) ────
+normalization:
+  goal: |
+    After loading, callers must see ONE shape regardless of which wire
+    format was on disk: an array of `McpServer` (see `src/lib/mcp-types.ts`)
+    with `scope: "project"`. The format-detection branch is invisible to
+    UI code.
+  format_detection:
+    rule: |
+      1. Parse the file as JSON. Empty string or parse-error → treat as
+         the empty object `{}` (`mcp-loader.ts::parseJsonOr`).
+      2. If `parsed.mcpServers` is a plain object → MODERN. Use it as-is
+         as the `wireMap`.
+      3. Otherwise (legacy or empty) → build `wireMap` by filtering
+         `Object.entries(parsed)` to entries whose value is a plain
+         non-null object containing a `"type"` field. All other keys
+         are silently ignored.
+    implementation: "src/lib/mcp-loader.ts step 3 (lines 142-162)"
+
+  per_entry_normalization:
+    - rule: "Set `scope` to `\"project\"`."
+    - rule: "Coerce `type` via `coerceType(wire.type)`: keep `sse` or `http`, anything else → `stdio`."
+    - rule: "If `type === \"stdio\"`: copy `command`, `args`. Drop `url`, `headers`."
+    - rule: "If `type === \"sse\"` or `\"http\"`: copy `url`, `headers`. Drop `command`, `args`."
+    - rule: "`env = wire.env ?? {}` — always present, even when empty."
+    - rule: "`status = \"disconnected\"` — runtime status is fetched separately by `refreshMcpStatus()` (T3.10)."
+    - rule: "`isOverridden = false` initially; the precedence pass (step 4) may flip it."
+    - rule: |
+        `isTrusted` — only meaningful when `scope === "project"`. Derived
+        from the PAIRED `~/.claude.json` entry:
+          enabled.has(name) → isTrusted = true
+          disabled.has(name) → isTrusted = false
+          neither           → isTrusted = undefined (CLI will prompt)
+
+  cross_scope_merge:
+    rule: "scopeRank = { project: 3, local: 2, user: 1 }"
+    behavior: |
+      After loading all three scopes, the highest-ranked entry per `name`
+      wins. Lower-ranked entries are KEPT in the returned array but get
+      `isOverridden: true` and `overriddenBy: <winning scope>` so the UI
+      can render them dimmed with a badge (spec §8.1).
+
+# ─── PRECEDENCE — worked example ─────────────────────────────────────────────
+precedence:
+  rule: project > local > user
+  worked_example:
+    scenario: "Same server name 'playwright' defined in all three scopes."
+    inputs:
+      "~/.claude.json":
+        user_scope:
+          mcpServers:
+            playwright:
+              type: stdio
+              command: cmd
+              args: ["/c", "npx", "-y", "@playwright/mcp@latest"]
+              env: {}
+        local_scope_for_cwd_C_Users_lianli_demo:
+          projects:
+            "C:/Users/lianli/demo":
+              mcpServers:
+                playwright:
+                  type: stdio
+                  command: npx
+                  args: ["@playwright/mcp@latest", "--local"]
+                  env: {}
+              enabledMcpjsonServers: ["playwright"]
+      "C:/Users/lianli/demo/.mcp.json":
+        format: modern
+        contents:
+          mcpServers:
+            playwright:
+              type: stdio
+              command: pwsh
+              args: ["-c", "npx @playwright/mcp@latest --project"]
+              env: {}
+    loader_output:
+      - name: playwright
+        scope: project
+        command: pwsh
+        args: ["-c", "npx @playwright/mcp@latest --project"]
+        isOverridden: false
+        isTrusted: true          # enabledMcpjsonServers includes "playwright"
+      - name: playwright
+        scope: local
+        command: npx
+        args: ["@playwright/mcp@latest", "--local"]
+        isOverridden: true
+        overriddenBy: project
+      - name: playwright
+        scope: user
+        command: cmd
+        args: ["/c", "npx", "-y", "@playwright/mcp@latest"]
+        isOverridden: true
+        overriddenBy: project
+    ui_treatment: |
+      The project-scope card renders normally with a green/gray status dot
+      and the "Project" pill. The local- and user-scope cards render
+      dimmed at ~50% opacity with an "Overridden by project" badge.
+
+# ─── CONSUMERS (Claude Manager) ──────────────────────────────────────────────
+consumers:
+  - "src/lib/mcp-loader.ts"          # reader, format detection, precedence
+  - "src/lib/mcp-types.ts"           # backing TypeScript types
+  - "src-tauri/src/mcp/commands.rs"  # `read_mcp_json` IPC pass-through
+  - "src/sections/Mcp/*"             # MCP panel UI (consumes loader output)
+
+# ─── SAFETY NOTES ────────────────────────────────────────────────────────────
+safety:
+  - id: file-is-trusted-input
+    note: |
+      `.mcp.json` is part of the project repository, so its contents are
+      under git review. However, Claude Code's `claude mcp list` actually
+      SPAWNS each declared server for health checks (spec §8.3). DO NOT
+      auto-call status refresh in untrusted directories.
+  - id: never-write-this-file
+    note: |
+      Claude Manager v1 does NOT write `.mcp.json`. Edits to project-scope
+      servers must be performed by the user (in their editor / via
+      `claude mcp add --scope project`). Trust toggles ARE writable, but
+      they touch `~/.claude.json`, not this file.
