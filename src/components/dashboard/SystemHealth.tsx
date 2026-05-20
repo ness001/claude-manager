@@ -96,7 +96,7 @@ export function SystemHealth({
     const timeoutId = setTimeout(() => controller.abort(), API_CHECK_TIMEOUT_MS);
     void (async () => {
       try {
-        const res = await fetch(apiCheckUrl, {
+        await fetch(apiCheckUrl, {
           method: "HEAD",
           signal: controller.signal,
         });
