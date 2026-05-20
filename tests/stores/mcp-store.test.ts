@@ -241,4 +241,23 @@ describe("useMcpStore", () => {
     expect(useMcpStore.getState().servers.map((s) => s.name)).toEqual(["a"]);
     expect(useMcpStore.getState().error).toContain("boom");
   });
+
+  it("case 8: refreshStatus clears a stale error from a prior failure on a successful retry", async () => {
+    // Seed a stale error left by an earlier failed action.
+    useMcpStore.setState({ error: "Couldn't refresh MCP status: boom" });
+    invokeMock.mockResolvedValueOnce("");
+    await useMcpStore.getState().refreshStatus();
+    // The successful retry must clear the stale banner — without the
+    // `set({ error: null })` at the top of refreshStatus, the banner
+    // would still read the previous failure even though the data is fresh.
+    expect(useMcpStore.getState().error).toBeNull();
+  });
+
+  it("case 9: addServer clears a stale error on a successful retry", async () => {
+    useMcpStore.setState({ error: "Couldn't save MCP server: boom" });
+    saveMcpServerMock.mockResolvedValueOnce(undefined);
+    loadMcpServersMock.mockResolvedValueOnce([]);
+    await useMcpStore.getState().addServer(makeServer({ name: "z" }));
+    expect(useMcpStore.getState().error).toBeNull();
+  });
 });
