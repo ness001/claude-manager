@@ -57,6 +57,15 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
   const selectPlugin = usePluginStore((s) => s.selectPlugin);
   const togglePlugin = usePluginStore((s) => s.togglePlugin);
 
+  // Toggle-error surface. `togglePlugin` re-throws on `write_plugin_enabled`
+  // failure (settings.json read-only / EACCES / IPC sandbox denial), but
+  // PluginCard previously fired-and-forgot via `void togglePlugin(...)` —
+  // the optimistic state flip rolled back invisibly and the user got no
+  // signal *why* their toggle "didn't take." Mirrors the silent-failure
+  // family fixed in PR #91 (SkillCard openInVsCode), PR #299
+  // (AssistantMessage link), and SessionInfoBar's openError pattern.
+  const [toggleError, setToggleError] = useState<string | null>(null);
+
   const dotClass = STATUS_COLOR[plugin.state];
   const isBroken = plugin.state === "broken";
   const isDisabled = plugin.state === "disabled";
@@ -344,7 +353,10 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           disabled={toggleDisabled}
           onClick={(e) => {
             e.stopPropagation();
-            void togglePlugin(plugin);
+            setToggleError(null);
+            void togglePlugin(plugin).catch((err: unknown) => {
+              setToggleError(err instanceof Error ? err.message : String(err));
+            });
           }}
           className={[
             "relative h-4 w-7 rounded-full transition-colors",
@@ -366,6 +378,15 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
           />
         </button>
       </div>
+      {toggleError !== null && (
+        <p
+          data-testid="toggle-error"
+          role="alert"
+          className="text-xs text-status-red"
+        >
+          Couldn't toggle: {toggleError}
+        </p>
+      )}
     </div>
   );
 }
