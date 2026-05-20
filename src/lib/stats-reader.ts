@@ -188,9 +188,30 @@ export async function readStatsCache(): Promise<StatsData> {
   if (!isPlainObject(parsed)) return freshDefaults();
 
   return {
-    costUSD: asNumber(parsed.costUSD),
+    costUSD: extractCostUSD(parsed),
     hourCounts: normalizeHourCounts(parsed.hourCounts),
     dailyActivity: normalizeDailyActivity(parsed.dailyActivity),
     dailyModelTokens: normalizeDailyModelTokens(parsed.dailyModelTokens),
   };
+}
+
+/**
+ * Real `stats-cache.json` (schema v2) stores `costUSD` ONLY per-model under
+ * `modelUsage[<model>].costUSD` — there is NO top-level `costUSD` key.
+ * Sum across models. Fall back to a top-level `costUSD` if present (older
+ * shapes / tests) so we don't silently degrade synthetic inputs.
+ *
+ * See docs/sources-of-truth/stats-cache-json.yaml gotcha
+ * "costusd-location-mismatch".
+ */
+function extractCostUSD(parsed: Record<string, unknown>): number {
+  const usage = parsed.modelUsage;
+  if (isPlainObject(usage)) {
+    let total = 0;
+    for (const entry of Object.values(usage)) {
+      if (isPlainObject(entry)) total += asNumber(entry.costUSD);
+    }
+    if (total > 0) return total;
+  }
+  return asNumber(parsed.costUSD);
 }

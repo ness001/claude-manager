@@ -11,7 +11,7 @@ function makeSession(overrides: Partial<SessionMeta> = {}): SessionMeta {
     cwd: "/repos/foo",
     firstPrompt: "do the thing",
     messageCount: 5,
-    startedAt: "",
+    startedAt: 0,
     durationMs: 0,
     entrypoint: "interactive",
     kind: "interactive",
@@ -118,9 +118,9 @@ describe("SessionListPanel", () => {
     const now = fixedNow.getTime();
     useSessionStore.setState({
       sessions: [
-        makeSession({ sessionId: "today", startedAt: new Date(now - 60_000).toISOString() }),
-        makeSession({ sessionId: "yest", startedAt: new Date(now - 26 * 3600_000).toISOString() }),
-        makeSession({ sessionId: "wk", startedAt: new Date(now - 4 * 24 * 3600_000).toISOString() }),
+        makeSession({ sessionId: "today", startedAt: now - 60_000 }),
+        makeSession({ sessionId: "yest", startedAt: now - 26 * 3600_000 }),
+        makeSession({ sessionId: "wk", startedAt: now - 4 * 24 * 3600_000 }),
       ],
       viewMode: "timeline",
     });

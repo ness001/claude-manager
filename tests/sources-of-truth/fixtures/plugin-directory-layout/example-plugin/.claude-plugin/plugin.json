@@ -1,0 +1,14 @@
+{
+  "_comment": "Synthetic fixture for source-of-truth contract test. Mirrors the .claude-plugin/plugin.json variant observed in real installs (superpowers, ralph-skills, karpathy-skills, document-skills).",
+  "name": "example-plugin",
+  "description": "Synthetic example plugin used by the plugin-directory-layout source-of-truth test. Not a real plugin.",
+  "version": "1.2.3",
+  "author": {
+    "name": "Example Author",
+    "email": "author@example.test"
+  },
+  "homepage": "https://example.test/example-plugin",
+  "repository": "https://example.test/example-plugin.git",
+  "license": "MIT",
+  "keywords": ["example", "fixture", "source-of-truth"]
+}

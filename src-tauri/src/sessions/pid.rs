@@ -20,8 +20,9 @@ pub struct PidFileData {
     pub pid: u32,
     pub session_id: String,
     pub cwd: String,
-    /// ISO-8601 string per TS type — kept as-is for the frontend.
-    pub started_at: String,
+    /// Epoch milliseconds. The on-disk format is always an integer; the
+    /// `±60s` PID-reuse guard at `pid.rs:169` does the arithmetic directly.
+    pub started_at: i64,
     pub kind: String,
     pub entrypoint: String,
 }

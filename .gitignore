@@ -31,8 +31,19 @@ Thumbs.db
 # Session handoff note (transient, per-session)
 .claude/handoff.md
 
+# Claude Code local state (user-specific, transient — not portable across dev boxes)
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# Ralph phase progress (per-dev-box state — finished tasks differ per machine)
+.phase*-progress.json
+
 # Transient screenshot output from scripts/_test/ helpers
 scripts/_test/out/
 
 # Git worktrees (per superpowers:using-git-worktrees skill)
 .worktrees/
+
+# WebdriverIO E2E logs/artifacts
+.wdio-logs/
+wdio-logs/

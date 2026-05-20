@@ -469,6 +469,39 @@ mod tests {
     }
 
     #[test]
+    fn read_frontmatter_empty_value_yields_empty_string() {
+        let root = tmp_dir("fm-empty-value");
+        let p = root.join("a.md");
+        fs::write(&p, "---\nname: hello\ndescription: \n---\n").unwrap();
+        let fm = read_frontmatter(&p).unwrap();
+        assert_eq!(fm.get("name").unwrap(), "hello");
+        assert_eq!(fm.get("description").unwrap(), "");
+    }
+
+    #[test]
+    fn read_frontmatter_value_with_colon_is_preserved() {
+        let root = tmp_dir("fm-colon-value");
+        let p = root.join("a.md");
+        fs::write(
+            &p,
+            "---\nname: hello\nurl: https://example.com/path?q=1\n---\n",
+        )
+        .unwrap();
+        let fm = read_frontmatter(&p).unwrap();
+        assert_eq!(fm.get("url").unwrap(), "https://example.com/path?q=1");
+    }
+
+    #[test]
+    fn read_frontmatter_missing_closing_fence_returns_partial() {
+        let root = tmp_dir("fm-no-close");
+        let p = root.join("a.md");
+        fs::write(&p, "---\nname: hello\ndescription: world\n").unwrap();
+        let fm = read_frontmatter(&p).unwrap();
+        assert_eq!(fm.get("name").unwrap(), "hello");
+        assert_eq!(fm.get("description").unwrap(), "world");
+    }
+
+    #[test]
     fn scan_skills_handles_skill_md_layout() {
         let root = tmp_dir("skills-dir");
         let s = root.join("my-skill");
@@ -496,6 +529,136 @@ mod tests {
         assert_eq!(hooks.len(), 1);
         assert_eq!(hooks[0].event, "SessionStart");
         assert_eq!(hooks[0].command, "echo hi");
+    }
+
+    #[test]
+    fn scan_agents_parses_basic_frontmatter() {
+        let root = tmp_dir("agents-basic");
+        fs::write(
+            root.join("researcher.md"),
+            "---\nname: researcher\ndescription: digs through code\n---\nbody\n",
+        )
+        .unwrap();
+        let agents = scan_agents(&root);
+        assert_eq!(agents.len(), 1);
+        assert_eq!(agents[0].name, "researcher");
+        assert_eq!(agents[0].description, "digs through code");
+        assert!(agents[0].tools.is_empty());
+        assert!(agents[0].model.is_none());
+        assert!(agents[0].color.is_none());
+    }
+
+    #[test]
+    fn scan_agents_parses_tools_list() {
+        let root = tmp_dir("agents-tools");
+        fs::write(
+            root.join("worker.md"),
+            "---\nname: worker\ndescription: does stuff\ntools: [Read, Write, Bash]\n---\n",
+        )
+        .unwrap();
+        let agents = scan_agents(&root);
+        assert_eq!(agents.len(), 1);
+        assert_eq!(agents[0].tools, vec!["Read", "Write", "Bash"]);
+    }
+
+    #[test]
+    fn scan_agents_optional_model_and_color() {
+        let root = tmp_dir("agents-optional");
+        fs::write(
+            root.join("with.md"),
+            "---\nname: with\ndescription: d\nmodel: claude-opus-4-6\ncolor: blue\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("without.md"),
+            "---\nname: without\ndescription: d\n---\n",
+        )
+        .unwrap();
+        let agents = scan_agents(&root);
+        assert_eq!(agents.len(), 2);
+        let with = agents.iter().find(|a| a.name == "with").unwrap();
+        let without = agents.iter().find(|a| a.name == "without").unwrap();
+        assert_eq!(with.model.as_deref(), Some("claude-opus-4-6"));
+        assert_eq!(with.color.as_deref(), Some("blue"));
+        assert!(without.model.is_none());
+        assert!(without.color.is_none());
+    }
+
+    #[test]
+    fn scan_agents_sorts_by_name_ascending() {
+        let root = tmp_dir("agents-sort");
+        fs::write(
+            root.join("zebra.md"),
+            "---\nname: zebra\ndescription: z\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("apple.md"),
+            "---\nname: apple\ndescription: a\n---\n",
+        )
+        .unwrap();
+        fs::write(
+            root.join("mango.md"),
+            "---\nname: mango\ndescription: m\n---\n",
+        )
+        .unwrap();
+        let agents = scan_agents(&root);
+        let names: Vec<&str> = agents.iter().map(|a| a.name.as_str()).collect();
+        assert_eq!(names, vec!["apple", "mango", "zebra"]);
+    }
+
+    #[test]
+    fn read_hooks_flattens_multiple_matchers() {
+        let root = tmp_dir("hooks-multi");
+        let path = root.join("hooks.json");
+        fs::write(
+            &path,
+            r#"{"PreToolUse":[
+                {"matcher":"Bash","hooks":[{"type":"command","command":"echo one"}]},
+                {"matcher":"Write","hooks":[
+                    {"type":"command","command":"echo two"},
+                    {"type":"command","command":"echo three"}
+                ]}
+            ]}"#,
+        )
+        .unwrap();
+        let hooks = read_hooks(&path);
+        assert_eq!(hooks.len(), 3);
+        assert!(hooks.iter().all(|h| h.event == "PreToolUse"));
+        let cmds: Vec<&str> = hooks.iter().map(|h| h.command.as_str()).collect();
+        assert!(cmds.contains(&"echo one"));
+        assert!(cmds.contains(&"echo two"));
+        assert!(cmds.contains(&"echo three"));
+    }
+
+    #[test]
+    fn read_hooks_skips_non_command_hook_types() {
+        let root = tmp_dir("hooks-noncmd");
+        let path = root.join("hooks.json");
+        // First hook has no `command` field (e.g., "webhook" shape) — must be
+        // skipped silently; the trailing command hook still comes through.
+        fs::write(
+            &path,
+            r#"{"PostToolUse":[{"matcher":"","hooks":[
+                {"type":"webhook","url":"https://example.com/hook"},
+                {"type":"command","command":"echo kept"}
+            ]}]}"#,
+        )
+        .unwrap();
+        let hooks = read_hooks(&path);
+        assert_eq!(hooks.len(), 1);
+        assert_eq!(hooks[0].command, "echo kept");
+    }
+
+    #[test]
+    fn read_hooks_handles_malformed_value_shape() {
+        let root = tmp_dir("hooks-malformed");
+        let path = root.join("hooks.json");
+        // Event value is a string instead of an array — parser should skip
+        // it via the `as_array()` guard, not panic.
+        fs::write(&path, r#"{"PreToolUse":"not-an-array","Notification":42}"#).unwrap();
+        let hooks = read_hooks(&path);
+        assert!(hooks.is_empty());
     }
 
     /// Lightweight test for the read-modify-write JSON shape produced by
