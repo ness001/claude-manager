@@ -2,7 +2,7 @@
 // rendering, and the toggle → store wiring.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { PluginCard } from "../../../src/components/plugins/PluginCard";
 import { usePluginStore } from "../../../src/stores/plugin-store";
@@ -132,14 +132,22 @@ describe("PluginCard", () => {
     ).toBe(tb);
   });
 
-  // Reinstall has no IPC backing yet — render it disabled with an
-  // explanatory tooltip rather than as a clickable lie.
-  it("Reinstall button is disabled with an explanatory title (no IPC backing yet)", () => {
+  // Reinstall has no IPC backing yet — render it soft-disabled (aria-disabled,
+  // not native disabled) with an explanatory tooltip rather than as a
+  // clickable lie. Native `disabled` was dropped in favor of `aria-disabled`
+  // so the button stays focusable for the WAI-ARIA Toolbar pattern's roving
+  // tabindex (the broken-actions row uses role="toolbar"; native-disabled
+  // buttons can't be focused in Chromium/WebView2, breaking arrow-key nav).
+  it("Reinstall button is soft-disabled (aria-disabled) with an explanatory title", () => {
     render(
       <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
     );
     const btn = screen.getByTestId("reinstall-btn") as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute("aria-disabled")).toBe("true");
+    // Native disabled MUST be absent so the button stays focusable inside
+    // the role="toolbar" parent — Toolbar APG requires arrow-key nav and
+    // disabled-attr buttons can't take focus in Chromium.
+    expect(btn.hasAttribute("disabled")).toBe(false);
     expect(btn.title.length).toBeGreaterThan(0);
     expect(btn.title.toLowerCase()).toContain("not yet wired");
   });
@@ -169,14 +177,62 @@ describe("PluginCard", () => {
   });
 
   // Same treatment for Remove — no `claude plugin uninstall` IPC yet.
-  it("Remove button is disabled with an explanatory title (no IPC backing yet)", () => {
+  // Soft-disabled (aria-disabled, no native disabled) for the same Toolbar
+  // pattern reason as Reinstall above.
+  it("Remove button is soft-disabled (aria-disabled) with an explanatory title", () => {
     render(
       <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
     );
     const btn = screen.getByTestId("remove-btn") as HTMLButtonElement;
-    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute("aria-disabled")).toBe("true");
+    expect(btn.hasAttribute("disabled")).toBe(false);
     expect(btn.title.length).toBeGreaterThan(0);
     expect(btn.title.toLowerCase()).toContain("not yet wired");
+  });
+
+  // WAI-ARIA Toolbar pattern (https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/):
+  // declaring role="toolbar" on the broken-plugin Reinstall + Remove pair
+  // without implementing the keyboard model is a false promise. SR users
+  // hearing "toolbar, Reinstall, button" expect arrow-key nav; sighted
+  // keyboard users expect Tab to enter the toolbar once and skip past it.
+  // Same defect class fixed on SessionInfoBar in PR #317.
+  it("recovery toolbar implements roving tabindex (only one btn is tabIndex=0)", () => {
+    render(
+      <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
+    );
+    const reinstall = screen.getByTestId("reinstall-btn") as HTMLButtonElement;
+    const remove = screen.getByTestId("remove-btn") as HTMLButtonElement;
+    // Initial tab stop is index 0 (Reinstall).
+    expect(reinstall.tabIndex).toBe(0);
+    expect(remove.tabIndex).toBe(-1);
+  });
+
+  it("recovery toolbar: ArrowRight / ArrowLeft / Home / End move focus", async () => {
+    render(
+      <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
+    );
+    const reinstall = screen.getByTestId("reinstall-btn") as HTMLButtonElement;
+    const remove = screen.getByTestId("remove-btn") as HTMLButtonElement;
+
+    reinstall.focus();
+    expect(document.activeElement).toBe(reinstall);
+
+    fireEvent.keyDown(reinstall, { key: "ArrowRight" });
+    await waitFor(() => expect(document.activeElement).toBe(remove));
+
+    fireEvent.keyDown(remove, { key: "Home" });
+    await waitFor(() => expect(document.activeElement).toBe(reinstall));
+
+    fireEvent.keyDown(reinstall, { key: "End" });
+    await waitFor(() => expect(document.activeElement).toBe(remove));
+
+    // Wrap: ArrowRight from last → first.
+    fireEvent.keyDown(remove, { key: "ArrowRight" });
+    await waitFor(() => expect(document.activeElement).toBe(reinstall));
+
+    // Wrap: ArrowLeft from first → last.
+    fireEvent.keyDown(reinstall, { key: "ArrowLeft" });
+    await waitFor(() => expect(document.activeElement).toBe(remove));
   });
 
   it("disabled plugin renders 70% opacity (opacity-70 utility)", () => {
@@ -203,6 +259,41 @@ describe("PluginCard", () => {
       (c) => c[0] === "write_plugin_enabled",
     );
     expect(writes).toHaveLength(1);
+  });
+
+  it("toggle failure surfaces inline alert (silent-failure family)", async () => {
+    // Repro: `togglePlugin` re-throws when `write_plugin_enabled` fails
+    // (settings.json read-only / EACCES / IPC denial). The optimistic
+    // state flip rolls back invisibly — without this surface the user
+    // clicks, sees nothing change, and has no idea why. Mirrors the
+    // PR #91 (SkillCard) and PR #299 (AssistantMessage) pattern.
+    invokeMock.mockRejectedValueOnce(new Error("EACCES: settings.json"));
+    const meta = makePlugin({ state: "active" });
+    usePluginStore.setState({ plugins: [meta] });
+    render(<PluginCard plugin={meta} selected={false} />);
+    fireEvent.click(screen.getByTestId("enable-toggle"));
+    await waitFor(() => {
+      const alert = screen.getByTestId("toggle-error");
+      expect(alert.getAttribute("role")).toBe("alert");
+      expect(alert.textContent).toContain("EACCES: settings.json");
+    });
+  });
+
+  it("toggle success after a prior failure clears the alert", async () => {
+    invokeMock.mockRejectedValueOnce(new Error("EACCES: settings.json"));
+    const meta = makePlugin({ state: "active" });
+    usePluginStore.setState({ plugins: [meta] });
+    render(<PluginCard plugin={meta} selected={false} />);
+    fireEvent.click(screen.getByTestId("enable-toggle"));
+    await waitFor(() => {
+      expect(screen.getByTestId("toggle-error")).toBeTruthy();
+    });
+    // Next click resolves — alert must clear.
+    invokeMock.mockResolvedValueOnce(undefined);
+    fireEvent.click(screen.getByTestId("enable-toggle"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("toggle-error")).toBeNull();
+    });
   });
 
   it("update-available shows the Update pill alongside the version pill", () => {

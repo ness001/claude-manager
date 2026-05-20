@@ -292,8 +292,28 @@ describe("SystemHealth", () => {
     expect(indicators[1].getAttribute("aria-label")).toBe(
       "Plugins: 5 plugins installed — OK",
     );
-    expect(indicators[2].getAttribute("aria-label")).toBe("API: OK — OK");
+    expect(indicators[2].getAttribute("aria-label")).toBe("API: OK");
     expect(indicators[3].getAttribute("aria-label")).toBe("CLI: 1.2.3 — OK");
+  });
+
+  // WCAG 4.1.2 (Name, Role, Value): the API row's `value` IS the status
+  // label ("OK" / "Down" / "Checking…"), so the previous unconditional
+  // `${label}: ${value} — ${status}` template stuttered as "API: OK — OK".
+  // Some SR rotors collapse the duplicate, others read it back twice.
+  // Pin: when value === status label, the trailing suffix is suppressed.
+  // Cover both states the API row actually visits.
+  it("API row drops redundant status suffix in aria-label (no 'API: OK — OK')", () => {
+    render(
+      <SystemHealth
+        skipApiCheck
+        mcpCount={2}
+        pluginCount={5}
+        cliVersion="1.2.3"
+      />,
+    );
+    const apiRow = screen.getByTestId("health-api");
+    expect(apiRow.getAttribute("aria-label")).toBe("API: OK");
+    expect(apiRow.getAttribute("aria-label")).not.toContain("— OK");
   });
 
   // Singular case: 1 server / 1 plugin must read naturally. Ensures the

@@ -179,6 +179,30 @@ describe("ConversationViewer", () => {
     expect(banner.getAttribute("role")).toBe("alert");
   });
 
+  // WCAG 1.4.3 (Contrast Minimum, 4.5:1 for normal text): the corruption
+  // warning text used `text-status-yellow` (#eab308 light) on a 10%-opacity
+  // status-yellow fill over the parent surface. That gave ~1.7:1 contrast
+  // — sighted low-vision users could see "something yellow happened" but
+  // could not read the line count. Use the dedicated `text-status-yellow-text`
+  // token (#a16207 light → ~4.7:1, #f9e2af dark → ~10:1). The decorative
+  // bg/border tints stay at the vivid `status-yellow` so the banner still
+  // reads as a warning at a glance — only the *text* token changes.
+  // Mirrors the SessionInfoBar dead-cwd-warning text fix and StatCard's
+  // yellow value-color pattern (StatCard.tsx lines 45-50).
+  it("corruption warning uses readable yellow-text token (WCAG 1.4.3)", async () => {
+    invokeMock.mockResolvedValue(readFixture("with-corruption.jsonl"));
+    render(<ConversationViewer path="/fake.jsonl" />);
+    await waitFor(() =>
+      expect(screen.getByTestId("corruption-warning")).toBeInTheDocument(),
+    );
+    const banner = screen.getByTestId("corruption-warning");
+    expect(banner.className).toContain("text-status-yellow-text");
+    // Regression guard: the failing color (`text-status-yellow` as a
+    // standalone class) is gone. We still allow the bg/border `/10`/`/40`
+    // opacity-suffixed variants which are decorative.
+    expect(banner.className).not.toMatch(/(^|\s)text-status-yellow(\s|$)/);
+  });
+
   it("shows turn navigation when the session has turns", async () => {
     invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
     render(<ConversationViewer path="/fake.jsonl" />);
@@ -451,6 +475,31 @@ describe("ConversationViewer", () => {
     await waitFor(() => {
       const after = screen.getByTestId("turn-input") as HTMLInputElement;
       expect(after.value).toBe("1");
+    });
+  });
+
+  // Cross-session leak (scroll position): same shape as the currentTurn
+  // leak above. The browser preserves the scroller's scrollTop across
+  // re-renders that change `path` — without an explicit reset, switching
+  // from a long session (scrolled deep) to a short one opens the new
+  // session at whatever pixel offset the previous one happened to be at,
+  // leaving the actual conversation invisible above the viewport. The
+  // user sees blank space and has to scroll up to find their content.
+  it("scroller resets scrollTop to 0 when the session path changes", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    const { rerender } = render(<ConversationViewer path="/sessionA.jsonl" />);
+    const scrollerA = await screen.findByTestId("conversation-scroller");
+    // jsdom doesn't lay out pixels, so scrollTop assignment / reads are
+    // backed by a regular property — that's enough to verify the effect
+    // writes 0 to it. Seed a non-zero value as if the user had scrolled.
+    scrollerA.scrollTop = 500;
+    expect(scrollerA.scrollTop).toBe(500);
+
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    rerender(<ConversationViewer path="/sessionB.jsonl" />);
+    await waitFor(() => {
+      const scrollerB = screen.getByTestId("conversation-scroller");
+      expect(scrollerB.scrollTop).toBe(0);
     });
   });
 

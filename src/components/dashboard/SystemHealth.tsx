@@ -207,7 +207,22 @@ function Indicator({ label, status, value, testId }: IndicatorProps) {
   // list pattern. The dot keeps its own role="img" + aria-label so direct
   // image-rotor navigation still works (and the existing test pinning
   // dot.aria-label="OK" stays green); the visible layout is unchanged.
-  const liAriaLabel = `${label}: ${value} — ${STATUS_LABEL[status]}`;
+  //
+  // The API row passes `value={STATUS_LABEL[apiStatus]}` (e.g. "OK", "Down",
+  // "Checking…") as both the visible value column and — implicitly — the
+  // status. Without de-duplication the aria-label read "API: OK — OK",
+  // which SR users hear as a stutter and the rotor often collapses to
+  // just the first "OK" anyway. Suppress the trailing status suffix when
+  // it exactly matches the value so the API row reads "API: OK" while the
+  // MCP/Plugins/CLI rows (where value and status genuinely differ — "2
+  // servers" vs "OK", "1.2.3" vs "OK") keep their full "value — status"
+  // shape. WCAG 4.1.2 (Name, Role, Value): the accessible name should
+  // not contain redundant content.
+  const statusLabel = STATUS_LABEL[status];
+  const liAriaLabel =
+    value === statusLabel
+      ? `${label}: ${value}`
+      : `${label}: ${value} — ${statusLabel}`;
   return (
     <li
       data-testid={testId ?? "health-indicator"}

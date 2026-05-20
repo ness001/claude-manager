@@ -237,15 +237,6 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
     [turnAnchors],
   );
   const [currentTurn, setCurrentTurn] = useState(1);
-  // When the user switches sessions the parent re-uses this component
-  // instance and just changes the `path` prop. The JSONL load/parse
-  // effect (above) already resets `entries` / `loading` / `error`, but
-  // `currentTurn` carries over — leaking the previous session's turn
-  // position into the new one. Reset to 1 on path change so the turn
-  // input + turn-jump scroller start fresh.
-  useEffect(() => {
-    setCurrentTurn(1);
-  }, [path]);
 
   // 5) Virtual scroller.
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -255,6 +246,27 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
     estimateSize: () => 96,
     overscan: 6,
   });
+
+  // When the user switches sessions the parent re-uses this component
+  // instance and just changes the `path` prop. The JSONL load/parse
+  // effect (above) already resets `entries` / `loading` / `error`, but
+  // `currentTurn` carries over — leaking the previous session's turn
+  // position into the new one. Reset to 1 on path change so the turn
+  // input + turn-jump scroller start fresh.
+  //
+  // Also reset the actual scroll offset: the browser preserves the
+  // scroller's scrollTop across the path change, so without this the
+  // new session opens at whatever pixel offset the previous session
+  // happened to be scrolled to. Visible symptom: user clicks a 5-turn
+  // session in the list after browsing a 200-turn one and lands in
+  // the middle of a (now-empty) overflow region with the new
+  // conversation invisible above.
+  useEffect(() => {
+    setCurrentTurn(1);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [path]);
 
   const jumpToTurn = useCallback(
     (n: number) => {
@@ -341,7 +353,19 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
         <div
           data-testid="corruption-warning"
           role="alert"
-          className="border-b border-status-yellow/40 bg-status-yellow/10 px-3 py-1.5 text-xs text-status-yellow"
+          // The visible warning text used `text-status-yellow` directly —
+          // #eab308 (light) on bg-status-yellow/10 over the parent
+          // bg-bg-secondary (#f8f9fa) gives ~1.7:1 contrast, well below
+          // WCAG 1.4.3's 4.5:1 floor for normal text. The status-yellow
+          // background tint and border are decorative (and bordered, so
+          // 1.4.11's 3:1 floor for non-text UI components is met by the
+          // `/40` border at 40% opacity over the surface). Switch the
+          // *text* color to the dedicated `--color-status-yellow-text`
+          // token (#a16207 light → ~4.7:1, #f9e2af dark → ~10:1) so SR
+          // users + low-vision sighted users can read the count.
+          // Mirrors PR family for SessionInfoBar dead-cwd-warning text
+          // and StatCard yellow value-color (lines 45-50).
+          className="border-b border-status-yellow/40 bg-status-yellow/10 px-3 py-1.5 text-xs text-status-yellow-text"
         >
           <span aria-hidden="true">⚠ </span>
           {corruptedCount} {corruptedCount === 1 ? "line" : "lines"} could not be parsed

@@ -1,0 +1,178 @@
+# Source of Truth: installed_plugins.json
+#
+# Investigator: inv-installed-plugins-registry (sot-investigation task #12)
+# Spec refs: §6.1 (plugin data model), §6.2 (key files), §6.3 (version format),
+#            §6.4 (states), §17.1 (data sources)
+# Design context: DESIGN-CONTEXT.md §2.5 (dual version format), §4 (plugin hierarchy)
+
+id: installed-plugins-registry
+title: Installed Plugins Registry
+path: ~/.claude/plugins/installed_plugins.json
+encoding: utf-8
+format: json
+
+owner: claude-code-cli
+# The Claude Code CLI is the sole writer. Claude Manager reads this file via the
+# Rust IPC command `read_installed_plugins` (src-tauri/src/plugins/commands.rs:73)
+# and parses it in `src/lib/plugin-loader.ts` (loadPlugins). Manager NEVER mutates
+# this file directly — install/uninstall/update go through `claude plugin ...`
+# subprocess calls so the CLI keeps ownership. Therefore: NOT `shared`.
+
+readers:
+  - claude-code-cli   # canonical reader/writer
+  - claude-manager    # read-only via Rust `read_installed_plugins` IPC
+
+writers:
+  - claude-code-cli
+
+related:
+  - id: plugin-marketplace-json
+    relation: "Companion registry of AVAILABLE plugins per marketplace; this file
+               records which of those have been installed. See inv-plugin-marketplace."
+  - id: settings-enabled-plugins
+    relation: "`~/.claude/settings.json` → `enabledPlugins` carries the on/off
+               toggle. A plugin can be installed-but-disabled or
+               enabled-but-uninstalled (orphaned). Join key: `<name>@<marketplace>`."
+  - id: plugin-cache-tree
+    relation: "Each installation's `installPath` points into
+               `~/.claude/plugins/cache/<marketplace>/<name>/<version>/` —
+               the on-disk plugin tree (skills/, agents/, hooks/, CLAUDE.md)."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Top-level shape
+# ─────────────────────────────────────────────────────────────────────────────
+schema:
+  type: object
+  required: [version, plugins]
+  properties:
+    version:
+      type: integer
+      description: >
+        Registry schema version maintained by the CLI. Observed value: 2.
+        Manager treats this as opaque — surface but don't gate behavior on it.
+    plugins:
+      type: object
+      description: >
+        Map keyed by `<plugin-name>@<marketplace>`. Each value is an ARRAY of
+        installation entries — the same plugin@marketplace can be installed
+        multiple times under different scopes (e.g. once user-scope, once
+        project-scope) or at different versions.
+      keyPattern: '^[A-Za-z0-9._-]+@[A-Za-z0-9._-]+$'
+      keyFormat:
+        separator: "@"
+        splitRule: "lastIndexOf('@')"   # tolerates `@` inside the name
+        components:
+          - name: plugin-name
+            example: superpowers
+          - name: marketplace
+            example: claude-plugins-official
+      valueType: array<Installation>
+
+  # ── Installation entry ────────────────────────────────────────────────────
+  $defs:
+    Installation:
+      type: object
+      required: [installPath, version]
+      properties:
+        scope:
+          type: string
+          enum: [user, project]
+          description: >
+            `user` → installed into `~/.claude/...` for the current OS user.
+            `project` → installed for a specific project; `projectPath` is set.
+        projectPath:
+          type: string
+          description: >
+            Absolute filesystem path to the project root. Present iff
+            `scope == "project"`. Windows-style backslashes in real data.
+          appliesWhen: scope == "project"
+        installPath:
+          type: string
+          description: >
+            Absolute path to the unpacked plugin tree. Convention:
+            `<claudeHome>/plugins/cache/<marketplace>/<name>/<version>/`.
+            Manager checks `fs.exists(installPath)` to derive `broken` state
+            (spec §6.4).
+        version:
+          type: string
+          format: pluginVersion
+          description: >
+            EITHER a semver string OR a 12-char git short SHA — see
+            `versionFormat` below. The value is also embedded as the leaf
+            directory name in `installPath`.
+        installedAt:
+          type: string
+          format: date-time   # ISO-8601, UTC, millisecond precision
+        lastUpdated:
+          type: string
+          format: date-time
+        gitCommitSha:
+          type: string
+          pattern: '^[0-9a-f]{40}$'
+          description: >
+            Full 40-char git commit SHA the install was pinned to. Used by
+            T3.4 (`git ls-remote` comparison) to derive `update-available`
+            state (spec §6.3, §6.4).
+
+  # ── Version format union (spec §6.3, DESIGN-CONTEXT §2.5) ─────────────────
+  versionFormat:
+    description: >
+      `version` is a discriminated union of two string shapes. Manager MUST
+      accept either and render verbatim — do not normalize.
+    oneOf:
+      - id: semver
+        pattern: '^\d+\.\d+\.\d+(?:[-+][A-Za-z0-9.-]+)?$'
+        examples: ["1.0.0", "1.0.1", "5.0.7"]
+        notes: >
+          Plugins authored with explicit version tags. Source of truth for the
+          version string is the marketplace's manifest entry at install time.
+      - id: gitShortSha
+        pattern: '^[0-9a-f]{12}$'
+        examples: ["a5bcdd7e58cd", "27d2b86d72da"]
+        notes: >
+          Used when the marketplace entry does not declare a version — the
+          CLI pins to a commit SHA instead. Always equals the first 12 chars
+          of the same installation's `gitCommitSha`.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Invariants Manager relies on (asserted by the companion test)
+# ─────────────────────────────────────────────────────────────────────────────
+invariants:
+  - id: key-format
+    rule: "Every top-level key in `plugins` matches `^[A-Za-z0-9._-]+@[A-Za-z0-9._-]+$`."
+  - id: value-is-array
+    rule: "Every value in `plugins` is an array — never a bare object."
+    rationale: >
+      Multi-install support (different scopes / versions under one key) is
+      first-class. `plugin-loader.ts` already guards with `Array.isArray` and
+      skips otherwise.
+  - id: version-union
+    rule: "`version` matches the semver pattern OR the 12-char hex pattern."
+  - id: sha-full-when-present
+    rule: "If `gitCommitSha` is present it is 40 hex chars."
+  - id: sha-shortform-consistency
+    rule: >
+      When `version` is a 12-char SHA, it equals `gitCommitSha.slice(0, 12)`.
+      (Holds on observed real data; treat as soft invariant — surface a
+      diagnostic, do not throw.)
+  - id: project-scope-has-path
+    rule: "Entries with `scope == 'project'` carry a `projectPath`."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Edge cases & non-obvious behavior
+# ─────────────────────────────────────────────────────────────────────────────
+edgeCases:
+  - missingFile: >
+      Rust `read_installed_plugins` returns an empty string when the file is
+      absent (commands.rs:73-83); frontend `parseJsonOr` falls back to `{}`
+      and the plugin list is empty. Treat as "no plugins installed", not error.
+  - missingTopLevelVersion: >
+      The TypeScript interface marks `version` and `plugins` as optional; on
+      a malformed file Manager degrades to empty plugins instead of crashing.
+  - keyWithAtInName: >
+      `splitRegistryKey` uses `lastIndexOf('@')`, so a name containing `@` is
+      tolerated. No such case observed on disk today; documented for safety.
+  - multipleInstallationsUnderOneKey: >
+      Observed: `superpowers@claude-plugins-official` has both a user-scope
+      and a project-scope installation with different `gitCommitSha` values.
+      Each entry becomes its own `PluginMeta` row in the UI.

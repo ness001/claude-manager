@@ -31,7 +31,16 @@ export function SummaryBanner({ text }: SummaryBannerProps) {
       >
         Session summary
       </span>
-      <span>{text}</span>
+      {/* Session summaries originate from the JSONL `summary` field written
+          by the Claude Code CLI's compaction step, which routinely contains
+          multi-line text — paragraph breaks separating "what was done",
+          "why", and "next steps", or markdown-bullet lists. A bare <span>
+          inherits `white-space: normal`, collapsing every run of whitespace
+          (newlines included) into a single space, so a 6-line summary
+          renders as one wrapped paragraph with no structural cues. Mirrors
+          UserMessage line 37 which uses the same `whitespace-pre-wrap`
+          discipline for raw user text. */}
+      <span className="whitespace-pre-wrap">{text}</span>
     </div>
   );
 }
