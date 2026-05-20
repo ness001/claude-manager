@@ -743,4 +743,40 @@ describe("McpServerForm", () => {
       screen.getByTestId("form-env-add").getAttribute("aria-label"),
     ).toBe("Add Environment variable entry");
   });
+
+  // WCAG 1.3.1 / 4.1.2 — visible <label> text ("Name", "Command", "URL")
+  // must be programmatically associated with its <input> via htmlFor/id.
+  // Without this association, clicking the visible label text does NOT
+  // focus the input (sighted-user click affordance lost) and accessibility
+  // linters flag the orphan <label> as missing its required association.
+  // The aria-label remains as the input's accessible name; this test
+  // pins the htmlFor↔id wiring so future refactors can't quietly drop it.
+  it("Name/Command/URL labels are associated with their inputs via htmlFor/id (WCAG 1.3.1)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+
+    const checkAssociation = (testid: string, labelText: string) => {
+      const input = screen.getByTestId(testid) as HTMLInputElement;
+      const id = input.getAttribute("id");
+      expect(id, `${testid} should have an id`).toBeTruthy();
+      const label = document.querySelector(`label[for="${id}"]`);
+      expect(
+        label,
+        `<label htmlFor="${id}"> should exist for ${testid}`,
+      ).not.toBeNull();
+      expect(label?.textContent).toBe(labelText);
+    };
+
+    checkAssociation("form-name", "Name");
+    checkAssociation("form-command", "Command");
+
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    checkAssociation("form-url", "URL");
+  });
 });
