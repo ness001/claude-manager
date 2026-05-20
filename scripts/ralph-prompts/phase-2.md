@@ -28,9 +28,9 @@ For each task in turn:
 
 Type-level test assertions use vitest `expectTypeOf`.
 
-For tasks whose Manual UI / E2E smoke section is NOT N/A: run `npx tauri dev` (or `cargo build` + launch),
-capture screenshots via `scripts/_test/helper.ps1`, and embed screenshot file paths in your verification output
-before promising.
+For tasks whose Manual UI / E2E smoke section is NOT N/A: run `npm run test:e2e`
+(tauri-driver + WebdriverIO against a release build — see test architecture spec §3.4)
+and quote the relevant PASS lines in your verification output before promising.
 
 Move to the next task only after the current task's commit has landed.
 
