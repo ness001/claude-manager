@@ -9,7 +9,15 @@
 // Save calls saveMcpServer via the parent's onSave; Cancel closes without
 // touching disk.
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { saveMcpServer } from "../../lib/mcp-loader";
 import type {
@@ -388,6 +396,18 @@ function Field({
   error?: string | null;
   children: React.ReactNode;
 }) {
+  // When this Field has an error, propagate aria-invalid + aria-describedby
+  // to the single child input so SR users hear "invalid entry, <error text>"
+  // when they focus the field. The error <p> below uses the same id.
+  // (WCAG 3.3.1 Error Identification, 1.3.1 Info and Relationships.)
+  const errorId = `form-error-${label.toLowerCase()}`;
+  const child =
+    error && isValidElement(children)
+      ? cloneElement(children, {
+          "aria-invalid": true,
+          "aria-describedby": errorId,
+        } as Partial<React.ComponentProps<"input">>)
+      : children;
   return (
     <div className="flex flex-col gap-1">
       <label
@@ -396,10 +416,11 @@ function Field({
       >
         {label}
       </label>
-      {children}
+      {child}
       {error && (
         <p
-          data-testid={`form-error-${label.toLowerCase()}`}
+          id={errorId}
+          data-testid={errorId}
           className="text-[11px] text-status-error"
         >
           {error}

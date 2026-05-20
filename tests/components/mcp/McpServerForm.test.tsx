@@ -779,4 +779,46 @@ describe("McpServerForm", () => {
     fireEvent.click(screen.getByTestId("form-type-http"));
     checkAssociation("form-url", "URL");
   });
+
+  // WCAG 3.3.1 (Error Identification) + 1.3.1 (Info and Relationships) — when
+  // a Field has an error, the underlying input must expose aria-invalid="true"
+  // and aria-describedby pointing at the rendered error message. Pre-fix, the
+  // error <p> rendered as an inert sibling — SR users heard the field's
+  // accessible name (from PRs #75/#77/#78/#79) but not that it was invalid,
+  // and not the error text.
+  it("errored fields expose aria-invalid + aria-describedby pointing at their error <p> (WCAG 3.3.1)", () => {
+    render(
+      <McpServerForm
+        existingNames={{ user: ["taken"], local: [], project: [] }}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+
+    // Name: starts empty → "required" error.
+    const name = screen.getByTestId("form-name");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(name.getAttribute("aria-describedby")).toBe("form-error-name");
+    expect(document.getElementById("form-error-name")?.textContent).toMatch(
+      /required/i,
+    );
+
+    // Command: starts empty in stdio mode → "required" error.
+    const command = screen.getByTestId("form-command");
+    expect(command.getAttribute("aria-invalid")).toBe("true");
+    expect(command.getAttribute("aria-describedby")).toBe("form-error-command");
+    expect(document.getElementById("form-error-command")).not.toBeNull();
+
+    // Once the user fixes the name, aria-invalid + aria-describedby drop off.
+    fireEvent.change(name, { target: { value: "ok-name" } });
+    expect(name.getAttribute("aria-invalid")).toBeNull();
+    expect(name.getAttribute("aria-describedby")).toBeNull();
+
+    // Switching to http mode surfaces a URL field that's also required.
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    const url = screen.getByTestId("form-url");
+    expect(url.getAttribute("aria-invalid")).toBe("true");
+    expect(url.getAttribute("aria-describedby")).toBe("form-error-url");
+  });
 });
