@@ -7,7 +7,8 @@
 // back into the store via `setPlugins`.
 
 import { useMemo, useState } from "react";
-import { Plus, RefreshCw, Search } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
+import { FileText, Plus, RefreshCw, Search } from "lucide-react";
 
 import { filterPlugins, usePluginStore } from "../../stores/plugin-store";
 import { checkPluginUpdates } from "../../lib/plugin-updates";
@@ -131,6 +132,23 @@ export function PluginListView() {
             >
               <RefreshCw size={14} aria-hidden="true" className={isChecking ? "animate-spin" : ""} />
               {isChecking ? "Checking…" : "Check for Updates"}
+            </button>
+            <button
+              type="button"
+              data-testid="plugins-log-btn"
+              onClick={() => {
+                void invoke("open_plugin_log_window").catch(() => {
+                  /* surfacing the error here would conflict with the
+                   * existing update-error alert region; window open
+                   * failures are surfaced via the OS instead. */
+                });
+              }}
+              aria-label="Open Plugins log window"
+              title="Open the Plugins activity log in a separate window"
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <FileText size={14} aria-hidden="true" />
+              Log
             </button>
           </div>
         </div>

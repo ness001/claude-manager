@@ -275,21 +275,64 @@ The `gitCommitSha` field has the full 40-char SHA for update comparison.
 ### 6.5 Plugin List View
 
 Full-page card list with:
-- Header: title, installed/active/disabled counts, [Install Plugin] button, search bar
+- Header: title, installed/active/disabled counts, [Install Plugin] button, [Check for Updates] button, [Log] button (see §6.8), search bar
 - Plugin cards: status dot, name, marketplace source, description, version pill, component counts, enable/disable toggle
 - Broken plugins show red border, warning text, Reinstall/Remove buttons
+- Orphaned plugins show yellow warning text and a Remove button (see §6.7) — no Reinstall (the original install record is gone, so there is nothing to reinstall against)
+
+**Multiple installations under one key.** `installed_plugins.json` keys (`{name}@{marketplace}`) hold an array of installation records — the same plugin can be installed at multiple scopes (user, project). Render one card per installation. The enable/disable toggle is keyed by `{name}@{marketplace}`, so flipping it on one card flips every card sharing that key in lockstep.
+
+**Toggle gating.** The enable/disable toggle is interactive only for `active`, `disabled`, and `update-available` states. For `broken` and `orphaned` it is rendered disabled — those states cannot be cleanly enabled without first resolving the underlying issue (Reinstall a broken plugin, Remove an orphaned entry).
+
+**Search.** Scope and behavior follow §17.7. Pressing `Esc` while focused in the search box clears the query (WebView2 does not always honor the native `<input type=search>` clear behavior).
 
 **Metadata fallback:** Some plugins (e.g., `document-skills`) have NO `plugin.json`. When present, `plugin.json` lives inside the `.claude-plugin/` subdirectory, not the plugin root. Fall back to `marketplace.json` for metadata.
 
 ### 6.6 Plugin Detail View
 
-Accessed by clicking a plugin card. Shows:
+Accessed by clicking a plugin card. A **[← Back to plugins]** affordance returns to the list view and clears the selection without losing the list's search query or scroll position.
+
+Shows:
 - Plugin header: name, marketplace, version, status, actions (Open in File Browser, Open in VS Code)
 - Tabbed content: Skills / Agents / Hooks
 - Each tab shows a tree view of the plugin's file structure with expandable items
 - Skill/agent items show name and description from YAML frontmatter
 
+**Open in VS Code** uses the `vscode://file/<path>` URI scheme (not the `code` CLI), so the user does not need `code` on PATH. On Windows the install path's backslashes are normalized to forward slashes before being embedded in the URI.
+
 **Mockups:** `plugin-list.html`, `plugin-detail-v2.html`
+
+### 6.7 Plugin Lifecycle Actions
+
+All install / reinstall / uninstall actions are performed **inside the app** by spawning the underlying `claude plugins …` CLI command — users do not need to leave the app and open a terminal. Every spawn streams its full stdout + stderr into the Log window (§6.8) and refreshes the plugin list when the command exits.
+
+| Trigger | Behavior |
+|---|---|
+| Header **[Install Plugin]** | Opens a prompt for `<plugin-name>` (with `@<marketplace>` optional). Spawns `claude plugins install <arg>`. On success, reloads `installed_plugins.json` and re-renders the list. On failure, surfaces the error inline and keeps the full output available in the Log window. |
+| Broken card **[Reinstall]** | Spawns `claude plugins install {name}@{marketplace}` for the affected installation. On success, the card transitions out of `broken` state. |
+| Broken card **[Remove]** | Opens a confirmation dialog ("Remove {name}? This will run `claude plugins uninstall …`"). On confirm, spawns `claude plugins uninstall {name}@{marketplace}`. On success, the card disappears from the list. |
+| Orphaned card **[Remove]** | Removes the stale entry directly from `~/.claude/settings.json → enabledPlugins`. No confirmation dialog (nothing is actually installed to lose), no CLI spawn. The card disappears from the list. |
+| Header **[Check for Updates]** | Compares each plugin's local `gitCommitSha` against the remote HEAD via `git ls-remote`. Result is cached for 1 hour; the button forces a refresh on click. While in flight, the button shows a spinner and is disabled. Plugins whose local SHA differs from remote are marked `update-available` (§6.4). Failures surface inline (`Couldn't check for updates: …`) and keep the full network output in the Log window. |
+| Update pill | Visual indicator only. To actually pull updates, the user re-runs **[Check for Updates]** (which today only marks the pill) — the in-place "update this one" affordance is **deferred** pending a follow-up product decision (open question, 2026-05-20). |
+
+### 6.8 Log Window
+
+The header carries a **[Log]** button that opens a separate OS window dedicated to Plugins-section activity. The window streams operation logs in real time and is the canonical place to read the full terminal output of any CLI spawn the app makes on behalf of the user.
+
+**Scope.** Plugins-section operations only — install, reinstall, uninstall (broken + orphaned variants), toggle enable/disable, check-for-updates, open-in-file-browser, open-in-vscode. Other sections (Sessions, MCP, etc.) are out of scope for this window.
+
+**Content per entry.**
+- Timestamp (local time, second precision)
+- Operation name (e.g. `install`, `uninstall`, `check-updates`)
+- Target plugin key (`{name}@{marketplace}`) when applicable
+- Lifecycle markers: `start`, `end (exit code N)`, or `error: <message>`
+- **Full stdout + stderr** of any spawned CLI command, captured verbatim and interleaved in the order the child process produced it (so users see the same byte stream a terminal would have shown)
+
+**Persistence.** Logs are written to disk so they survive app restarts. The window's default view shows the current session at the top with older sessions accessible by scrolling/loading.
+
+**Rotation.** Log files rotate at **10 MB per file**, keeping the **most recent 5 files** (≈50 MB worst-case on-disk budget). Older files are deleted automatically.
+
+**Mockups:** to be added.
 
 ---
 

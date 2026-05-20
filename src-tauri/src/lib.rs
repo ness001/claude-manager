@@ -26,6 +26,10 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
+        .setup(|app| {
+            plugins::log::init(&app.handle());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             get_db_path,
             sessions::commands::discover_sessions,
@@ -37,6 +41,8 @@ pub fn run() {
             plugins::commands::read_plugin_contents,
             plugins::commands::write_plugin_enabled,
             plugins::commands::check_plugin_updates,
+            plugins::log::read_plugin_log,
+            plugins::log::open_plugin_log_window,
             skills::commands::scan_custom_skills,
             mcp::commands::read_claude_json,
             mcp::commands::read_mcp_json,

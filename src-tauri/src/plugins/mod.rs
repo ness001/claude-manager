@@ -10,3 +10,4 @@
 //! and parses simple structures.
 
 pub mod commands;
+pub mod log;
