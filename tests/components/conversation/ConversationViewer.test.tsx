@@ -478,6 +478,31 @@ describe("ConversationViewer", () => {
     });
   });
 
+  // Cross-session leak (scroll position): same shape as the currentTurn
+  // leak above. The browser preserves the scroller's scrollTop across
+  // re-renders that change `path` — without an explicit reset, switching
+  // from a long session (scrolled deep) to a short one opens the new
+  // session at whatever pixel offset the previous one happened to be at,
+  // leaving the actual conversation invisible above the viewport. The
+  // user sees blank space and has to scroll up to find their content.
+  it("scroller resets scrollTop to 0 when the session path changes", async () => {
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    const { rerender } = render(<ConversationViewer path="/sessionA.jsonl" />);
+    const scrollerA = await screen.findByTestId("conversation-scroller");
+    // jsdom doesn't lay out pixels, so scrollTop assignment / reads are
+    // backed by a regular property — that's enough to verify the effect
+    // writes 0 to it. Seed a non-zero value as if the user had scrolled.
+    scrollerA.scrollTop = 500;
+    expect(scrollerA.scrollTop).toBe(500);
+
+    invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    rerender(<ConversationViewer path="/sessionB.jsonl" />);
+    await waitFor(() => {
+      const scrollerB = screen.getByTestId("conversation-scroller");
+      expect(scrollerB.scrollTop).toBe(0);
+    });
+  });
+
   // WCAG 2.1.1 Keyboard — the conversation pane is the largest scrollable
   // region in the app. Without tabIndex={0} keyboard users cannot focus it
   // to arrow/Page-Down through prior turns; they're stuck in the turn input

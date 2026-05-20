@@ -1,0 +1,346 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Source of truth: ~/.claude.json  (the Claude Code primary user config)
+# Task #5  •  Investigator: inv-claude-json-config
+# ─────────────────────────────────────────────────────────────────────────────
+
+id: claude-json-config
+title: ~/.claude.json — Claude Code primary user config (MCP + per-project state)
+owner: shared
+claudeManagerAccess: read-write
+
+# ─── CORRECTION BANNER ───────────────────────────────────────────────────────
+# DESIGN-CONTEXT.md §2.1 documents this file path as the #1 most-misunderstood
+# location in the Claude Code data model. Read this before touching anything.
+corrections:
+  - id: not-settings-json
+    severity: critical
+    summary: |
+      MCP server configurations are NOT in `~/.claude/settings.json`.
+      They live in `~/.claude.json` — a separate file at the *home root*,
+      sibling to `~/.claude/`, NOT inside it.
+    wrong:
+      - "~/.claude/settings.json  ← does NOT hold mcpServers"
+      - "~/.claude/.claude.json   ← does NOT exist"
+    correct:
+      - "~/.claude.json           ← user + local-scope mcpServers live here"
+      - "<project-root>/.mcp.json ← project-scope mcpServers live here"
+    enforced_by:
+      - "src-tauri/src/mcp/commands.rs  (function `claude_json_path` joins HOME directly, never `claude_home()`)"
+      - "src/lib/mcp-loader.ts          (invokes `read_claude_json`, not anything settings-related)"
+    history: |
+      The brainstorm proposer initially placed MCP configs in settings.json.
+      The verifier agent caught this; settings.json holds permissions/env/
+      enabledPlugins ONLY. See DESIGN-CONTEXT.md §5 for the resolved table.
+
+  - id: project-vs-local-vs-user
+    severity: high
+    summary: |
+      "local scope" and "project scope" are NOT the same thing, and neither
+      lives in `<project-root>/.mcp.json` alone.
+        • USER    → `~/.claude.json` → `$.mcpServers`
+        • LOCAL   → `~/.claude.json` → `$.projects["<cwd>"].mcpServers`  (private)
+        • PROJECT → `<project-root>/.mcp.json`                           (committed)
+      Trust state (enabled/disabled) for PROJECT scope is tracked back in
+      `~/.claude.json` under `$.projects["<cwd>"].enabledMcpjsonServers` /
+      `.disabledMcpjsonServers`. So even project-scope decisions touch THIS file.
+
+# ─── FILE LOCATION ───────────────────────────────────────────────────────────
+location:
+  windows: "%USERPROFILE%\\.claude.json"
+  posix: "$HOME/.claude.json"
+  resolver: "src-tauri/src/mcp/commands.rs::claude_json_path"
+  note: |
+    Resolved by joining the user's HOME directory with `.claude.json`.
+    Never construct from `claude_home()` (which returns `~/.claude/`).
+
+# ─── WRITERS ─────────────────────────────────────────────────────────────────
+writers:
+  - actor: Claude Code CLI
+    writes: nearly all top-level keys (numStartups, projects, mcpServers, onboarding flags, model-migration flags, cached gates, etc.)
+    when: on every CLI invocation, session end, /usage, mcp commands, login
+  - actor: Claude Manager (this app)
+    writes: "$.mcpServers.<name>  AND  $.projects.<cwd>.mcpServers.<name>"
+    when: user adds/edits/removes an MCP server through the MCP panel
+    via: "src-tauri/src/mcp/commands.rs::write_mcp_server, remove_mcp_server"
+    safety: |
+      Atomic via temp file + rename. Read-modify-write preserves every
+      unrelated top-level key — we MUST NOT touch any field outside the
+      narrow MCP subtree we own.
+
+# ─── SCHEMA — top level ──────────────────────────────────────────────────────
+# Only fields Claude Manager consumes or writes are required. Every other
+# key listed under `untouched_keys` exists in real files and must be
+# round-tripped untouched by any RMW operation.
+schema:
+  type: object
+  required: []          # File may be entirely absent on first launch.
+  properties:
+
+    mcpServers:
+      description: User-scope MCP server registry (available in every project).
+      type: object
+      additionalProperties:
+        $ref: "#/definitions/McpServerEntry"
+
+    projects:
+      description: |
+        Per-project state keyed by absolute CWD path. Keys are forward-
+        slash-normalised on Windows (e.g. "C:/Users/lianli"). Claude Code
+        creates an entry the first time the CLI is run in a given CWD.
+      type: object
+      additionalProperties:
+        $ref: "#/definitions/ProjectEntry"
+
+    # The following keys exist in real ~/.claude.json files but are
+    # owned by the Claude Code CLI. Claude Manager must preserve them
+    # verbatim during any read-modify-write cycle.
+    untouched_keys:
+      - autoUpdates
+      - autoUpdatesProtectedForNative
+      - btwUseCount
+      - cachedChromeExtensionInstalled
+      - cachedStatsigGates
+      - changelogLastFetched
+      - clientDataCache
+      - firstStartTime
+      - githubRepoPaths
+      - hasCompletedOnboarding
+      - hasSeenTasksHint
+      - hasUsedBackslashReturn
+      - ideHintShownCount
+      - installMethod
+      - lastPlanModeUse
+      - lastReleaseNotesSeen
+      - metricsStatusCache
+      - migrationVersion
+      - numStartups
+      - officialMarketplaceAutoInstallAttempted
+      - officialMarketplaceAutoInstalled
+      - opus45MigrationComplete
+      - opus47LaunchSeenCount
+      - opusProMigrationComplete
+      - promptQueueUseCount
+      - seenNotifications
+      - showSpinnerTree
+      - skillUsage
+      - sonnet1m45MigrationComplete
+      - sonnet45MigrationComplete
+      - thinkingMigrationComplete
+      - tipsHistory
+      - unpinOpus47LaunchEffort
+      - userID
+
+# ─── SCHEMA — McpServerEntry (discriminated by transport) ────────────────────
+definitions:
+
+  McpServerEntry:
+    description: |
+      One MCP server config. The `type` field discriminates between three
+      transports: stdio (subprocess), sse (Server-Sent Events HTTP stream),
+      and http (plain HTTP). Different fields are required per transport.
+      Default `type` when omitted is "stdio" (mcp-loader.ts::coerceType).
+    oneOf:
+      - $ref: "#/definitions/McpStdioServer"
+      - $ref: "#/definitions/McpSseServer"
+      - $ref: "#/definitions/McpHttpServer"
+
+  McpStdioServer:
+    description: Server launched as a subprocess; speaks MCP over stdio.
+    type: object
+    required: [command]
+    properties:
+      type:
+        const: stdio
+        default: stdio                       # Absent → stdio per loader.
+      command:
+        type: string
+        description: |
+          Executable path or PATH-resolved name. Real-world examples:
+          "npx", "node", "cmd", "C:\\Users\\u\\.pencil\\mcp\\...\\server.exe".
+      args:
+        type: array
+        items: { type: string }
+        description: |
+          CLI args passed to `command`. On Windows the common pattern is
+          `command: "cmd"`, `args: ["/c", "npx", "-y", "@scope/pkg@latest"]`.
+      env:
+        type: object
+        additionalProperties: { type: string }
+        description: |
+          Environment overrides. Spec §8.2 mandates this field is ALWAYS
+          present (`{}` when empty). Loader inserts `{}` if missing.
+    forbidden_fields: [url, headers]
+
+  McpSseServer:
+    description: Server reached via an SSE stream over HTTP.
+    type: object
+    required: [type, url]
+    properties:
+      type:    { const: sse }
+      url:     { type: string, format: uri }
+      headers:
+        type: object
+        additionalProperties: { type: string }
+        description: |
+          Optional. Values may contain `${ENV_VAR}` placeholders that the
+          CLI expands at spawn time (spec §8.2).
+      env:
+        type: object
+        additionalProperties: { type: string }
+    forbidden_fields: [command, args]
+
+  McpHttpServer:
+    description: Server reached via plain request/response HTTP.
+    type: object
+    required: [type, url]
+    properties:
+      type:    { const: http }
+      url:     { type: string, format: uri }
+      headers:
+        type: object
+        additionalProperties: { type: string }
+      env:
+        type: object
+        additionalProperties: { type: string }
+    forbidden_fields: [command, args]
+
+# ─── SCHEMA — ProjectEntry ───────────────────────────────────────────────────
+  ProjectEntry:
+    description: |
+      Per-project state. Only the fields Claude Manager *reads* are listed
+      as `consumed`; the rest exist on disk and must be preserved during RMW.
+    type: object
+    consumed:
+      mcpServers:
+        description: Local-scope MCP servers (private to this CWD only).
+        type: object
+        additionalProperties:
+          $ref: "#/definitions/McpServerEntry"
+
+      enabledMcpjsonServers:
+        description: |
+          Trust-allow list for *project-scope* servers (those defined in
+          `<cwd>/.mcp.json`). When a name appears here, the CLI auto-loads
+          that project-scope server without prompting.
+        type: array
+        items: { type: string }
+        default: []
+
+      disabledMcpjsonServers:
+        description: |
+          Trust-deny list, counterpart of `enabledMcpjsonServers`.
+          A name in this list is suppressed even though `.mcp.json` defines it.
+        type: array
+        items: { type: string }
+        default: []
+
+      mcpContextUris:
+        description: MCP context URIs the CLI has surfaced. Read-only for us.
+        type: array
+        items: { type: string }
+
+      hasTrustDialogAccepted:
+        type: boolean
+        description: |
+          Whether the user has clicked through Claude Code's project trust
+          dialog. Affects how `.mcp.json` servers are surfaced.
+
+    preserved_only:
+      - allowedTools
+      - exampleFiles
+      - hasClaudeMdExternalIncludesApproved
+      - hasClaudeMdExternalIncludesWarningShown
+      - hasCompletedProjectOnboarding
+      - hasTrustDialogAccepted
+      - lastAPIDuration
+      - lastAPIDurationWithoutRetries
+      - lastCost
+      - lastDuration
+      - lastFpsAverage
+      - lastFpsLow1Pct
+      - lastGracefulShutdown
+      - lastHintSessionId
+      - lastLinesAdded
+      - lastLinesRemoved
+      - lastModelUsage
+      - lastSessionFirstPrompt
+      - lastSessionId
+      - lastSessionMetrics
+      - lastSessionModified
+      - lastToolDuration
+      - lastTotalCacheCreationInputTokens
+      - lastTotalCacheReadInputTokens
+      - lastTotalInputTokens
+      - lastTotalOutputTokens
+      - lastTotalWebSearchRequests
+      - projectOnboardingSeenCount
+      - reactVulnerabilityCache
+
+# ─── PRECEDENCE ──────────────────────────────────────────────────────────────
+precedence:
+  rule: project > local > user
+  resolution: |
+    Same `name` may exist at multiple scopes. The most specific scope wins;
+    the loser is rendered with `isOverridden: true` and `overriddenBy: <winner>`.
+    Implemented in `src/lib/mcp-loader.ts` via a `scopeRank` map.
+  ranks:
+    project: 3
+    local:   2
+    user:    1
+  examples:
+    - scenario: "Same name 'playwright' at user + local"
+      data:
+        user_scope:
+          mcpServers:
+            playwright: { type: stdio, command: cmd, args: ["/c","npx","-y","@playwright/mcp@latest"] }
+        local_scope_for_cwd_C_Users_lianli:
+          projects:
+            "C:/Users/lianli":
+              mcpServers:
+                playwright: { type: stdio, command: npx, args: ["@playwright/mcp@latest"] }
+      result:
+        - { scope: local, name: playwright, isOverridden: false }
+        - { scope: user,  name: playwright, isOverridden: true, overriddenBy: local }
+
+    - scenario: "Project-scope wins over both"
+      data:
+        project_mcp_json_at_cwd:
+          mcpServers:
+            playwright: { type: stdio, command: pwsh, args: ["-c","npx @playwright/mcp@latest"] }
+      result:
+        - { scope: project, name: playwright, isOverridden: false }
+        - { scope: local,   name: playwright, isOverridden: true, overriddenBy: project }
+        - { scope: user,    name: playwright, isOverridden: true, overriddenBy: project }
+
+# ─── TRUST MAPS ──────────────────────────────────────────────────────────────
+trust:
+  semantics: |
+    `enabledMcpjsonServers` and `disabledMcpjsonServers` apply ONLY to
+    servers defined in a project's `.mcp.json` file. They have NO effect
+    on user-scope or local-scope entries (those are implicitly trusted
+    because the user typed them themselves).
+  derivation: |
+    For each project-scope server `name`, `isTrusted` is derived as:
+      enabled.has(name)  →  isTrusted = true
+      disabled.has(name) →  isTrusted = false
+      neither            →  isTrusted = undefined  (CLI will prompt)
+    See `src/lib/mcp-loader.ts` step 3 + step 4.
+  conflict: |
+    If a name appears in BOTH arrays, behaviour is undefined by the CLI;
+    `mcp-loader.ts` resolves enabled-wins because it checks `enabled` first.
+
+# ─── CONSUMERS (Claude Manager) ──────────────────────────────────────────────
+consumers:
+  - "src/lib/mcp-loader.ts"          # reader, precedence resolution
+  - "src/lib/mcp-types.ts"           # TypeScript types backing the schema
+  - "src-tauri/src/mcp/commands.rs"  # raw read/write IPC commands
+  - "src/sections/Mcp/*"             # MCP panel UI (consumes loader output)
+
+# ─── RELATED ─────────────────────────────────────────────────────────────────
+related:
+  - id: project-mcp-json
+    path: "<project-root>/.mcp.json"
+    relationship: "Holds project-scope MCP server defs. Trust state for THESE servers lives in ~/.claude.json (enabledMcpjsonServers)."
+  - id: claude-settings-json
+    path: "~/.claude/settings.json"
+    relationship: "DIFFERENT FILE. Holds permissions, env, enabledPlugins. Does NOT hold mcpServers — see corrections[0]."

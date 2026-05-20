@@ -357,4 +357,31 @@ mod tests {
         let m = parse_jsonl_metadata(&fix("normal.jsonl")).unwrap();
         assert_eq!(m.started_at_ms, Some(1777885200000));
     }
+
+    fn write_tmp_jsonl(name: &str, body: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join("claude-mgr-parser-tests");
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.join(name);
+        std::fs::write(&p, body).unwrap();
+        p
+    }
+
+    #[test]
+    fn permission_mode_falls_back_to_kebab_case_key() {
+        let body = "{\"type\":\"user\",\"sessionId\":\"sess-kebab\",\"permission-mode\":\"plan\",\"message\":{\"content\":\"hi\"}}\n";
+        let p = write_tmp_jsonl("kebab-permission-mode.jsonl", body);
+        let m = parse_jsonl_metadata(&p).unwrap();
+        assert_eq!(m.permission_mode.as_deref(), Some("plan"));
+    }
+
+    #[test]
+    fn first_prompt_skips_non_text_blocks_in_mixed_content_array() {
+        let body = "{\"type\":\"user\",\"sessionId\":\"sess-mixed\",\"message\":{\"content\":[\
+            {\"type\":\"image\",\"source\":{\"type\":\"base64\",\"data\":\"xxx\"}},\
+            {\"type\":\"text\",\"text\":\"hi\"}\
+        ]}}\n";
+        let p = write_tmp_jsonl("mixed-content.jsonl", body);
+        let m = parse_jsonl_metadata(&p).unwrap();
+        assert_eq!(m.first_prompt.as_deref(), Some("hi"));
+    }
 }

@@ -1,0 +1,232 @@
+# Source of truth: ~/.claude/stats-cache.json
+#
+# Investigator: inv-stats-cache (task #11)
+# Peer review: inv-installed-plugins-registry (task #12)
+# Date: 2026-05-18
+# Real-disk evidence: C:/Users/lianli/.claude/stats-cache.json (sanitized into fixtures)
+
+id: stats-cache-json
+path: ~/.claude/stats-cache.json
+owner: claude-code-cli            # written by `@anthropic-ai/claude-code` only
+claudeManagerAccess: read         # READ-ONLY. Dual-writer ban (DESIGN-CONTEXT §18).
+format: json
+writeTriggers:
+  - session end (Claude Code CLI session lifecycle)
+  - "/usage slash command in the CLI"
+readers:
+  - src/lib/stats-reader.ts        # primary consumer; normalizes + tolerates malformed input
+  - src/sections/dashboard/*       # via stats-reader
+
+# ---------------------------------------------------------------------------
+# Schema — top-level keys observed on disk (CLI v2.1.x, "version": 2)
+# ---------------------------------------------------------------------------
+schema:
+  version:
+    type: number
+    required: true
+    description: Schema version stamped by the CLI writer. Observed value: 2.
+  lastComputedDate:
+    type: string
+    format: ISO-8601 calendar date (YYYY-MM-DD)
+    required: true
+    description: Date the CLI last recomputed the cache. Used by Claude Manager
+      to detect staleness (see stalenessContract below).
+  firstSessionDate:
+    type: string
+    format: ISO-8601 instant (YYYY-MM-DDTHH:mm:ss.sssZ)
+    required: false
+  totalSessions:
+    type: number
+    required: false
+  totalMessages:
+    type: number
+    required: false
+  totalSpeculationTimeSavedMs:
+    type: number
+    required: false
+  longestSession:
+    type: object
+    required: false
+    fields:
+      sessionId:    { type: string, format: uuid }
+      duration:     { type: number, units: milliseconds }
+      messageCount: { type: number }
+      timestamp:    { type: string, format: ISO-8601 instant }
+  dailyActivity:
+    type: array
+    required: true
+    items:
+      type: object
+      fields:
+        date:          { type: string, format: YYYY-MM-DD, required: true }
+        messageCount:  { type: number, required: true }
+        sessionCount:  { type: number, required: true }
+        toolCallCount: { type: number, required: true }
+  dailyModelTokens:
+    type: array
+    required: true
+    items:
+      type: object
+      fields:
+        date: { type: string, format: YYYY-MM-DD, required: true }
+        tokensByModel:
+          type: object
+          description: Map of model-id string -> total tokens (number) for that day.
+          example: { "claude-opus-4.6-1m": 4762744 }
+  modelUsage:
+    type: object
+    required: false
+    description: Per-model cumulative usage. Keyed by model-id string.
+    valueShape:
+      inputTokens:              { type: number }
+      outputTokens:             { type: number }
+      cacheReadInputTokens:     { type: number }
+      cacheCreationInputTokens: { type: number }
+      webSearchRequests:        { type: number }
+      costUSD:                  { type: number }
+      contextWindow:            { type: number }
+      maxOutputTokens:          { type: number }
+  hourCounts:
+    type: discriminated-union
+    required: true
+    description: GitHub-style hour-of-day heatmap. The CLI has written BOTH shapes
+      across history; consumers MUST accept both. Real disk evidence (2026-05) uses
+      the OBJECT form, sparsely populated (missing hours = 0). Older CLI builds
+      and tests written before v2.1.x used the ARRAY form.
+    variants:
+      - name: object
+        shape: Record<string, number>
+        keys: stringified hour-of-day in "0".."23"
+        sparse: true   # missing hours mean zero count
+        example:
+          "10": 1
+          "15": 15
+          "21": 1
+      - name: array
+        shape: number[]
+        length: 24
+        indexing: array index = hour-of-day (0..23)
+        example: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 1, 15, 3, 3, 2, 1, 1, 1, 0, 0]
+
+# ---------------------------------------------------------------------------
+# Normalization — performed by src/lib/stats-reader.ts (canonical internal form)
+# ---------------------------------------------------------------------------
+normalization:
+  canonicalForm:
+    costUSD:          { type: number, default: 0 }   # top-level is absent in v2; authoritative source is `modelUsage[<model>].costUSD`; current reader silently coerces to 0 — see gotcha `costusd-location-mismatch`
+    hourCounts:       { type: number[], length: 24, default: 24 zeros }
+    dailyActivity:    { type: DailyActivityEntry[] }
+    dailyModelTokens: { type: DailyModelTokensEntry[] }
+  rules:
+    - rule: hourCounts.array
+      input: number[] (any length)
+      output: length-24 array; positions copied from input[0..min(24,len)-1]; missing positions = 0
+    - rule: hourCounts.object
+      input: Record<string, unknown>
+      output: length-24 array; for each entry, parse key with Number(); accept only
+        Number.isInteger(n) AND 0 <= n <= 23; non-numeric / out-of-range keys silently dropped;
+        non-finite values coerced to 0
+    - rule: hourCounts.other
+      input: missing, null, primitive, etc.
+      output: 24 zeros
+    - rule: dailyActivity[]
+      input: not-array  -> []
+      input: array      -> each non-plain-object item dropped; field coercions:
+        date -> string (default ""), messageCount/sessionCount/toolCallCount -> finite number (default 0)
+    - rule: dailyModelTokens[]
+      input: same item-level coercion as dailyActivity; tokensByModel: non-object -> {};
+        each value coerced via finite-number rule
+    - rule: top-level
+      input: missing file        -> EMPTY_STATS (no throw)
+      input: malformed JSON      -> EMPTY_STATS (no throw)
+      input: non-object root     -> EMPTY_STATS (no throw)
+      input: unknown extra keys  -> silently dropped (forward-compatible)
+
+# ---------------------------------------------------------------------------
+# Staleness contract — Claude Manager's responsibility (DESIGN-CONTEXT §18)
+# ---------------------------------------------------------------------------
+stalenessContract:
+  signal: compare lastComputedDate (and file mtime) against today's local date
+  thresholdDays: 1
+  banner:
+    when: (today - lastComputedDate) > 1 day OR file missing for a user who has prior sessions
+    severity: warning
+    dismissable: false
+    message: "Usage stats may be out of date. Run `claude /usage` to refresh."
+    action: invoke `claude /usage` via Tauri shell (NOT compute stats ourselves)
+  rationale: |
+    The CLI is the only writer. If it stops writing (flag set, CLI not running,
+    CLI bug), our dashboard would silently show stale data. The banner surfaces
+    that gap without trying to fix it.
+
+# ---------------------------------------------------------------------------
+# Gotchas
+# ---------------------------------------------------------------------------
+gotchas:
+  - id: disable-nonessential-traffic-bug
+    severity: high
+    description: |
+      Pre-v2.1.105, setting CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 in ANY
+      project's settings permanently disabled usage-metrics machine-wide,
+      so stats-cache.json stops updating. Fixed in CLI v2.1.105. If a user
+      reports stale charts, check CLI version and this env var.
+    reference: DESIGN-CONTEXT.md §18
+  - id: missing-file-is-empty-state
+    severity: low
+    description: |
+      A missing stats-cache.json is a legitimate state (new install, never
+      ran a session, /usage never invoked). stats-reader.ts returns
+      EMPTY_STATS without throwing. Dashboard renders empty-state copy.
+  - id: dual-writer-corruption
+    severity: critical
+    description: |
+      Claude Manager MUST NEVER write this file. The CLI does not lock it;
+      two unlocked writers race -> truncated/corrupt JSON, lost stats,
+      schema drift on every CLI release. The "Rebuild Stats" Quick Action
+      shells out to `claude /usage` rather than computing.
+    reference: DESIGN-CONTEXT.md §18, docs/research/2026-05-09-stats-cache-investigation.md §5
+  - id: hourcounts-shape-drift
+    severity: medium
+    description: |
+      The CLI has shipped both an object form (current, observed on disk
+      2026-05) and an array form (older builds / test fixtures). Always
+      pass through normalizeHourCounts() — never index hourCounts directly.
+  - id: sparse-object-hourcounts
+    severity: low
+    description: |
+      When in object form, missing hour keys are NOT zero-filled by the
+      writer. Hours with zero activity are simply absent. Normalization
+      must default missing keys to 0.
+  - id: schema-version-bump-warning
+    severity: medium
+    description: |
+      `version` is currently 2. A CLI release that bumps this can add/remove
+      fields without warning. Treat all reads as untrusted input; never
+      destructure without coercion.
+  - id: costusd-location-mismatch
+    severity: high
+    description: |
+      Real disk in v2 stores `costUSD` ONLY per-model under
+      `modelUsage[<model>].costUSD`. There is NO top-level `costUSD` key.
+      `src/lib/stats-reader.ts` reads only `parsed.costUSD` (top level) and
+      falls through to `0` via `asNumber(undefined)`. The Dashboard cost
+      widget therefore shows $0 even when the CLI has recorded real costs.
+    reproduction: |
+      Inspect your real `~/.claude/stats-cache.json`: `costUSD` is absent at
+      the top level, but present (numeric) on every `modelUsage[<model>]`
+      entry. `readStatsCache()` returns `costUSD: 0` regardless.
+    fixRecommendation: |
+      TODO (follow-up, NOT this doc's responsibility): derive the total in
+      stats-reader.ts as
+      `sum(Object.values(parsed.modelUsage ?? {}).map(m => Number((m as any).costUSD) || 0))`
+      rather than reading `parsed.costUSD`. This source-of-truth doc only
+      documents the on-disk contract; the consumer fix is tracked separately.
+
+# ---------------------------------------------------------------------------
+# Fixture pointers
+# ---------------------------------------------------------------------------
+fixtures:
+  - tests/sources-of-truth/fixtures/stats-cache-json-object-hours.json   # canonical (sanitized real disk)
+  - tests/sources-of-truth/fixtures/stats-cache-json-array-hours.json    # hand-authored for array variant
+tests:
+  - tests/sources-of-truth/stats-cache-json.test.ts

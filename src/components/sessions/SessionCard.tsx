@@ -56,31 +56,14 @@ function truncate(s: string, max: number): string {
   return s.slice(0, max - 1).trimEnd() + "…";
 }
 
-/**
- * Convert SessionMeta.startedAt (ISO string from PID file) to epoch ms.
- * Returns 0 (which `timeAgo` renders as "") when the timestamp is missing or
- * unparseable — that's the case for ENDED sessions that have no PID file.
- */
-function startedAtMs(startedAt: string): number {
-  if (!startedAt) return 0;
-  const parsed = Date.parse(startedAt);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
 export function SessionCard({ session, selected, style }: SessionCardProps) {
   const selectSession = useSessionStore((s) => s.selectSession);
   const label = session.displayName ?? truncate(session.firstPrompt, 60);
   const dotClass = STATUS_COLOR[session.state];
   const pulse = session.state === "alive" ? "animate-pulse" : "";
-  const timeLabel = timeAgo(startedAtMs(session.startedAt));
-  // Tooltip: surface the absolute timestamp on hover so the relative
-  // "3h ago" / "Yesterday" string isn't the only handle to a session's
-  // start time. Mirrors PR #185 (RecentSessions). Skip when missing/0
-  // so we don't render an empty title="" artifact.
-  const startedAtAbsolute = (() => {
-    const ms = startedAtMs(session.startedAt);
-    return ms > 0 ? new Date(ms).toLocaleString() : undefined;
-  })();
+  const ms = session.startedAt;
+  const timeLabel = timeAgo(ms);
+  const startedAtAbsolute = ms > 0 ? new Date(ms).toLocaleString() : undefined;
 
   return (
     <button
