@@ -184,6 +184,31 @@ describe("stats-reader: readStatsCache", () => {
 
     expect(stats).toEqual(EMPTY_STATS);
   });
+
+  // Real-shape: schema v2 stores costUSD ONLY per-model under
+  // modelUsage[<model>].costUSD — there's no top-level costUSD. The reader
+  // must sum across models so the dashboard doesn't show $0 for every real
+  // user. Regression for the source-of-truth gotcha
+  // "costusd-location-mismatch".
+  it("derives costUSD by summing modelUsage[<model>].costUSD when top-level absent", async () => {
+    existsMock.mockResolvedValue(true);
+    readTextFileMock.mockResolvedValue(
+      JSON.stringify({
+        modelUsage: {
+          "claude-opus-4.6-1m": { costUSD: 0.123 },
+          "claude-sonnet-4-6": { costUSD: 0.5 },
+          "claude-opus-4.5": { costUSD: 0 },
+        },
+        hourCounts: {},
+        dailyActivity: [],
+        dailyModelTokens: [],
+      }),
+    );
+
+    const stats = await readStatsCache();
+
+    expect(stats.costUSD).toBeCloseTo(0.623);
+  });
 });
 
 describe("stats-reader: path resolution", () => {

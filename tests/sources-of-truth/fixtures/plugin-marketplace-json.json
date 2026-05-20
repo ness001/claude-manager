@@ -1,0 +1,75 @@
+{
+  "$schema": "https://example.com/claude-code/marketplace.schema.json",
+  "name": "example-marketplace",
+  "description": "Example marketplace fixture covering all observed plugin-entry shapes (string source, url source, semver version, git-sha version, missing version, lspServers, skills array).",
+  "owner": {
+    "name": "Example Org",
+    "email": "support@example.com"
+  },
+  "metadata": {
+    "description": "Same description repeated under metadata to exercise the dual-location reader contract.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "example-tool",
+      "description": "A plugin with a semver version and a relative-path source.",
+      "version": "5.0.7",
+      "author": {
+        "name": "Example Author",
+        "email": "author@example.com"
+      },
+      "source": "./plugins/example-tool",
+      "category": "development",
+      "homepage": "https://example.com/example-tool",
+      "keywords": ["example", "fixture"],
+      "strict": false
+    },
+    {
+      "name": "example-skills-bundle",
+      "description": "A skill-bundler plugin: source is './' meaning the marketplace IS the plugin, and skills[] enumerates the bundled skill directories.",
+      "version": "a5bcdd7e58cd",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/skill-one",
+        "./skills/skill-two",
+        "./skills/skill-three"
+      ]
+    },
+    {
+      "name": "example-external",
+      "description": "External plugin: source is an object referencing a git URL. No version field, no author — the CLI tracks HEAD of the source repo.",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/example-org/example-external.git"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/example-org/example-external",
+      "tags": ["community-managed"]
+    },
+    {
+      "name": "example-lsp",
+      "description": "LSP-type plugin entry — exercises the optional lspServers field.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Example Org",
+        "email": "support@example.com"
+      },
+      "source": "./plugins/example-lsp",
+      "category": "development",
+      "strict": false,
+      "lspServers": {
+        "example-langserver": {
+          "command": "example-langserver",
+          "args": ["--stdio"],
+          "extensionToLanguage": {
+            ".ex": "example",
+            ".exs": "example"
+          },
+          "startupTimeout": 120000
+        }
+      }
+    }
+  ]
+}

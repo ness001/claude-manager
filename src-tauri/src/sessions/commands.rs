@@ -34,17 +34,20 @@ fn read_sidechain_overlay(project_dir: &Path) -> HashMap<String, bool> {
     let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else {
         return out;
     };
-    // Layout observed: { "sessions": [ { "id": "...", "isSidechain": true, ... } ] }
-    // Be permissive about the wrapper.
+    // Real layout (per docs/sources-of-truth/sessions-index-cache-json.yaml):
+    //   { "version": 1, "entries": [ { "sessionId": "...", "isSidechain": ... }, ... ] }
+    // Some older snapshots used { "sessions": [ { "id": "...", "isSidechain": ... } ] };
+    // keep that as a fallback so we don't break long-running installs.
     let arr = value
-        .get("sessions")
+        .get("entries")
         .and_then(|v| v.as_array())
+        .or_else(|| value.get("sessions").and_then(|v| v.as_array()))
         .or_else(|| value.as_array());
     if let Some(arr) = arr {
         for entry in arr {
             let id = entry
-                .get("id")
-                .or_else(|| entry.get("sessionId"))
+                .get("sessionId")
+                .or_else(|| entry.get("id"))
                 .and_then(|v| v.as_str());
             let sc = entry.get("isSidechain").and_then(|v| v.as_bool());
             if let (Some(id), Some(sc)) = (id, sc) {
@@ -147,5 +150,22 @@ mod tests {
         std::fs::create_dir_all(&tmp).unwrap();
         let overlay = read_sidechain_overlay(&tmp);
         assert!(overlay.is_empty());
+    }
+
+    /// Backwards-compat: the historical wrapper used `{sessions:[{id,…}]}`
+    /// instead of the current `{version,entries:[{sessionId,…}]}`. Long-
+    /// running installs may still have the old shape on disk; we accept
+    /// both rather than silently dropping every sidechain marker.
+    #[test]
+    fn read_sidechain_overlay_accepts_legacy_sessions_id_shape() {
+        let tmp = std::env::temp_dir().join("claude-mgr-legacy-idx");
+        std::fs::create_dir_all(&tmp).unwrap();
+        std::fs::write(
+            tmp.join("sessions-index.json"),
+            r#"{"sessions":[{"id":"sess-legacy","isSidechain":true}]}"#,
+        )
+        .unwrap();
+        let overlay = read_sidechain_overlay(&tmp);
+        assert_eq!(overlay.get("sess-legacy"), Some(&true));
     }
 }

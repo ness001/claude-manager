@@ -1,0 +1,197 @@
+## Source of truth: sessions-index.json (per-project cache)
+##
+## A small JSON file written by the Claude Code CLI inside every project
+## directory under `~/.claude/projects/`. Intended as a speed hint for
+## listing recent sessions. In practice we found it severely stale on
+## this machine (see `gotchas` below) and Claude Manager treats it as
+## advisory only.
+
+id: sessions-index-cache
+path: "~/.claude/projects/{encoded-project-path}/sessions-index.json"
+encoding: utf-8
+format: json
+
+owner: claude-code-cli
+ownerNotes: >
+  Written exclusively by the Claude Code CLI. We have no documented
+  signal for *when* the CLI rewrites it (it is clearly not on every
+  JSONL append — see staleness numbers below). Schema may drift on
+  CLI releases; treat as untrusted input.
+
+claudeManagerAccess: read
+claudeManagerAccessNotes: >
+  Read-only. Used only as an overlay source for `isSidechain` (the one
+  field spec §5.1 trusts it for). Never used as primary metadata —
+  filesystem JSONL enumeration is the source of truth.
+
+# Top-level shape observed on this machine across 7 sessions-index.json files.
+schema:
+  type: object
+  required: [version, entries]
+  fields:
+    version:
+      type: integer
+      observed: [1]
+      notes: "Schema-version sentinel. Only `1` seen in the wild."
+    entries:
+      type: array
+      itemSchema:
+        type: object
+        required:
+          - sessionId
+          - fullPath
+          - fileMtime
+          - firstPrompt
+          - summary
+          - messageCount
+          - created
+          - modified
+          - gitBranch
+          - projectPath
+          - isSidechain
+        fields:
+          sessionId:
+            type: string
+            format: uuid
+            notes: "Matches `<filename>.jsonl` stem under the same project dir."
+          fullPath:
+            type: string
+            notes: >
+              Absolute Windows path to the JSONL the entry describes.
+              FREQUENTLY POINTS TO A FILE THAT NO LONGER EXISTS — see gotchas.
+          fileMtime:
+            type: integer
+            unit: epoch-ms
+            notes: >
+              The JSONL's mtime AT THE MOMENT THE INDEX WAS LAST REWRITTEN.
+              This is the cache-validity anchor: compare against the live
+              JSONL's mtime. See `stalenessContract` below.
+          firstPrompt:
+            type: string
+            notes: "User's first message verbatim. May be empty string."
+          summary:
+            type: string
+            notes: "AI-generated short title. May be empty string."
+          messageCount:
+            type: integer
+            notes: "CLI's own count at index-write time. Not necessarily user+assistant only."
+          created:
+            type: string
+            format: iso-8601-z
+          modified:
+            type: string
+            format: iso-8601-z
+          gitBranch:
+            type: string
+            notes: "Empty string when no branch / not a git repo."
+          projectPath:
+            type: string
+            notes: "Decoded CWD of the project (the original path, not the slug)."
+          isSidechain:
+            type: boolean
+            notes: >
+              The ONE field spec §5.1 says to trust this file for —
+              sub-agent sessions which should be hidden from the main list.
+    originalPath:
+      type: string
+      required: false
+      observed: present in 7/7 files inspected
+      notes: "Decoded CWD of the project. Matches `entries[*].projectPath`."
+
+# Defines how Claude Manager decides whether to consult this file vs reparse JSONL.
+stalenessContract:
+  rule: >
+    For each entry, the cached fields are valid IF AND ONLY IF
+    `entry.fileMtime === fs.statSync(entry.fullPath).mtimeMs` (with
+    tolerance ≤ 1 ms for FS precision). On any mismatch — including
+    "file missing" — discard the cached entry and reparse the live JSONL.
+  authorityWindow: >
+    Even when fileMtime matches, the only field we will source from this
+    file is `isSidechain`. firstPrompt, summary, messageCount, gitBranch
+    are reparsed from JSONL because the CLI's writer cadence is unknown.
+  missingFileHandling: >
+    An entry whose `fullPath` is missing on disk is silently ignored —
+    do NOT surface as an "orphaned session". Real orphans are detected
+    via PID-file cross-reference, not this index.
+  extraJsonlHandling: >
+    A JSONL on disk with no matching index entry is treated as a brand-new
+    session. Discovery enumerates the filesystem directly (spec §5.2 step 1).
+
+# Empirical numbers, measured on the investigator's machine on 2026-05-18.
+# Captured to keep us honest about how broken this cache really is.
+gotchas:
+  - id: severelyStale
+    severity: critical
+    measured_on: "2026-05-18"
+    measured_against: "All 7 sessions-index.json files under ~/.claude/projects/ on inv-sessions-index-cache's machine."
+    finding: >
+      Across all 7 index files (21 total entries), 21 / 21 entries point
+      to a JSONL `fullPath` that no longer exists on disk (likely because
+      the CLI rewrote the JSONL with a new sessionId/filename, or the
+      file was deleted). Meanwhile 54 JSONL files exist on disk across
+      the same projects — 54 / 54 are NOT mentioned in any index entry.
+      Net coverage of the cache vs current reality: 0%.
+    busiestProjectDetail:
+      project: "C--Users-lianli (~/.claude/projects/C--Users-lianli/)"
+      index_entries: 15
+      index_entries_pointing_to_existing_jsonl: 0
+      index_entries_pointing_to_missing_jsonl: 15
+      jsonl_files_on_disk: 48
+      jsonl_files_not_in_index: 48
+      index_file_mtime: "2026-04-09T17:54:06+08:00"
+      newest_jsonl_mtime: "2026-05-15T16:33:03+08:00"
+      days_behind: 35.94
+    implication: >
+      The cache MUST NOT be the primary list. If we listed sessions only
+      from this file we would show 0 of 48 real sessions on this machine.
+      Confirms the design decision in DESIGN-CONTEXT §2.2 — even the
+      Discovery 17/20-stale number quoted there is optimistic relative
+      to what fields like fullPath go through.
+
+  - id: noWriterCadence
+    severity: high
+    finding: >
+      We have no documented signal for when the CLI rewrites this file.
+      It is clearly not on every JSONL append (some indexes are 30+ days
+      behind the JSONLs they index). Do not assume any liveness.
+
+  - id: schemaIsObservational
+    severity: medium
+    finding: >
+      The schema documented above is purely observational — Claude Code
+      ships no public spec for this file. A CLI release can add or drop
+      fields without warning. The Rust loader (`commands.rs::read_sidechain_overlay`)
+      already deals with this by being permissive: tolerates `id` or
+      `sessionId`, top-level `sessions:[...]` wrapper or bare array,
+      and silently returns an empty map on parse failure.
+
+  - id: pathsAreAbsoluteWindows
+    severity: low
+    finding: >
+      `fullPath` is an absolute Windows path with backslashes. On
+      cross-platform code this needs normalization before comparison.
+      Today the loader sidesteps this by keying on `sessionId` instead
+      of `fullPath`.
+
+  - id: emptyStringNotMissing
+    severity: low
+    finding: >
+      `gitBranch`, `firstPrompt`, `summary` are present-but-empty-string
+      when no value applies, never absent. Treat `""` as "no data".
+
+callers:
+  - path: src-tauri/src/sessions/commands.rs
+    fn: read_sidechain_overlay
+    notes: >
+      Permissive reader. Returns `HashMap<sessionId, isSidechain>`.
+      Empty map on any IO/parse failure — by design, so a corrupt index
+      never poisons the whole discovery scan.
+
+relatedSpec:
+  - "docs/superpowers/specs/2026-05-03-claude-manager-design.md §5.1 (Data Sources)"
+  - "docs/superpowers/specs/2026-05-03-claude-manager-design.md §5.2 (Data Discovery)"
+  - "docs/DESIGN-CONTEXT.md §2.2 (sessions-index.json is STALE)"
+  - "docs/DESIGN-CONTEXT.md §13 (key file paths)"
+
+fixture: tests/sources-of-truth/fixtures/sessions-index-cache.json
+test: tests/sources-of-truth/sessions-index-cache.test.ts

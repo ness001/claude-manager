@@ -1,0 +1,5 @@
+{
+  "_comment": "SYNTHETIC FIXTURE — do NOT replace with a real ~/.claude/config.json. The `primaryApiKey` value is a deliberately-redacted stub; the companion test (tests/sources-of-truth/config-json-api-key.test.ts) asserts that this value matches /REDACTED/i so a contributor cannot accidentally commit a real key by copying their own file over this fixture. See docs/sources-of-truth/config-json-api-key.yaml for full schema and security notes.",
+  "primaryApiKey": "sk-ant-REDACTED-FIXTURE-VALUE",
+  "ANTHROPIC_BASE_URL": "https://api.example.com"
+}
