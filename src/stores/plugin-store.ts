@@ -32,6 +32,12 @@ interface PluginStoreState {
   selectPlugin: (plugin: PluginMeta | null) => Promise<void>;
   setSearchQuery: (query: string) => void;
   togglePlugin: (plugin: PluginMeta) => Promise<void>;
+  /** Spawn `claude plugins install <name>`, then reload. Spec §6.7. */
+  installPlugin: (name: string) => Promise<void>;
+  /** Spawn `claude plugins uninstall <key>`, then reload. Spec §6.7. */
+  uninstallPlugin: (plugin: PluginMeta) => Promise<void>;
+  /** Drop a dangling enabledPlugins entry, then reload. Spec §6.7 / C1. */
+  removeOrphaned: (plugin: PluginMeta) => Promise<void>;
 }
 
 export const usePluginStore = create<PluginStoreState>((set, get) => ({
@@ -107,6 +113,59 @@ export const usePluginStore = create<PluginStoreState>((set, get) => ({
       ),
     }));
     void get();
+  },
+
+  installPlugin: async (name) => {
+    let captured: string | null = null;
+    try {
+      const code = await invoke<number>("install_plugin", { name });
+      if (code !== 0) {
+        captured = `claude plugins install exited with code ${code}`;
+      }
+    } catch (err) {
+      captured = errorMessage(err);
+      // Reload before rethrowing so the list reflects any partial work.
+      await get().loadPlugins();
+      set({ error: captured });
+      throw err;
+    }
+    // Reload, then surface the captured error — loadPlugins clears `error`
+    // on entry, so we must re-apply our message after it completes.
+    await get().loadPlugins();
+    set({ error: captured });
+  },
+
+  uninstallPlugin: async (plugin) => {
+    const key = pluginKey(plugin);
+    let captured: string | null = null;
+    try {
+      const code = await invoke<number>("uninstall_plugin", { key });
+      if (code !== 0) {
+        captured = `claude plugins uninstall exited with code ${code}`;
+      }
+    } catch (err) {
+      captured = errorMessage(err);
+      await get().loadPlugins();
+      set({ error: captured });
+      throw err;
+    }
+    await get().loadPlugins();
+    set({ error: captured });
+  },
+
+  removeOrphaned: async (plugin) => {
+    const key = pluginKey(plugin);
+    let captured: string | null = null;
+    try {
+      await invoke("remove_orphaned_plugin", { key });
+    } catch (err) {
+      captured = errorMessage(err);
+      await get().loadPlugins();
+      set({ error: captured });
+      throw err;
+    }
+    await get().loadPlugins();
+    set({ error: captured });
   },
 }));
 
