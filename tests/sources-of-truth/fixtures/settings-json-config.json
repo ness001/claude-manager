@@ -1,0 +1,39 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
+    "ANTHROPIC_AUTH_TOKEN": "<REDACTED>",
+    "ANTHROPIC_MODEL": "claude-opus-4-6",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "0"
+  },
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Edit(*)",
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(ls)",
+      "mcp__*"
+    ],
+    "deny": [
+      "Bash(rm -rf /*)"
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "document-skills@anthropic-agent-skills": true,
+    "ralph-loop@claude-plugins-official": false
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo done" }
+        ]
+      }
+    ]
+  },
+  "model": "claude-opus-4-6",
+  "skipDangerousModePermissionPrompt": false,
+  "autoUpdatesChannel": "latest",
+  "fastMode": true
+}

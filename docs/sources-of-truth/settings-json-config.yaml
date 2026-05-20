@@ -1,0 +1,284 @@
+# Source of Truth: ~/.claude/settings.json (+ settings.local.json overlay)
+#
+# Investigator: inv-settings-json-config (task #7)
+# Peer review:  inv-config-json-api-key (task #8)
+#
+# Documents the on-disk schema, ownership, merge contract, and Claude
+# Manager's read/write surface for the two settings files.
+
+id: settings-json-config
+title: Claude Code settings.json + settings.local.json
+files:
+  - path: "~/.claude/settings.json"
+    role: shared
+    description: >
+      Primary settings file written by the Claude Code CLI. Contains the
+      user-wide permission allowlist, environment variables, hooks,
+      `enabledPlugins` map, model defaults, and miscellaneous CLI flags.
+  - path: "~/.claude/settings.local.json"
+    role: machine-overlay
+    description: >
+      Machine-/checkout-specific overlay. Same schema as settings.json but
+      typically only carries `permissions.allow` additions that should not
+      sync across machines. Merged on top of settings.json by the CLI at
+      load time.
+
+owner: shared
+# Rationale: The Claude Code CLI owns most of the file (env, permissions,
+# hooks, model, statusLine, extraKnownMarketplaces, fastMode,
+# autoUpdatesChannel, skipDangerousModePermissionPrompt are all written by
+# the CLI). Claude Manager is permitted to mutate exactly ONE branch:
+# `enabledPlugins["<name>@<marketplace>"] = boolean` via the Rust command
+# `write_plugin_enabled` (src-tauri/src/plugins/commands.rs:104), which
+# does a read-modify-write that preserves every unrelated key and writes
+# atomically (temp file + rename).
+
+claudeManagerAccess: read-write
+claudeManagerAccess.read:
+  - "enabledPlugins (map)"   # plugin-loader.ts:77-85 via read_settings_enabled_plugins
+  - "permissions.allow (planned, Settings panel)"
+  - "env (planned, Settings panel)"
+  - "skipDangerousModePermissionPrompt (planned, Settings > Permissions)"
+claudeManagerAccess.write:
+  - "enabledPlugins.<key> = boolean"   # ONLY this leaf; see write_plugin_enabled
+claudeManagerAccess.writeForbidden:
+  - "permissions.*"          # CLI-managed; user edits via CLI or text editor
+  - "env.*"                  # CLI-managed
+  - "hooks.*"                # CLI-managed
+  - "statusLine"             # CLI-managed
+  - "extraKnownMarketplaces" # CLI-managed (plugin marketplace add/remove)
+  - "model"                  # CLI-managed (--model alias persistence)
+  - "fastMode | autoUpdatesChannel | skipDangerousModePermissionPrompt"
+
+# ---------------------------------------------------------------------------
+# Schema (settings.json AND settings.local.json — identical shape)
+# ---------------------------------------------------------------------------
+schema:
+  type: object
+  additionalProperties: true   # CLI may add new top-level keys at any release
+  properties:
+
+    permissions:
+      type: object
+      description: >
+        Tool/Bash invocation allow/deny lists. Strings use a pattern syntax
+        recognized by the CLI's permission engine — see "permissions.patterns"
+        below for the observed forms.
+      properties:
+        allow:
+          type: array
+          items: { type: string }
+          description: Patterns whitelisted without prompt.
+        deny:
+          type: array
+          items: { type: string }
+          description: Patterns hard-blocked (overrides allow).
+        # NOTE: CLI also accepts `ask` in some versions; treat as optional.
+      required: []
+
+    env:
+      type: object
+      description: >
+        Environment variables exported into the Claude Code process. Values
+        are arbitrary strings; secrets (auth tokens) live here and MUST be
+        treated as sensitive by any UI surface.
+      additionalProperties: { type: string }
+      observedKeys:
+        - ANTHROPIC_BASE_URL
+        - ANTHROPIC_AUTH_TOKEN        # SECRET — never log/display raw
+        - ANTHROPIC_MODEL
+        - CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC   # see DESIGN-CONTEXT §18
+        - CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
+
+    enabledPlugins:
+      type: object
+      description: >
+        Registry-keyed enable/disable flags for installed plugins. KEY FORMAT
+        is `"<plugin-name>@<marketplace-id>"` — emphatically not a bare name.
+        The map is independent of installation: a plugin can be installed
+        (present in `~/.claude/plugins/installed_plugins.json`) yet disabled
+        (`false` here), or enabled here but uninstalled (→ "orphaned" state,
+        spec §6.4).
+      keyFormat: "<plugin-name>@<marketplace-id>"
+      keyRegex: "^[A-Za-z0-9][A-Za-z0-9._-]*@[A-Za-z0-9][A-Za-z0-9._-]*$"
+      additionalProperties: { type: boolean }
+      examples:
+        - "superpowers@claude-plugins-official"
+        - "document-skills@anthropic-agent-skills"
+        - "ralph-loop@claude-plugins-official"
+
+    hooks:
+      type: object
+      description: >
+        Event-keyed hook definitions. Each event maps to an array of hook
+        groups; each group has a `hooks` array of `{type, command}` entries.
+        Owned entirely by CLI/user — Claude Manager must not mutate.
+      additionalProperties:
+        type: array
+        items:
+          type: object
+          properties:
+            matcher: { type: string }
+            hooks:
+              type: array
+              items:
+                type: object
+                properties:
+                  type: { type: string, enum: ["command"] }
+                  command: { type: string }
+                  timeout: { type: number }
+                required: [type, command]
+      observedEvents:
+        - Stop
+        - SessionStart
+        - PreToolUse
+        - PostToolUse
+
+    model:
+      type: string
+      description: Default model alias / id (e.g. "claude-opus-4-6[1m]").
+
+    statusLine:
+      type: object
+      properties:
+        type: { type: string, enum: ["command"] }
+        command: { type: string }
+
+    extraKnownMarketplaces:
+      type: object
+      description: >
+        Registered marketplace sources beyond the built-ins. Map of
+        marketplace-id → `{source: {source: "github", repo: "owner/repo"}}`
+        (or other source types). Plugin registry keys reference these IDs
+        after the `@`.
+      additionalProperties:
+        type: object
+        properties:
+          source:
+            type: object
+            properties:
+              source: { type: string, enum: ["github", "git", "local"] }
+              repo: { type: string }   # "owner/repo" for source=github
+              path: { type: string }   # for source=local
+
+    fastMode:               { type: boolean }
+    autoUpdatesChannel:     { type: string }   # e.g. "latest" | "stable"
+    skipDangerousModePermissionPrompt:
+      type: boolean
+      description: >
+        When true, suppresses the confirm dialog before entering
+        `bypassPermissions` mode. Red-flag for the Settings panel UI.
+
+permissions.patterns:
+  description: >
+    Observed forms inside `permissions.allow` / `permissions.deny`. The CLI
+    matches against tool calls and Bash command lines.
+  forms:
+    - form: "<Tool>(<glob>)"
+      examples: ["Read(*)", "Edit(*)", "Glob(*)"]
+    - form: "Bash(<command-prefix> *)"
+      examples: ["Bash(git *)", "Bash(npm *)", "Bash(dotnet build*)"]
+    - form: "Bash(<exact-command>)"
+      examples: ["Bash(ls)", "Bash(pwd)", "Bash(python)"]
+    - form: "Bash(<command>:*)"
+      examples: ["Bash(git clone:*)", "Bash(dir:*)", "Bash(cmd /c:*)"]
+    - form: "mcp__<glob>"
+      examples: ["mcp__*", "mcp__pencil"]
+    - form: "WebSearch | WebFetch(domain:<host>)"
+      examples: ["WebSearch", "WebFetch(domain:docs.anthropic.com)"]
+
+# ---------------------------------------------------------------------------
+# Merge contract — how settings.local.json overlays settings.json
+# ---------------------------------------------------------------------------
+mergeContract:
+  applies: "settings.local.json over settings.json"
+  rule: shallow-merge-with-array-concat
+  description: >
+    The two files are merged at LOAD TIME by the Claude Code CLI. Observed
+    semantics (confirmed against the live ~/.claude files on this machine):
+      - Top-level keys present in local REPLACE the corresponding key in
+        global, EXCEPT for `permissions.{allow,deny}` arrays which are
+        CONCATENATED (local appended to global). This is why settings.local
+        on this machine carries only `permissions.allow` additions and
+        nothing else — it grows the global allowlist rather than replacing
+        it.
+      - `enabledPlugins` and `env`, when present in both, are key-by-key
+        merged with local wins per leaf key. (Same shallow rule, scoped to
+        immediate children since these are flat maps.)
+      - Unknown top-level keys in local simply override global.
+  notKnownToBe: deep-recursive-merge
+  notes: >
+    The CLI's exact merge implementation is closed source and may evolve;
+    code that depends on the merge result (e.g. Settings panel preview)
+    SHOULD read both files separately and surface the local overlay
+    explicitly rather than silently flattening.
+  rationale: >
+    Verified by inspection of this machine's settings.local.json which only
+    declares `permissions.allow` additions that meaningfully extend the
+    global list (e.g. `Bash(cmd /c:*)`, `WebFetch(domain:docs.anthropic.com)`)
+    rather than redefining unrelated keys.
+
+# ---------------------------------------------------------------------------
+# What is NOT in this file (cross-references)
+# ---------------------------------------------------------------------------
+crossReferences:
+  - id: claude-json-config
+    note: >
+      MCP server definitions live in `~/.claude.json` (NOT settings.json).
+      See `docs/sources-of-truth/claude-json-config.yaml` (inv-claude-json-config,
+      task #6). DESIGN-CONTEXT §2.1 calls this out as the #1 research correction.
+  - id: config-json-api-key
+    note: >
+      The primary API key lives in `~/.claude/config.json`, NOT in
+      settings.json. settings.json `env.ANTHROPIC_AUTH_TOKEN` is a secondary
+      override. See peer-reviewed task #8 / config-json-api-key.yaml.
+  - id: installed-plugins
+    note: >
+      `enabledPlugins` only carries on/off flags. The actual installation
+      registry is `~/.claude/plugins/installed_plugins.json`. A key may
+      exist in `enabledPlugins` with no matching installation → orphaned
+      plugin state (spec §6.4).
+
+# ---------------------------------------------------------------------------
+# Code references inside the Claude Manager repo
+# ---------------------------------------------------------------------------
+codeRefs:
+  read:
+    - file: src-tauri/src/plugins/commands.rs
+      symbol: read_settings_enabled_plugins
+      lines: "88-98"
+      note: Returns the raw text of settings.json (empty string if missing).
+    - file: src/lib/plugin-loader.ts
+      symbol: extractEnabledPlugins
+      lines: "77-85"
+      note: Pure parser — pulls the enabledPlugins map out of settings text.
+  write:
+    - file: src-tauri/src/plugins/commands.rs
+      symbol: write_plugin_enabled
+      lines: "104+"
+      note: >
+        Read-modify-write of `enabledPlugins["<key>"] = <bool>`. Preserves
+        unrelated keys, atomic via write-to-temp-then-rename. This is the
+        ONLY mutation Claude Manager performs on settings.json.
+
+# ---------------------------------------------------------------------------
+# Edge cases / observed gotchas
+# ---------------------------------------------------------------------------
+edgeCases:
+  - missingFile: >
+      Both the Rust read and the frontend parser treat a missing file as the
+      empty object `{}`. Plugin loader returns no enabled flags; no plugins
+      appear "enabled".
+  - malformedJson: >
+      `parseJsonOr` (plugin-loader.ts:67) swallows parse errors and returns
+      the fallback. A corrupted settings.json silently disables ALL plugins
+      from the manager's perspective; surface a banner in the Settings panel
+      if `JSON.parse` throws on either file.
+  - secretsInEnv: >
+      `env.ANTHROPIC_AUTH_TOKEN` and any token-shaped value MUST be masked
+      in the Settings UI (reveal-on-click), never logged, never copied to
+      clipboards without explicit user action.
+  - skipDangerousFlag: >
+      `skipDangerousModePermissionPrompt: true` removes the safety dialog
+      for `--permission-mode bypassPermissions`. Render with red warning
+      in the Permissions section per spec §9.2 row "Permissions".

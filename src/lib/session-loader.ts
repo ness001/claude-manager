@@ -115,8 +115,11 @@ function coercePermissionMode(s: string | null | undefined): PermissionMode | un
 }
 
 function coerceSessionKind(s: string | null | undefined): SessionKind {
-  if (s === "interactive" || s === "headless" || s === "sdk") return s;
-  // Real Claude Code emits "interactive" or "print"; anything else falls back.
+  // Pass unknown values through verbatim — never silently rewrite to
+  // "interactive". Real CLI emits values outside the documented enum
+  // (e.g. "print" for `-p` one-shot mode), and clobbering them here
+  // hides whatever surfaces next.
+  if (typeof s === "string" && s.length > 0) return s as SessionKind;
   return "interactive";
 }
 
@@ -234,7 +237,7 @@ function buildSessionMeta(
     version: d.version ?? row?.version ?? undefined,
     permissionMode: coercePermissionMode(d.permissionMode ?? row?.permission_mode),
     gitBranch: d.gitBranch ?? row?.git_branch ?? undefined,
-    startedAt: pid?.startedAt ?? "",
+    startedAt: pid?.startedAt ?? row?.started_at ?? 0,
     durationMs: row?.duration_ms ?? 0,
     entrypoint: d.entrypoint ?? row?.entrypoint ?? "",
     kind: coerceSessionKind(d.kind ?? row?.kind),
@@ -270,7 +273,7 @@ function buildOrphanMeta(row: SessionRow): SessionMeta {
     version: row.version ?? undefined,
     permissionMode: coercePermissionMode(row.permission_mode),
     gitBranch: row.git_branch ?? undefined,
-    startedAt: "",
+    startedAt: 0,
     durationMs: row.duration_ms ?? 0,
     entrypoint: row.entrypoint ?? "",
     kind: coerceSessionKind(row.kind),
