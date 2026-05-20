@@ -373,6 +373,132 @@ fn stem(p: &Path) -> String {
         .to_string()
 }
 
+/// Spawn the `claude` CLI to install a plugin by name, streaming every line
+/// of stdout/stderr into the Plugins log so the open Log window tails the
+/// CLI output live (spec §6.7 / §6.8). Blocks until the child exits; the
+/// frontend is expected to `await` and then reload the plugin list.
+///
+/// Returns the exit code; non-zero is surfaced as Ok(code) — the caller
+/// inspects it and surfaces a UI error. We intentionally don't translate
+/// non-zero into Err because the CLI already emitted the diagnostic into
+/// the log; an Err here would just duplicate that into the toast layer.
+#[tauri::command]
+pub fn install_plugin(app: tauri::AppHandle, name: String) -> Result<i32, String> {
+    spawn_claude_plugin(&app, "install", &name)
+}
+
+/// Same shape as `install_plugin` but for `claude plugins uninstall <key>`.
+/// `key` is `<name>@<marketplace>` per the registry layout.
+#[tauri::command]
+pub fn uninstall_plugin(app: tauri::AppHandle, key: String) -> Result<i32, String> {
+    spawn_claude_plugin(&app, "uninstall", &key)
+}
+
+/// Drive `claude plugins <op> <arg>` to completion. stdout/stderr are
+/// read line-by-line on background threads and forwarded through the
+/// Plugins log so the Log window updates as the CLI runs. The parent
+/// thread waits on the child and on both reader joins before returning.
+fn spawn_claude_plugin(
+    app: &tauri::AppHandle,
+    op: &str,
+    arg: &str,
+) -> Result<i32, String> {
+    use std::io::{BufRead, BufReader};
+    use std::process::{Command, Stdio};
+
+    super::log::log_event(app, op, Some(arg), "start", &format!("claude plugins {} {}", op, arg));
+
+    let mut child = Command::new(claude_cli_name())
+        .args(["plugins", op, arg])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| {
+            let msg = format!("failed to spawn claude: {}", e);
+            super::log::log_event(app, op, Some(arg), "error", &msg);
+            msg
+        })?;
+
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let app_out = app.clone();
+    let app_err = app.clone();
+    let op_owned = op.to_string();
+    let arg_owned = arg.to_string();
+    let op_owned2 = op.to_string();
+    let arg_owned2 = arg.to_string();
+
+    let out_join = std::thread::spawn(move || {
+        if let Some(out) = stdout {
+            for line in BufReader::new(out).lines().map_while(Result::ok) {
+                super::log::log_event(&app_out, &op_owned, Some(&arg_owned), "stdout", &line);
+            }
+        }
+    });
+    let err_join = std::thread::spawn(move || {
+        if let Some(err) = stderr {
+            for line in BufReader::new(err).lines().map_while(Result::ok) {
+                super::log::log_event(&app_err, &op_owned2, Some(&arg_owned2), "stderr", &line);
+            }
+        }
+    });
+
+    let status = child.wait().map_err(|e| {
+        let msg = format!("wait failed: {}", e);
+        super::log::log_event(app, op, Some(arg), "error", &msg);
+        msg
+    })?;
+    let _ = out_join.join();
+    let _ = err_join.join();
+
+    let code = status.code().unwrap_or(-1);
+    super::log::log_event(app, op, Some(arg), "end", &format!("exit={}", code));
+    Ok(code)
+}
+
+/// Drop a stale entry from `settings.json`'s `enabledPlugins` map. Used by
+/// the Plugins UI's "Remove" affordance on orphaned cards (spec §6.7, C1
+/// in the gap audit). No CLI spawn — there's nothing on disk to uninstall;
+/// the entry is just dangling settings state.
+#[tauri::command]
+pub fn remove_orphaned_plugin(app: tauri::AppHandle, key: String) -> Result<(), String> {
+    let Some(root) = claude_home() else {
+        return Err("Could not resolve ~/.claude".to_string());
+    };
+    let path = root.join("settings.json");
+    let existing = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => "{}".to_string(),
+        Err(e) => return Err(e.to_string()),
+    };
+    let mut value: serde_json::Value = if existing.trim().is_empty() {
+        serde_json::json!({})
+    } else {
+        serde_json::from_str(&existing).map_err(|e| e.to_string())?
+    };
+    if let Some(map) = value
+        .as_object_mut()
+        .and_then(|m| m.get_mut("enabledPlugins"))
+        .and_then(|v| v.as_object_mut())
+    {
+        map.remove(&key);
+    }
+    let serialized = serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?;
+    let tmp = path.with_extension("json.tmp");
+    std::fs::write(&tmp, serialized.as_bytes()).map_err(|e| e.to_string())?;
+    std::fs::rename(&tmp, &path).map_err(|e| e.to_string())?;
+    super::log::log_event(&app, "remove-orphaned", Some(&key), "info", "removed from enabledPlugins");
+    Ok(())
+}
+
+/// Resolve the Claude CLI binary name. On Windows the npm shim is
+/// `claude.cmd`; elsewhere it's plain `claude`. We rely on PATH; if the
+/// user has Claude installed via a non-PATH location, the spawn will fail
+/// with a recognizable "failed to spawn" log entry.
+fn claude_cli_name() -> &'static str {
+    if cfg!(windows) { "claude.cmd" } else { "claude" }
+}
+
 /// Look up `git ls-remote origin HEAD` for each marketplace under
 /// `~/.claude/plugins/marketplaces/<name>/`. Returns a marketplace → SHA map.
 /// Marketplaces that aren't a git checkout, can't reach their remote, or
@@ -697,5 +823,47 @@ mod tests {
         assert_eq!(value["enabledPlugins"]["a@m"], false);
         // Sibling enabledPlugins entry unchanged.
         assert_eq!(value["enabledPlugins"]["b@m"], false);
+    }
+
+    /// Mirror of the toggle RMW test for the orphaned-remove path: the
+    /// removed key disappears, every unrelated key stays put. This is the
+    /// shape `remove_orphaned_plugin` writes back via serde — the test
+    /// pins the in-memory mutation so future refactors don't accidentally
+    /// nuke siblings under enabledPlugins or top-level keys.
+    #[test]
+    fn remove_orphaned_drops_only_target_key() {
+        let original = r#"{"theme":"dark","enabledPlugins":{"a@m":true,"b@m":false,"c@m":true},"other":42}"#;
+        let mut value: serde_json::Value = serde_json::from_str(original).unwrap();
+        if let Some(map) = value
+            .as_object_mut()
+            .and_then(|m| m.get_mut("enabledPlugins"))
+            .and_then(|v| v.as_object_mut())
+        {
+            map.remove("b@m");
+        }
+        assert_eq!(value["theme"], "dark");
+        assert_eq!(value["other"], 42);
+        assert_eq!(value["enabledPlugins"]["a@m"], true);
+        assert!(value["enabledPlugins"].get("b@m").is_none());
+        assert_eq!(value["enabledPlugins"]["c@m"], true);
+    }
+
+    /// Missing enabledPlugins key is a no-op rather than a panic — covers
+    /// the orphaned-remove edge case where the user clicks Remove on a
+    /// card that some other process already cleaned up between list
+    /// render and click.
+    #[test]
+    fn remove_orphaned_on_missing_map_is_noop() {
+        let original = r#"{"theme":"dark"}"#;
+        let mut value: serde_json::Value = serde_json::from_str(original).unwrap();
+        if let Some(map) = value
+            .as_object_mut()
+            .and_then(|m| m.get_mut("enabledPlugins"))
+            .and_then(|v| v.as_object_mut())
+        {
+            map.remove("b@m");
+        }
+        assert_eq!(value["theme"], "dark");
+        assert!(value.get("enabledPlugins").is_none());
     }
 }

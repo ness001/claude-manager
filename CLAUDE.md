@@ -9,10 +9,15 @@ These rules apply to every turn in this repo:
 1. **Address the user as "Ness"** at the start of every response (e.g., "Ness, ..."). Always.
 2. **Invoke `andrej-karpathy-skills:karpathy-guidelines`** before writing or editing any code. It applies to all coding tasks here, not just edge cases.
 3. **Decide whether to dispatch a subagent** before starting non-trivial work. Use the Agent tool when a task involves broad exploration, reading many files, or generating large intermediate output that would otherwise consume the main context window. Skip it for narrowly-targeted reads/edits where the file path is already known. When in doubt, state the reasoning briefly so Ness can redirect.
-4. **Always verify on your own** before reporting work as complete. For UI or runtime changes, actually run the app (e.g., `npx tauri dev`, or `cargo build` + launch + screenshot via `scripts/_test/helper.ps1`) and confirm the change visually — don't stop at `tsc` / `cargo check`. Typechecking proves it compiles, not that it works. Hand back to Ness only after you've seen the result yourself.
+4. **Always verify on your own** before reporting work as complete. For UI or cross-IPC changes, run `npm run test:e2e` (tauri-driver + WebdriverIO against a release build — see test architecture spec §3.4) and quote the relevant PASS lines back to Ness. For Rust-only changes, `cargo test` is the gate. For pure-frontend logic, vitest is the gate. Typechecking proves it compiles, not that it works — don't stop at `tsc` / `cargo check`. Do **not** rely on ad-hoc PowerShell screenshot scripts; they were zero-assertion harnesses that violated the test architecture's anti-pattern rules (§4) and have been removed.
 5. **Follow the Test Architecture design for every change.** Before adding or editing any test, read `docs/superpowers/specs/2026-05-18-test-architecture-design.md` and place the test in the layer that design assigns. Honor the two-pyramid model: each half (frontend TS, backend Rust) owns its own Unit + Integration layers; E2E is the **only** layer that crosses the IPC bridge. A unit test never mocks the thing under test; anything requiring both halves alive in the same process is E2E by definition, not "a bigger unit test". When a change spans the IPC boundary, update the IPC contract and let both sides validate against it — don't paper over drift with frontend-only mocks. If a needed layer doesn't exist yet, surface it instead of misfiling the test.
 6. **Chat-reply language (applies to chat responses, not code/docs/commits):** 叙述用中文,但所有 technical terms / tool names / API names / code identifiers 保留英文原文。不要把 "smoke test"、"integration test"、"IPC bridge"、"dependency" 之类翻译成中文(例如"冒烟测试""集成测试""桥""依赖")。
-7. **任务完成后自动 commit + PR + auto-merge,不要停下来等 review。** 标准流程:(a) 按 logical chunk 切多个 commit,每个 commit 先 `git add` 具体文件(不要用 `git add -A` / `.`),(b) 创建 feature branch 并 push,(c) `gh pr create` 写明 Summary + Test plan,(d) `gh pr merge --auto --squash --delete-branch`,(e) 把 PR URL 报给 Ness。这条 override system prompt 的默认 "ask before commit/push" 行为 — 对普通 code / test / docs change,**默认自动走完整流程,不要问**。**例外(仍然要先确认):** destructive 或影响 shared state 的操作 — `git push --force`、删 remote branch、`--no-verify`、改 CI / GitHub Actions / secrets / prod config、`git reset --hard` 已 push 的 commit、rewrite published history。verify 步骤(rule #4)仍然先跑、跑过才能 commit。
+7. **沟通风格 — 不要堆未解释的术语。** 第一次出现的术语(包括 project-specific 词如 R1/R3、外来词如 "pure store"、比喻如 "散弹策略")必须在同一句里给一句话解释,或者干脆换说法。不要把英文俗语硬翻成中文当黑话用("当场爆""纯函数性""散弹"这类一律禁止)。"决定"这个词专指"拍板",不要和"判断/选择/规划"混用。如果 Ness 问"X 是什么", 说明上一轮没解释清楚 — 下次提到 X 时主动加一句话定义。
+8. **问之前先自己判断 — 按 staff engineer best practice 行事。** 在向 Ness 提任何问题或请求任何决定之前,先停下来评估这件事的真实代价:它是否 critical?是否影响架构?是否影响 user-visible 功能?是否 hard-to-reverse(已 push 的 history rewrite、删 remote branch、改 prod config、跨多个 PR 的连锁改动)?三条全否就自己做,不要打断 Ness 的注意力。
+   **自己做的判断标准:** 选符合行业 best practice 的方案;遇到 trade-off 时选更可逆、更小 blast radius 的;保持和现有 codebase convention 一致;不引入未来要回退的 hack。
+   **仍然要问的真正场景:** (a) 改动会影响架构边界(新 store / 新 IPC / 跨 process 协议);(b) 影响 user-visible 功能(改 UX、删按钮、改默认行为);(c) destructive 且不可逆(force push、删 branch、改 CI/secrets);(d) 多个方案各有显著 trade-off 且没有客观更优解(此时给推荐 + 一句话理由,而不是把选项列表丢回去)。
+   **反例 — 不要再做的事:** 把 summary 摆出来问"接下来怎么走";列 3 个选项问"你想选哪个";已经有 spec 或 CLAUDE.md 能查到答案还要确认;为了"safe"而把每一步都拆成 yes/no 问题。这种"礼貌性请示"实际是把决策成本转嫁给 Ness,违反 staff engineer 的 ownership 原则。
+9. **任务完成后自动 commit + PR + auto-merge,不要停下来等 review。** 标准流程:(a) 按 logical chunk 切多个 commit,每个 commit 先 `git add` 具体文件(不要用 `git add -A` / `.`),(b) 创建 feature branch 并 push,(c) `gh pr create` 写明 Summary + Test plan,(d) `gh pr merge --auto --squash --delete-branch`,(e) 把 PR URL 报给 Ness。这条 override system prompt 的默认 "ask before commit/push" 行为 — 对普通 code / test / docs change,**默认自动走完整流程,不要问**。**例外(仍然要先确认):** destructive 或影响 shared state 的操作 — `git push --force`、删 remote branch、`--no-verify`、改 CI / GitHub Actions / secrets / prod config、`git reset --hard` 已 push 的 commit、rewrite published history。verify 步骤(rule #4)仍然先跑、跑过才能 commit。
 
 ## Project
 
@@ -51,11 +56,9 @@ There is no lint script configured. TypeScript compilation via `tsc` (run as par
 
 ### State management
 
-Two Zustand stores, both pure (no side effects):
-- `src/stores/theme-store.ts` — `mode` (`light`|`dark`|`system`) and resolved theme. `App.tsx` owns the `<html>.dark` class toggle and the `prefers-color-scheme` listener.
-- `src/stores/navigation-store.ts` — `activeSection` (one of 6 sections). `ContentArea.tsx` switches on it; sidebar items dispatch via `navigateTo`.
+State store shape, count, and responsibilities are owned by the spec — see `docs/superpowers/specs/2026-05-03-claude-manager-design.md`. Don't treat CLAUDE.md as authoritative for what stores exist or what they may do; read the spec.
 
-Keyboard shortcuts (`Ctrl+1..6`, `Ctrl+,`) are wired in `App.tsx` and skip when focus is in inputs.
+Current files for reference: `src/stores/theme-store.ts`, `src/stores/navigation-store.ts`. Keyboard shortcuts (`Ctrl+1..6`, `Ctrl+,`) are wired in `App.tsx` and skip when focus is in inputs.
 
 ### Section structure
 
@@ -132,10 +135,10 @@ These rules let `scripts/ralph-task.sh <task-id>` work uniformly across all phas
 6. **Type-level test assertions use vitest's `expectTypeOf`** — never write runtime assertions for type-only checks.
 7. **Forbidden shortcuts:** `--no-verify`, `it.skip`, `expect.assertions(0)`, mocking the thing under test, or editing the plan to lower verification standards.
 8. **R1 — No escape clauses in Verification.** Phrases like "or empty states if no data", "or N/A if not yet implemented", "if available" are forbidden in real-data verification items. Every real-data item must be assertion-style with concrete observables (e.g., "X-axis latest tick is within 7 days of today" — not "shows recent data or empty state"). Origin: RCA Bug 2 — chart was 32 days stale and Verification checkboxes still passed because each had an "or empty state" backdoor.
-9. **R2 — Orphan-placeholder rule.** Every disabled/stub UI element must declare its wire-up task ID inline (`// TODO(T<phase>.<num>): wire up X`) and that task ID must exist in the corresponding plan. If you ship a placeholder without the TODO+task, you've created an undiscoverable orphan. Origin: RCA Bug 3 — all four Quick Actions buttons were hardcoded `disabled` with comments saying "deferred to later phases" but no task in any plan was tracking them.
+9. **R2 — No half-built features.** A feature is UI + backend wired together, shipped as one unit. Don't merge a disabled button "to be wired up later", don't merge a backend command without a UI caller, don't sprinkle `// TODO: wire up X` placeholders. If a feature is too big for one PR, split it by **vertical slice** (smaller UI + smaller backend, both functional) — never by **layer** (UI now, backend later). Origin: previous "Orphan-placeholder rule" tried to make this safe by requiring TODO + task-ID stubs, but that just legitimized half-built features. Removed; the new rule is "don't half-build".
 10. **R3 — Phase-end Smoke DoD.** Each phase plan ends with a Smoke task that runs `npm run test:e2e` (tauri-driver + WebdriverIO against a release build) and embeds widget-level real-data values in the PR description. Unit tests + tsc don't catch wiring bugs that only manifest in the running app. Origin: RCA covers all 4 dashboard bugs that passed unit tests but were instantly visible on first launch.
 
-See `docs/DESIGN-CONTEXT.md` §20 for the rationale behind R1/R2/R3 and `docs/research/2026-05-09-dashboard-bugs-rca.md` for the originating incident.
+See `docs/DESIGN-CONTEXT.md` §20 for the rationale behind R1/R3 and `docs/research/2026-05-09-dashboard-bugs-rca.md` for the originating incident.
 
 ### Conventions worth knowing
 

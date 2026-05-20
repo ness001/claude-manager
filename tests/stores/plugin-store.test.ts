@@ -173,4 +173,73 @@ describe("plugin-store", () => {
     expect(usePluginStore.getState().error).toContain("loader boom");
     expect(usePluginStore.getState().plugins).toEqual([]);
   });
+
+  // Task #29: install_plugin invoke + loadPlugins refresh.
+  it("installPlugin invokes install_plugin then reloads", async () => {
+    invokeMock.mockResolvedValue(0); // exit code 0
+    const reloaded = [makePlugin({ name: "alpha" })];
+    loadPluginsMock.mockResolvedValue(reloaded);
+
+    await usePluginStore.getState().installPlugin("alpha");
+
+    const installCalls = invokeMock.mock.calls.filter(
+      (c) => c[0] === "install_plugin",
+    );
+    expect(installCalls).toHaveLength(1);
+    expect(installCalls[0][1]).toEqual({ name: "alpha" });
+    expect(loadPluginsMock).toHaveBeenCalledTimes(1);
+    expect(usePluginStore.getState().plugins).toEqual(reloaded);
+    expect(usePluginStore.getState().error).toBeNull();
+  });
+
+  it("installPlugin records error on non-zero exit but still reloads", async () => {
+    invokeMock.mockResolvedValue(1);
+    loadPluginsMock.mockResolvedValue([]);
+
+    await usePluginStore.getState().installPlugin("doesnotexist");
+
+    expect(usePluginStore.getState().error).toContain("exit");
+    expect(loadPluginsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("uninstallPlugin invokes uninstall_plugin with key then reloads", async () => {
+    const meta = makePlugin({ state: "broken" });
+    invokeMock.mockResolvedValue(0);
+    loadPluginsMock.mockResolvedValue([]);
+
+    await usePluginStore.getState().uninstallPlugin(meta);
+
+    const uninstallCalls = invokeMock.mock.calls.filter(
+      (c) => c[0] === "uninstall_plugin",
+    );
+    expect(uninstallCalls).toHaveLength(1);
+    expect(uninstallCalls[0][1]).toEqual({ key: pluginKey(meta) });
+    expect(loadPluginsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("removeOrphaned invokes remove_orphaned_plugin and reloads", async () => {
+    const meta = makePlugin({ state: "orphaned" });
+    invokeMock.mockResolvedValue(undefined);
+    loadPluginsMock.mockResolvedValue([]);
+
+    await usePluginStore.getState().removeOrphaned(meta);
+
+    const calls = invokeMock.mock.calls.filter(
+      (c) => c[0] === "remove_orphaned_plugin",
+    );
+    expect(calls).toHaveLength(1);
+    expect(calls[0][1]).toEqual({ key: pluginKey(meta) });
+    expect(loadPluginsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("installPlugin reloads even when invoke rejects", async () => {
+    invokeMock.mockRejectedValue(new Error("spawn ENOENT"));
+    loadPluginsMock.mockResolvedValue([]);
+
+    await expect(
+      usePluginStore.getState().installPlugin("alpha"),
+    ).rejects.toThrow("spawn ENOENT");
+    expect(usePluginStore.getState().error).toContain("spawn ENOENT");
+    expect(loadPluginsMock).toHaveBeenCalledTimes(1);
+  });
 });

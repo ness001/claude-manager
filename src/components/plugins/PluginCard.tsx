@@ -56,6 +56,9 @@ function truncate(s: string, max: number): string {
 export function PluginCard({ plugin, selected }: PluginCardProps) {
   const selectPlugin = usePluginStore((s) => s.selectPlugin);
   const togglePlugin = usePluginStore((s) => s.togglePlugin);
+  const installPlugin = usePluginStore((s) => s.installPlugin);
+  const uninstallPlugin = usePluginStore((s) => s.uninstallPlugin);
+  const removeOrphaned = usePluginStore((s) => s.removeOrphaned);
 
   // Toggle-error surface. `togglePlugin` re-throws on `write_plugin_enabled`
   // failure (settings.json read-only / EACCES / IPC sandbox denial), but
@@ -70,6 +73,41 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
   const isBroken = plugin.state === "broken";
   const isDisabled = plugin.state === "disabled";
   const isUpdateAvailable = plugin.state === "update-available";
+  const isOrphaned = plugin.state === "orphaned";
+
+  const [isBusy, setIsBusy] = useState(false);
+  const onReinstall = async () => {
+    setIsBusy(true);
+    try {
+      // Reinstall = same `claude plugins install` codepath. The CLI is
+      // idempotent enough to repair a broken on-disk layout; if it can't,
+      // the failure streams into the Plugins log window.
+      await installPlugin(plugin.name);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+  const onRemoveBroken = async () => {
+    if (!window.confirm(`Remove ${plugin.name}? This runs \`claude plugins uninstall\`.`)) {
+      return;
+    }
+    setIsBusy(true);
+    try {
+      await uninstallPlugin(plugin);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+  const onRemoveOrphaned = async () => {
+    setIsBusy(true);
+    try {
+      // Per spec §6.7: orphaned removal is config cleanup, not an
+      // uninstall — no confirm dialog.
+      await removeOrphaned(plugin);
+    } finally {
+      setIsBusy(false);
+    }
+  };
 
   // WAI-ARIA Toolbar pattern keyboard model for the broken-plugin
   // Reinstall/Remove pair — roving tabindex + ArrowLeft/Right + Home/End.
@@ -277,67 +315,75 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
             data-testid="plugin-broken-actions-toolbar"
             className="flex gap-2"
           >
-            {/* TODO(ui-defect-sweep#L293): wire Reinstall to a `claude plugins
-              * install <name>` IPC. Tracked in
-              * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md (the
-              * Reinstall checkbox is currently marked done because the stub
-              * was deemed acceptable until the IPC ships, but the underlying
-              * IPC work is still outstanding). Per CLAUDE.md R2 (Orphan-
-              * placeholder rule), every disabled stub must declare its
-              * wire-up tracker inline so the placeholder isn't an
-              * undiscoverable orphan. */}
+            {/* Spec §6.7 — broken-card Reinstall is now wired to
+              * `claude plugins install <name>` via the store. CLI output
+              * streams into the Plugins log window. */}
             <button
               ref={(el) => {
                 recoveryRefs.current[0] = el;
               }}
               type="button"
               data-testid="reinstall-btn"
-              // WAI-ARIA APG (Toolbar pattern): use `aria-disabled="true"`
-              // rather than the native `disabled` attribute so the button
-              // remains focusable. Native `disabled` makes the element
-              // unfocusable in Chromium/WebView2, breaking the Toolbar
-              // pattern's roving-tabindex keyboard model — arrow keys
-              // can't land on a button that can't take focus. The button
-              // is visually disabled (opacity-50 + cursor-not-allowed)
-              // and has no onClick handler so soft-disable is safe.
-              // https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/
-              aria-disabled="true"
+              disabled={isBusy}
+              aria-busy={isBusy}
               tabIndex={recoveryTabStop === 0 ? 0 : -1}
               onFocus={() => setRecoveryTabStop(0)}
               onKeyDown={(e) => onRecoveryKeyDown(e, 0)}
-              // Sighted users see the long "Reinstall is not yet wired …"
-              // tooltip on hover; mirror the gist into the accessible name
-              // so screen-reader users hear the same CLI-workaround hint
-              // instead of just "Reinstall, button, dimmed" and assuming
-              // the app is broken (WCAG 4.1.2). Mirrors PR #181 / #183 /
-              // #184 / #154 (PluginListView Install Plugin stub).
-              aria-label="Reinstall (not yet wired — use the CLI)"
-              title="Reinstall is not yet wired — run `claude plugin install` from the terminal for now"
-              className="cursor-not-allowed rounded border border-border px-2 py-1 text-[11px] text-text-secondary opacity-50"
+              onClick={() => {
+                void onReinstall();
+              }}
+              aria-label={`Reinstall ${plugin.name}`}
+              title="Reinstall via the Claude CLI"
+              className="rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              Reinstall
+              {isBusy ? "Working…" : "Reinstall"}
             </button>
-            {/* TODO(ui-defect-sweep#L294): wire Remove to a `claude plugins
-              * uninstall <name>` IPC. Tracked in
-              * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md ("Remove
-              * button has no onClick handler"). Per CLAUDE.md R2. */}
+            {/* Spec §6.7 — broken-card Remove is now wired to
+              * `claude plugins uninstall <key>` via the store, gated by
+              * a confirm() dialog. */}
             <button
               ref={(el) => {
                 recoveryRefs.current[1] = el;
               }}
               type="button"
               data-testid="remove-btn"
-              // See companion ARIA-disable comment on the Reinstall button above.
-              aria-disabled="true"
+              disabled={isBusy}
+              aria-busy={isBusy}
               tabIndex={recoveryTabStop === 1 ? 0 : -1}
               onFocus={() => setRecoveryTabStop(1)}
               onKeyDown={(e) => onRecoveryKeyDown(e, 1)}
-              // See companion comment on the Reinstall button above.
-              aria-label="Remove (not yet wired — use the CLI)"
-              title="Remove is not yet wired — run `claude plugin uninstall` from the terminal for now"
-              className="cursor-not-allowed rounded border border-border px-2 py-1 text-[11px] text-text-secondary opacity-50"
+              onClick={() => {
+                void onRemoveBroken();
+              }}
+              aria-label={`Remove ${plugin.name}`}
+              title="Remove via the Claude CLI"
+              className="rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Remove
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isOrphaned && (
+        <div data-testid="orphaned-warning" className="flex flex-col gap-1">
+          <div className="text-[11px] text-status-amber">
+            Listed in settings.json but not installed. Remove the stale entry.
+          </div>
+          <div>
+            <button
+              type="button"
+              data-testid="orphaned-remove-btn"
+              disabled={isBusy}
+              aria-busy={isBusy}
+              onClick={() => {
+                void onRemoveOrphaned();
+              }}
+              aria-label={`Remove orphaned entry for ${plugin.name}`}
+              title="Remove the stale entry from settings.json"
+              className="rounded border border-border px-2 py-1 text-[11px] text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              {isBusy ? "Working…" : "Remove"}
             </button>
           </div>
         </div>

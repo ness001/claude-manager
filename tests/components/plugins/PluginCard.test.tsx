@@ -132,62 +132,29 @@ describe("PluginCard", () => {
     ).toBe(tb);
   });
 
-  // Reinstall has no IPC backing yet — render it soft-disabled (aria-disabled,
-  // not native disabled) with an explanatory tooltip rather than as a
-  // clickable lie. Native `disabled` was dropped in favor of `aria-disabled`
-  // so the button stays focusable for the WAI-ARIA Toolbar pattern's roving
-  // tabindex (the broken-actions row uses role="toolbar"; native-disabled
-  // buttons can't be focused in Chromium/WebView2, breaking arrow-key nav).
-  it("Reinstall button is soft-disabled (aria-disabled) with an explanatory title", () => {
+  // Reinstall + Remove are now wired to the Rust IPCs (Task #29 / spec §6.7).
+  // Both must:
+  //  - be enabled (no aria-disabled),
+  //  - carry an aria-label that names the plugin (toolbar disambiguation),
+  //  - stay focusable inside role="toolbar" for the roving-tabindex model.
+  it("Reinstall + Remove are wired and name the plugin in their accessible label", () => {
     render(
-      <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
+      <PluginCard
+        plugin={makePlugin({ name: "broken-x", state: "broken" })}
+        selected={false}
+      />,
     );
-    const btn = screen.getByTestId("reinstall-btn") as HTMLButtonElement;
-    expect(btn.getAttribute("aria-disabled")).toBe("true");
-    // Native disabled MUST be absent so the button stays focusable inside
-    // the role="toolbar" parent — Toolbar APG requires arrow-key nav and
-    // disabled-attr buttons can't take focus in Chromium.
-    expect(btn.hasAttribute("disabled")).toBe(false);
-    expect(btn.title.length).toBeGreaterThan(0);
-    expect(btn.title.toLowerCase()).toContain("not yet wired");
-  });
+    const reinstall = screen.getByTestId("reinstall-btn") as HTMLButtonElement;
+    expect(reinstall.getAttribute("aria-disabled")).not.toBe("true");
+    expect(reinstall.disabled).toBe(false);
+    expect(reinstall.getAttribute("aria-label")).toMatch(/reinstall/i);
+    expect(reinstall.getAttribute("aria-label")).toContain("broken-x");
 
-  // WCAG 4.1.2 (Name, Role, Value): the disabled stub buttons previously
-  // exposed the "not yet wired" hint only via the visual `title` tooltip.
-  // Screen-reader users heard just "Reinstall, button, dimmed" / "Remove,
-  // button, dimmed" and had no way to discover the CLI workaround. Mirror
-  // the title text into aria-label so SR users get the same hint, and add
-  // aria-disabled="true" for parity with the codebase's other disabled
-  // stubs (PR #181 QuickActions, PR #183 SessionListPanel new-session,
-  // PR #184 SessionInfoBar actions, PluginListView Install Plugin stub).
-  it("Reinstall + Remove disabled stubs expose the CLI hint via aria-label (WCAG 4.1.2)", () => {
-    render(
-      <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
-    );
-    const reinstall = screen.getByTestId("reinstall-btn");
-    expect(reinstall.getAttribute("aria-disabled")).toBe("true");
-    expect(reinstall.getAttribute("aria-label")?.toLowerCase()).toContain(
-      "not yet wired",
-    );
-    const remove = screen.getByTestId("remove-btn");
-    expect(remove.getAttribute("aria-disabled")).toBe("true");
-    expect(remove.getAttribute("aria-label")?.toLowerCase()).toContain(
-      "not yet wired",
-    );
-  });
-
-  // Same treatment for Remove — no `claude plugin uninstall` IPC yet.
-  // Soft-disabled (aria-disabled, no native disabled) for the same Toolbar
-  // pattern reason as Reinstall above.
-  it("Remove button is soft-disabled (aria-disabled) with an explanatory title", () => {
-    render(
-      <PluginCard plugin={makePlugin({ state: "broken" })} selected={false} />,
-    );
-    const btn = screen.getByTestId("remove-btn") as HTMLButtonElement;
-    expect(btn.getAttribute("aria-disabled")).toBe("true");
-    expect(btn.hasAttribute("disabled")).toBe(false);
-    expect(btn.title.length).toBeGreaterThan(0);
-    expect(btn.title.toLowerCase()).toContain("not yet wired");
+    const remove = screen.getByTestId("remove-btn") as HTMLButtonElement;
+    expect(remove.getAttribute("aria-disabled")).not.toBe("true");
+    expect(remove.disabled).toBe(false);
+    expect(remove.getAttribute("aria-label")).toMatch(/remove/i);
+    expect(remove.getAttribute("aria-label")).toContain("broken-x");
   });
 
   // WAI-ARIA Toolbar pattern (https://www.w3.org/WAI/ARIA/apg/patterns/toolbar/):
@@ -367,21 +334,15 @@ describe("PluginCard", () => {
     expect(toggle.className).toContain("focus-visible:ring-offset-bg-primary");
   });
 
-  // CLAUDE.md R2 (Orphan-placeholder rule): every disabled stub must declare
-  // its wire-up tracker inline so the placeholder isn't an undiscoverable
-  // orphan. The Reinstall + Remove buttons in PluginCard are disabled until
-  // the `claude plugins install/uninstall` IPC ships; both must reference
-  // the open tracker in docs/superpowers/plans/2026-05-08-ui-defect-sweep.md
-  // (lines 293–294). Mirrors PR #105 (QuickActions).
-  it("PluginCard source has R2 wire-up TODOs for the Reinstall + Remove stubs", async () => {
-    const fs = await import("node:fs");
-    const path = await import("node:path");
-    const src = fs.readFileSync(
-      path.resolve(__dirname, "../../../src/components/plugins/PluginCard.tsx"),
-      "utf8",
+  // Task #29 / spec §6.7: orphaned cards get a [Remove] button that drops
+  // the dangling settings.json entry without spawning the CLI.
+  it("orphaned card renders a Remove button", () => {
+    render(
+      <PluginCard plugin={makePlugin({ state: "orphaned" })} selected={false} />,
     );
-    expect(src).toMatch(/TODO\(ui-defect-sweep#L293\)[\s\S]*Reinstall/);
-    expect(src).toMatch(/TODO\(ui-defect-sweep#L294\)[\s\S]*Remove/);
+    const btn = screen.getByTestId("orphaned-remove-btn") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(btn.getAttribute("aria-label")).toMatch(/orphan/i);
   });
 
   // UX bug: the plugin name span has `truncate` but no `title`, so long
