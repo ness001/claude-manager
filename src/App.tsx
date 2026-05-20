@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { SidebarRail } from "./components/SidebarRail";
 import { ContentArea } from "./components/ContentArea";
 import { TitleBar } from "./components/TitleBar";
+import { LogView } from "./components/plugins/LogView";
 import { useThemeStore } from "./stores/theme-store";
 import {
   useNavigationStore,
@@ -21,6 +22,17 @@ const SHORTCUTS: Record<string, Section> = {
 };
 
 function App() {
+  // Secondary windows (e.g. plugins-log) load the same bundle but route on
+  // URL hash — see spec §6.8 (Log Window). Hooks live inside MainApp so the
+  // early-return below doesn't violate the Rules of Hooks (the hook call
+  // count must be stable across renders of a single component).
+  if (window.location.hash === "#/plugins-log") {
+    return <LogView />;
+  }
+  return <MainApp />;
+}
+
+function MainApp() {
   const resolved = useThemeStore((s) => s.resolved);
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);

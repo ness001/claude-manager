@@ -101,7 +101,11 @@ pub fn read_settings_enabled_plugins() -> Result<String, String> {
 /// preserving all unrelated keys (read-modify-write per Phase 3 conventions).
 /// Atomic via write-to-temp-then-rename.
 #[tauri::command]
-pub fn write_plugin_enabled(key: String, enabled: bool) -> Result<(), String> {
+pub fn write_plugin_enabled(
+    app: tauri::AppHandle,
+    key: String,
+    enabled: bool,
+) -> Result<(), String> {
     let Some(root) = claude_home() else {
         return Err("Could not resolve ~/.claude".to_string());
     };
@@ -128,12 +132,22 @@ pub fn write_plugin_enabled(key: String, enabled: bool) -> Result<(), String> {
     let inner = entry
         .as_object_mut()
         .ok_or_else(|| "enabledPlugins is not an object".to_string())?;
-    inner.insert(key, serde_json::Value::Bool(enabled));
+    inner.insert(key.clone(), serde_json::Value::Bool(enabled));
 
     let serialized = serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?;
     let tmp = path.with_extension("json.tmp");
     std::fs::write(&tmp, serialized.as_bytes()).map_err(|e| e.to_string())?;
     std::fs::rename(&tmp, &path).map_err(|e| e.to_string())?;
+
+    // Audit trail per spec §6.8 — toggles are one of the Plugins-section
+    // operations explicitly enumerated in scope.
+    super::log::log_event(
+        &app,
+        "toggle",
+        Some(&key),
+        "info",
+        &format!("enabled={}", enabled),
+    );
     Ok(())
 }
 
