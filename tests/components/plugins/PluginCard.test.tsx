@@ -261,6 +261,41 @@ describe("PluginCard", () => {
     expect(writes).toHaveLength(1);
   });
 
+  it("toggle failure surfaces inline alert (silent-failure family)", async () => {
+    // Repro: `togglePlugin` re-throws when `write_plugin_enabled` fails
+    // (settings.json read-only / EACCES / IPC denial). The optimistic
+    // state flip rolls back invisibly — without this surface the user
+    // clicks, sees nothing change, and has no idea why. Mirrors the
+    // PR #91 (SkillCard) and PR #299 (AssistantMessage) pattern.
+    invokeMock.mockRejectedValueOnce(new Error("EACCES: settings.json"));
+    const meta = makePlugin({ state: "active" });
+    usePluginStore.setState({ plugins: [meta] });
+    render(<PluginCard plugin={meta} selected={false} />);
+    fireEvent.click(screen.getByTestId("enable-toggle"));
+    await waitFor(() => {
+      const alert = screen.getByTestId("toggle-error");
+      expect(alert.getAttribute("role")).toBe("alert");
+      expect(alert.textContent).toContain("EACCES: settings.json");
+    });
+  });
+
+  it("toggle success after a prior failure clears the alert", async () => {
+    invokeMock.mockRejectedValueOnce(new Error("EACCES: settings.json"));
+    const meta = makePlugin({ state: "active" });
+    usePluginStore.setState({ plugins: [meta] });
+    render(<PluginCard plugin={meta} selected={false} />);
+    fireEvent.click(screen.getByTestId("enable-toggle"));
+    await waitFor(() => {
+      expect(screen.getByTestId("toggle-error")).toBeTruthy();
+    });
+    // Next click resolves — alert must clear.
+    invokeMock.mockResolvedValueOnce(undefined);
+    fireEvent.click(screen.getByTestId("enable-toggle"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("toggle-error")).toBeNull();
+    });
+  });
+
   it("update-available shows the Update pill alongside the version pill", () => {
     render(
       <PluginCard
