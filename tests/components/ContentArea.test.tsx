@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { act, render, screen, cleanup } from "@testing-library/react";
 import { ContentArea } from "../../src/components/ContentArea";
 import {
   useNavigationStore,
@@ -95,5 +95,26 @@ describe("ContentArea", () => {
     expect(main.getAttribute("tabindex")).toBe("0");
     expect(main.className).toContain("focus-visible:ring-2");
     expect(main.className).toContain("focus-visible:ring-accent");
+  });
+
+  // Defect: <main> is the same DOM node across navigations (only the inner
+  // <Component /> swaps), so the browser preserves whatever scrollTop the
+  // previous section left behind. Symptom: user scrolls deep in Plugins,
+  // clicks the Dashboard sidebar item, and lands on a Dashboard whose top
+  // is clipped above the viewport — the new content fits in one screen but
+  // <main> is still scrolled down. Same defect class and shape as PR #306
+  // (ConversationViewer scrollTop reset on session-path change).
+  it("resets scrollTop to 0 when activeSection changes (cross-section scroll leak)", () => {
+    useNavigationStore.getState().navigateTo("plugins");
+    render(<ContentArea />);
+    const main = screen.getByRole("main");
+    // Seed a deep scroll position as if the user had scrolled the prior section.
+    main.scrollTop = 500;
+    expect(main.scrollTop).toBe(500);
+    // Navigate to a different section — the same <main> node should reset.
+    act(() => {
+      useNavigationStore.getState().navigateTo("dashboard");
+    });
+    expect(main.scrollTop).toBe(0);
   });
 });

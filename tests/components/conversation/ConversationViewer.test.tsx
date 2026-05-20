@@ -362,7 +362,11 @@ describe("ConversationViewer", () => {
         new KeyboardEvent("keydown", { key: "ArrowDown", ctrlKey: true }),
       );
     });
-    await waitFor(() => expect(input.value).toBe("2"));
+    // Ctrl+ArrowDown requires two render cycles to propagate to the input
+    // (parent's setCurrentTurn → TurnInput's re-sync useEffect → setDraft).
+    // The default 1s waitFor timeout is tight under CI CPU pressure; widen
+    // defensively to keep this from flaking on busy runners.
+    await waitFor(() => expect(input.value).toBe("2"), { timeout: 2000 });
   });
 
   it("Ctrl+ArrowDown is ignored while focus is in a text input (no hijack)", async () => {
@@ -472,10 +476,15 @@ describe("ConversationViewer", () => {
     // Switch to session B (new path → same component instance).
     invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
     rerender(<ConversationViewer path="/sessionB.jsonl" />);
+    // Path-change reset propagates through multiple cycles: parent's
+    // useEffect([path]) → setCurrentTurn(1) → re-render → TurnInput's
+    // re-sync useEffect → setDraft("1"). Default 1s waitFor timeout is
+    // tight under CI CPU pressure; widen defensively (same rationale
+    // as the Ctrl+ArrowDown test above).
     await waitFor(() => {
       const after = screen.getByTestId("turn-input") as HTMLInputElement;
       expect(after.value).toBe("1");
-    });
+    }, { timeout: 2000 });
   });
 
   // Cross-session leak (scroll position): same shape as the currentTurn

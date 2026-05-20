@@ -743,4 +743,120 @@ describe("McpServerForm", () => {
       screen.getByTestId("form-env-add").getAttribute("aria-label"),
     ).toBe("Add Environment variable entry");
   });
+
+  // WCAG 1.3.1 / 4.1.2 — visible <label> text ("Name", "Command", "URL")
+  // must be programmatically associated with its <input> via htmlFor/id.
+  // Without this association, clicking the visible label text does NOT
+  // focus the input (sighted-user click affordance lost) and accessibility
+  // linters flag the orphan <label> as missing its required association.
+  // The aria-label remains as the input's accessible name; this test
+  // pins the htmlFor↔id wiring so future refactors can't quietly drop it.
+  it("Name/Command/URL labels are associated with their inputs via htmlFor/id (WCAG 1.3.1)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+
+    const checkAssociation = (testid: string, labelText: string) => {
+      const input = screen.getByTestId(testid) as HTMLInputElement;
+      const id = input.getAttribute("id");
+      expect(id, `${testid} should have an id`).toBeTruthy();
+      const label = document.querySelector(`label[for="${id}"]`);
+      expect(
+        label,
+        `<label htmlFor="${id}"> should exist for ${testid}`,
+      ).not.toBeNull();
+      expect(label?.textContent).toBe(labelText);
+    };
+
+    checkAssociation("form-name", "Name");
+    checkAssociation("form-command", "Command");
+
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    checkAssociation("form-url", "URL");
+  });
+
+  // WCAG 3.3.1 (Error Identification) + 1.3.1 (Info and Relationships) — when
+  // a Field has an error, the underlying input must expose aria-invalid="true"
+  // and aria-describedby pointing at the rendered error message. Pre-fix, the
+  // error <p> rendered as an inert sibling — SR users heard the field's
+  // accessible name (from PRs #75/#77/#78/#79) but not that it was invalid,
+  // and not the error text.
+  it("errored fields expose aria-invalid + aria-describedby pointing at their error <p> (WCAG 3.3.1)", () => {
+    render(
+      <McpServerForm
+        existingNames={{ user: ["taken"], local: [], project: [] }}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+
+    // Name: starts empty → "required" error.
+    const name = screen.getByTestId("form-name");
+    expect(name.getAttribute("aria-invalid")).toBe("true");
+    expect(name.getAttribute("aria-describedby")).toBe("form-error-name");
+    expect(document.getElementById("form-error-name")?.textContent).toMatch(
+      /required/i,
+    );
+
+    // Command: starts empty in stdio mode → "required" error.
+    const command = screen.getByTestId("form-command");
+    expect(command.getAttribute("aria-invalid")).toBe("true");
+    expect(command.getAttribute("aria-describedby")).toBe("form-error-command");
+    expect(document.getElementById("form-error-command")).not.toBeNull();
+
+    // Once the user fixes the name, aria-invalid + aria-describedby drop off.
+    fireEvent.change(name, { target: { value: "ok-name" } });
+    expect(name.getAttribute("aria-invalid")).toBeNull();
+    expect(name.getAttribute("aria-describedby")).toBeNull();
+
+    // Switching to http mode surfaces a URL field that's also required.
+    fireEvent.click(screen.getByTestId("form-type-http"));
+    const url = screen.getByTestId("form-url");
+    expect(url.getAttribute("aria-invalid")).toBe("true");
+    expect(url.getAttribute("aria-describedby")).toBe("form-error-url");
+  });
+
+  // WAI-ARIA APG modal-dialog pattern + WCAG 2.4.3 (Focus Order): the form
+  // is `role="dialog" aria-modal="true"` (line ~164 of source) but without a
+  // Tab/Shift+Tab handler the keyboard focus could escape the modal and land
+  // on background controls (McpPanel toolbar buttons, search field, cards
+  // beneath the backdrop) — those are visually obscured but still in the
+  // document focus order. The trap cycles within the form's tabbable set.
+  it("Tab from the last focusable wraps to the first; Shift+Tab from first wraps to last (focus trap)", () => {
+    render(
+      <McpServerForm
+        existingNames={EMPTY_NAMES}
+        cwd=""
+        onClose={() => {}}
+        onSaved={() => {}}
+      />,
+    );
+    const form = screen.getByTestId("mcp-form") as HTMLFormElement;
+    const tabbables = Array.from(
+      form.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((el) => el.tabIndex !== -1);
+    expect(tabbables.length).toBeGreaterThan(1);
+    const first = tabbables[0];
+    const last = tabbables[tabbables.length - 1];
+
+    // Tab from last → wraps to first.
+    last.focus();
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+
+    // Shift+Tab from first → wraps to last.
+    first.focus();
+    expect(document.activeElement).toBe(first);
+    fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
 });

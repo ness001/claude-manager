@@ -120,8 +120,21 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
             // by-navigation the onClick handler exists to prevent. Mirror
             // the same shell hand-off on auxClick + treat Ctrl/Cmd+click
             // on the primary button as the same intent.
+            //
+            // onKeyDown covers keyboard activation. The browser's default
+            // Enter-on-focused-link behavior navigates the host element to
+            // `href` — inside Tauri's WebView that means losing the entire
+            // app view, the same death-by-navigation onClick exists to
+            // prevent. Mirror the shell hand-off so keyboard users get the
+            // same OS-shell open as mouse users. Space is not a browser
+            // default on <a>, but APG suggests honoring it for parity with
+            // button-like activation.
             a: ({ href, children, ...rest }) => {
-              const handleOpen = (e: React.MouseEvent<HTMLAnchorElement>) => {
+              const handleOpen = (
+                e:
+                  | React.MouseEvent<HTMLAnchorElement>
+                  | React.KeyboardEvent<HTMLAnchorElement>,
+              ) => {
                 e.preventDefault();
                 setOpenError(null);
                 if (href) {
@@ -144,6 +157,11 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
                     // contextmenu, not auxClick) keep its default behavior
                     // so users can still "Copy Link Address".
                     if (e.button === 1) handleOpen(e);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      handleOpen(e);
+                    }
                   }}
                   className="text-accent underline underline-offset-2 hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
                 >
