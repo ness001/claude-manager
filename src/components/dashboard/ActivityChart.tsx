@@ -8,7 +8,7 @@
 // The plan's case 1 calls out that `parseInt("7d")` works only by accident
 // and warns against it. "all" maps to Infinity so the slice keeps everything.
 
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import {
   Area,
@@ -144,6 +144,13 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
   const [series, setSeries] = useState<SeriesMode>("messages");
   const periodKb = useTablistKeyboard(PERIOD_BUTTONS, setPeriod);
   const seriesKb = useTablistKeyboard(SERIES_BUTTONS, setSeries);
+  // WCAG 1.3.1 + WAI-ARIA APG: bind the card root to its visible <h3> via
+  // aria-labelledby so SR landmark-rotor users can navigate to "Activity"
+  // by name. Mirrors PR #262 (ModelDonut), PR #266/#268 (PluginListView /
+  // McpPanel section roots), and the SystemHealth fix (src/components/
+  // dashboard/SystemHealth.tsx:131-138). ActivityChart was the lone
+  // dashboard holdout still rendering as a bare <div>.
+  const headingId = useId();
 
   // Memoize the sliced series — re-computed only when input or period flips.
   // Spec perf budget §T2.12: re-render on period toggle < 50ms.
@@ -157,9 +164,10 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
 
   if (data.length === 0) {
     return (
-      <div
+      <section
         data-testid="activity-chart"
         data-empty="true"
+        aria-labelledby={headingId}
         // a11y: the "No activity yet" copy appears asynchronously after the
         // dashboard's stats-cache resolves to an empty/missing payload.
         // Without a live region, screen-reader users get silence and can't
@@ -177,13 +185,13 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
             headings list (NVDA "H", JAWS "H"). ActivityChart was the only
             one missing — SR rotor users would skip past the chart silently.
             Mirrors PRs #61, #63, #64. */}
-        <h3 className="text-xs uppercase tracking-wide text-text-muted">
+        <h3 id={headingId} className="text-xs uppercase tracking-wide text-text-muted">
           Activity
         </h3>
         <div className="flex flex-1 items-center justify-center text-sm text-text-muted">
           No activity yet
         </div>
-      </div>
+      </section>
     );
   }
 
@@ -191,9 +199,10 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
     series === "messages" ? "messageCount" : "toolCallCount";
 
   return (
-    <div
+    <section
       data-testid="activity-chart"
       data-empty="false"
+      aria-labelledby={headingId}
       className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
     >
       {isStale ? (
@@ -232,7 +241,7 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
       {/* WCAG 1.3.1 / 2.4.6: section heading mirroring SystemHealth /
           ModelDonut / RecentSessions / QuickActions so SR users can
           locate the chart via the headings list. */}
-      <h3 className="text-xs uppercase tracking-wide text-text-muted">
+      <h3 id={headingId} className="text-xs uppercase tracking-wide text-text-muted">
         Activity
       </h3>
 
@@ -369,7 +378,7 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </section>
   );
 }
 

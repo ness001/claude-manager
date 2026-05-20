@@ -70,6 +70,15 @@ export const useMcpStore = create<McpStoreState>((set, get) => ({
   },
 
   addServer: async (server) => {
+    // Clear any stale `error` from a prior failed action before starting a
+    // new attempt. Without this, a previous `Couldn't …` banner stays
+    // visible across a successful retry — the user fixes the underlying
+    // problem (e.g. removes an invalid arg, restarts the `claude` daemon)
+    // and the action succeeds, but the McpPanel banner still reads "Couldn't
+    // refresh MCP status: …" because nothing in the success path clears it.
+    // Mirrors `loadServers` (line 61) which already does this. Same defect
+    // applied to updateServer / removeServer / refreshStatus below.
+    set({ error: null });
     try {
       await saveMcpServer(server, { cwd: get().cwd });
     } catch (err) {
@@ -80,6 +89,7 @@ export const useMcpStore = create<McpStoreState>((set, get) => ({
   },
 
   updateServer: async (server) => {
+    set({ error: null });
     try {
       await saveMcpServer(server, { cwd: get().cwd });
     } catch (err) {
@@ -90,6 +100,7 @@ export const useMcpStore = create<McpStoreState>((set, get) => ({
   },
 
   removeServer: async (scope, name) => {
+    set({ error: null });
     try {
       await deleteMcpServer(scope, name, { cwd: get().cwd });
     } catch (err) {
@@ -100,6 +111,7 @@ export const useMcpStore = create<McpStoreState>((set, get) => ({
   },
 
   refreshStatus: async () => {
+    set({ error: null });
     let raw: string;
     try {
       raw = await invoke<string>("check_mcp_status");
