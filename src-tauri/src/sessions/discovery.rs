@@ -152,4 +152,64 @@ mod tests {
         let files = discover_session_files_in(&tmp);
         assert!(files.is_empty());
     }
+
+    // env-var tests below mutate process-global state; serialize via a shared
+    // mutex (no serial_test crate in Cargo.toml) and restore originals via RAII.
+    use std::sync::{Mutex, OnceLock};
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+    struct EnvGuard {
+        keys: Vec<(&'static str, Option<std::ffi::OsString>)>,
+    }
+    impl EnvGuard {
+        fn capture(keys: &[&'static str]) -> Self {
+            Self {
+                keys: keys
+                    .iter()
+                    .map(|k| (*k, std::env::var_os(k)))
+                    .collect(),
+            }
+        }
+    }
+    impl Drop for EnvGuard {
+        fn drop(&mut self) {
+            for (k, v) in &self.keys {
+                match v {
+                    Some(val) => std::env::set_var(k, val),
+                    None => std::env::remove_var(k),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn claude_home_prefers_userprofile_over_home() {
+        let _lk = env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let _g = EnvGuard::capture(&["USERPROFILE", "HOME"]);
+        std::env::set_var("USERPROFILE", "C:\\Users\\winner");
+        std::env::set_var("HOME", "/home/loser");
+        let p = claude_home().unwrap();
+        assert_eq!(p, PathBuf::from("C:\\Users\\winner").join(".claude"));
+    }
+
+    #[test]
+    fn claude_home_falls_back_to_home_when_userprofile_absent() {
+        let _lk = env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let _g = EnvGuard::capture(&["USERPROFILE", "HOME"]);
+        std::env::remove_var("USERPROFILE");
+        std::env::set_var("HOME", "/home/posix");
+        let p = claude_home().unwrap();
+        assert_eq!(p, PathBuf::from("/home/posix").join(".claude"));
+    }
+
+    #[test]
+    fn claude_home_returns_none_when_both_absent() {
+        let _lk = env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let _g = EnvGuard::capture(&["USERPROFILE", "HOME"]);
+        std::env::remove_var("USERPROFILE");
+        std::env::remove_var("HOME");
+        assert!(claude_home().is_none());
+    }
 }

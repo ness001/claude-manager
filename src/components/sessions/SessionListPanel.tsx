@@ -37,13 +37,10 @@ interface Group {
 }
 
 /**
- * Parse SessionMeta.startedAt (ISO string, may be empty) into epoch ms.
- * Empty / unparseable → 0 (sorts last in "newest first" ordering).
+ * Read SessionMeta.startedAt (epoch ms). 0 → sorts last in "newest first".
  */
 function startedAtMs(s: SessionMeta): number {
-  if (!s.startedAt) return 0;
-  const v = Date.parse(s.startedAt);
-  return Number.isNaN(v) ? 0 : v;
+  return s.startedAt || 0;
 }
 
 /** "My View" — pinned items first, then a single "All" bucket (groups TBD). */

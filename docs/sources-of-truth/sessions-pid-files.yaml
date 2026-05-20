@@ -1,0 +1,297 @@
+id: sessions-pid-files
+title: Session PID Files
+owner: claude-code-cli         # Claude Code CLI writes/deletes these; claude-manager only reads.
+claudeManagerAccess: read      # We never create, modify, or delete these files.
+location:
+  pattern: "~/.claude/sessions/{pid}.json"
+  resolvedExample: "C:\\Users\\<user>\\.claude\\sessions\\13716.json"
+  osNotes: |
+    Resolves under HOME on Unix, USERPROFILE on Windows. Rust resolves via
+    `claude_home()` in `src-tauri/src/sessions/discovery.rs:26-34`, which
+    prefers USERPROFILE then HOME. Frontend uses `homeDir()` from
+    `@tauri-apps/api/path`. The filename's stem is the OS PID as a decimal
+    integer with no zero-padding (e.g. `13716.json`, `54820.json`); this PID
+    matches the in-file `pid` field byte-for-byte and the matching `node.exe`
+    process running `claude-code/cli.js`.
+lifecycle: |
+  One file per active session. Claude Code CLI writes the file on session
+  start and DELETES it on clean session end. Files are also updated mid-life
+  (the `status`, `updatedAt`, and `name` fields mutate as the session runs —
+  observed updatedAt deltas of several hours on the same file). Absence of a
+  file therefore means either "never existed", "ended cleanly", or "crashed"
+  — it does NOT distinguish those cases. Use the liveness contract below to
+  verify aliveness before acting on a present file.
+
+  Per DESIGN-CONTEXT §2.3 and spec §17 item 3, typically ~6 PID files exist
+  at any moment (9 observed in this snapshot). Cardinality scales with the
+  number of concurrent Claude Code CLI processes the user is running.
+fields:
+  pid:
+    type: integer
+    required: true
+    description: |
+      OS process id of the node.exe running the CLI. Matches the filename
+      stem and the PID of the live process. Used as the key for liveness
+      probes (see livenessContract).
+  sessionId:
+    type: string
+    format: uuid-v4
+    required: true
+    description: |
+      Stable session identifier shared with the JSONL transcript at
+      `~/.claude/projects/{slug}/{sessionId}.jsonl`. Primary key for
+      cross-referencing PID file ⇄ JSONL ⇄ SQLite row.
+  cwd:
+    type: string
+    required: true
+    description: |
+      Absolute working directory the CLI was launched in. Used for project
+      grouping in "By Project" view (spec §5.4). Path uses native OS
+      separators (backslash on Windows, observed: "C:\\Users\\<user>\\...",
+      "E:\\project\\..."). May reference a directory that no longer exists
+      ("dead CWD" — see spec §17.5).
+  startedAt:
+    type: integer
+    format: unix-epoch-ms
+    required: true
+    description: |
+      Wall-clock time the CLI process started, in epoch milliseconds. Used
+      by the liveness contract as the reference point for the ±60s PID-reuse
+      cross-check, and (per DESIGN-CONTEXT §19) populates the `started_at`
+      column on the SQLite `sessions` table.
+
+      NOTE: The Rust struct `PidFileData` in `src-tauri/src/sessions/pid.rs`
+      declares `started_at: String` (and the TS counterpart in
+      `src/lib/session-types.ts:139` likewise types it as `string`), but
+      real on-disk files contain an INTEGER. serde deserializes integer →
+      String with a type error, which means the current Rust reader will
+      reject EVERY real PID file. This is a known bug, not a contract
+      change — the on-disk shape is an integer and downstream code (the
+      liveness ±60s math) treats it as an integer of ms.
+  kind:
+    type: string
+    enum: kind          # see enums block
+    required: true
+    description: |
+      How the session was started. The TS type `SessionKind` claims a
+      `"sdk"` value also exists but it has not been observed on disk in
+      this snapshot. The spec table (§5.1) lists `"interactive"` and
+      `"print"` while real files only contain `"interactive"`.
+  entrypoint:
+    type: string
+    enum: entrypoint    # see enums block
+    required: true
+    description: |
+      What invoked the CLI. Spec §5.1 hints at `"cli" | "vscode" | ...` but
+      only `"cli"` is observed on disk.
+  version:
+    type: string
+    format: semver
+    required: false     # Not in the TS PidFileData interface, but present on every observed file.
+    description: |
+      Claude Code CLI version that wrote this file (e.g. "2.1.138"). All 9
+      observed files report the same version, suggesting the CLI writes its
+      own version into every active session record. NOT modeled by
+      `PidFileData` in TS/Rust — currently silently ignored by the
+      deserializer.
+  peerProtocol:
+    type: integer
+    required: false     # Not in the TS PidFileData interface; observed on every file.
+    description: |
+      Protocol version for whatever IPC/peer channel the CLI exposes for
+      external tools (suspected for IDE attach / live-tail). All observed
+      files have `peerProtocol: 1`. NOT modeled by the current readers.
+  status:
+    type: string
+    enum: status        # see enums block
+    required: false     # Observed on every file in this snapshot.
+    description: |
+      Mutable liveness/activity hint that the CLI updates while the
+      session runs. Observed values: "idle", "busy". This is the CLI's
+      self-reported state; an authoritative aliveness check still requires
+      the process probe (see livenessContract). Pairs with `updatedAt`.
+  updatedAt:
+    type: integer
+    format: unix-epoch-ms
+    required: false     # Observed on every file in this snapshot.
+    description: |
+      Epoch ms of the last in-file update. Observed deltas between
+      `startedAt` and `updatedAt` range from ~7 minutes to ~70 hours,
+      confirming the file is rewritten throughout the session, not only at
+      start.
+  name:
+    type: string
+    required: false     # Optional; present on 2 of 9 observed files.
+    description: |
+      Human-readable session label the CLI derives (often from the first
+      prompt or a `/title`-like command). May contain very long strings and
+      Claude Code internal markers like `<local-command-caveat>...`. Maps
+      naturally to the spec's "session name" UI surface, though our
+      `SessionMeta.displayName` is a user-managed override stored in SQLite
+      that should win when set.
+  procStart:
+    type: string
+    required: false     # Optional; present on 1 of 9 observed files (Windows-specific?).
+    description: |
+      Opaque process-start identifier. Observed value (single sample):
+      `"639143956134789210"`. The length (~18 digits) is consistent with a
+      Windows FILETIME (100ns ticks since 1601-01-01); if that interpretation
+      holds, this is a stronger PID-reuse defense than `startedAt` because
+      FILETIME is sub-microsecond. Treat as opaque until confirmed by code
+      inspection of the CLI.
+enums:
+  kind:
+    values: [interactive, headless]
+    observedInLiveData: [interactive]
+    specMentionsButUnobserved: [sdk, print, headless]
+    note: |
+      The TS union `SessionKind` in src/lib/session-types.ts:15 is
+      `"interactive" | "headless" | "sdk"`. Spec §5.1 says `"interactive"
+      or "print"`. The Rust coercion in session-loader.ts:117 falls back to
+      `"interactive"` for anything not in {interactive, headless, sdk}, so
+      a real `"print"` value would currently be silently rewritten — a
+      latent bug worth tracking.
+  entrypoint:
+    values: [cli, vscode]
+    observedInLiveData: [cli]
+    specMentionsButUnobserved: [vscode]
+    note: |
+      Treated as a free-form string by both Rust (`String`) and TS
+      (`string`), but the spec and DESIGN-CONTEXT both mention a `"vscode"`
+      value that wasn't observed in this snapshot. No coercion fallback
+      exists for unknown values.
+  status:
+    values: [idle, busy]
+    observedInLiveData: [idle, busy]
+    specMentionsButUnobserved: []
+    note: |
+      Not modeled by any TS/Rust type today; observed in real files only.
+      Enumerated from this snapshot: `busy` for 2 files, `idle` for 7.
+livenessContract: |
+  A PID file is NECESSARY but NOT SUFFICIENT to declare a session ALIVE.
+  The current frontend short-circuit in session-loader.ts:138 ("hasJsonl &&
+  hasPid → alive") is documented as a Phase-2 placeholder; the contract
+  below is what the spec and DESIGN-CONTEXT call for and what
+  `is_process_alive_with` in src-tauri/src/sessions/pid.rs:158 implements:
+
+    1. The PID file `<pid>.json` exists and parses.
+    2. A live process with the same PID exists. On Windows: enumerate via
+       PowerShell `Get-WmiObject Win32_Process -Filter "ProcessId = <pid>"`
+       (NOT `Get-CimInstance` — PS5.1 compat; NOT `tasklist` — fails under
+       bash; see DESIGN-CONTEXT §2.10).
+    3. That process's `CommandLine` contains the literal substring
+       `cli.js`. Claude CLI runs as `node.exe`, so process-name matching is
+       insufficient (DESIGN-CONTEXT §2.4).
+    4. The process's `CreationDate` (WMI format
+       `yyyymmddHHMMSS.ffffff+TZmin`, parsed by `parse_wmi_creation_date`
+       at pid.rs:114) is within ±60 seconds of the file's `startedAt`.
+       This defeats PID reuse: the OS will eventually reissue a freed PID
+       to an unrelated process, but the creation-time delta will be wildly
+       larger than 60s.
+
+  All four conditions must hold. Any single failure → treat the session as
+  ENDED (do not show "alive" indicators, do not offer "Stop"). The
+  PowerShell call has a 5-second wall-clock timeout enforced by manual
+  `try_wait()` polling (pid.rs:84-97) because std::process::Command has no
+  built-in timeout.
+
+  Dual-write safety (spec §5.3.1, DESIGN-CONTEXT §2.8): before invoking
+  `claude --resume <sessionId>`, scan every PID file in
+  `~/.claude/sessions/` and refuse the resume if any file's `sessionId`
+  field matches — two CLIs writing the same JSONL will corrupt it.
+gotchas:
+  - id: ephemeral-by-design
+    description: |
+      Files are deleted on session end. Watchers must handle DELETE events;
+      absence is a normal state, not an error. (DESIGN-CONTEXT §2.3.)
+  - id: stale-pid-after-crash
+    description: |
+      If the CLI crashes (SIGKILL, OS kill, power loss), the file is NOT
+      deleted. A stale PID file points to either nothing or a reused PID.
+      The liveness contract's CommandLine + ±60s creation-time check is the
+      ONLY way to distinguish stale from alive — never trust file presence
+      alone.
+  - id: pid-reuse
+    description: |
+      OS PIDs are reused. Without the creation-time cross-check, a stale
+      record can mis-attribute liveness to a totally unrelated process that
+      happens to inherit the same PID. The ±60s window in
+      is_process_alive_with is the canonical defense.
+  - id: rust-startedat-type-mismatch
+    description: |
+      `PidFileData.started_at` is typed `String` in Rust
+      (src-tauri/src/sessions/pid.rs:25) and `string` in TS
+      (src/lib/session-types.ts:139), but real files contain an INTEGER
+      (epoch ms). serde rejects integer→String, so the current Rust reader
+      silently drops every real PID file. Either the type or the on-disk
+      shape needs to be reconciled; the on-disk shape is the source of
+      truth.
+  - id: unmodeled-fields-silently-dropped
+    description: |
+      `version`, `peerProtocol`, `status`, `updatedAt`, `name`, and
+      `procStart` all appear on real files but are absent from both
+      `PidFileData` types. They are silently dropped on read today. If
+      claude-manager wants to surface `name` in the UI (e.g. as a fallback
+      when displayName is unset), or to use `status: busy` as a "live
+      activity" hint, the type needs to grow these fields.
+  - id: name-can-contain-noise
+    description: |
+      The `name` field is whatever the CLI derives — observed examples
+      include `<local-command-caveat>Caveat: The messages below were
+      generated by the user while running local comm (Branch)`, which is
+      Claude Code internal scaffolding, not a user-meaningful title. Any UI
+      surface using this field should strip the `<local-command-caveat>`
+      preamble or fall back to firstPrompt.
+  - id: enum-coercion-hides-spec-mismatch
+    description: |
+      coerceSessionKind in src/lib/session-loader.ts:117 silently rewrites
+      any unrecognised `kind` to `"interactive"`. If Claude Code ever emits
+      the spec-mentioned `"print"` value (or anything new), the bug will
+      be invisible — the value just gets remapped. Replace silent fallback
+      with an observability log at minimum.
+  - id: no-write-from-claude-manager
+    description: |
+      claude-manager must NEVER write to `~/.claude/sessions/*.json`.
+      Claude Code CLI is the sole writer; concurrent writers without
+      locking would corrupt the file. Read-only access only.
+citations:
+  spec:
+    - "docs/superpowers/specs/2026-05-03-claude-manager-design.md:§5.1 (Data Sources table — pid/sessionId/cwd/startedAt/kind/entrypoint)"
+    - "docs/superpowers/specs/2026-05-03-claude-manager-design.md:§5.3 (Session States — PID file is the ALIVE-detection precondition)"
+    - "docs/superpowers/specs/2026-05-03-claude-manager-design.md:§5.3.1 (CLI commands + dual-write safety)"
+    - "docs/superpowers/specs/2026-05-03-claude-manager-design.md:§17 item 3 (PID files are ephemeral)"
+    - "docs/superpowers/specs/2026-05-03-claude-manager-design.md:§17.5 (Error Handling — dead CWD)"
+  designContext:
+    - "docs/DESIGN-CONTEXT.md:§2.3 (PID Files are Ephemeral)"
+    - "docs/DESIGN-CONTEXT.md:§2.4 (Process Detection — node.exe, cli.js, ±60s)"
+    - "docs/DESIGN-CONTEXT.md:§2.8 (Dual-Write Safety)"
+    - "docs/DESIGN-CONTEXT.md:§2.10 (tasklist fails in bash)"
+    - "docs/DESIGN-CONTEXT.md:§3 (Session Data Model + States)"
+    - "docs/DESIGN-CONTEXT.md:§13 (Key File Paths)"
+    - "docs/DESIGN-CONTEXT.md:§19 (started_at upsert column omission)"
+  code:
+    - "src-tauri/src/sessions/pid.rs:17-47 (PidFileData struct + read_pid_files_in)"
+    - "src-tauri/src/sessions/pid.rs:56-171 (ProcessProbe trait, PowerShellProbe, is_process_alive_with)"
+    - "src-tauri/src/sessions/discovery.rs:26-34 (claude_home resolution: USERPROFILE then HOME)"
+    - "src/lib/session-types.ts:135-142 (PidFileData TS interface)"
+    - "src/lib/session-types.ts:15 (SessionKind union)"
+    - "src/lib/session-loader.ts:117-121 (coerceSessionKind silent fallback)"
+    - "src/lib/session-loader.ts:131-141 (computeState — PID presence == alive, current Phase-2 simplification)"
+fixture:
+  path: tests/sources-of-truth/fixtures/sessions-pid-files.json
+  sanitization: |
+    Source file: ~/.claude/sessions/13716.json (chosen because it exercises
+    the optional `name` field). Verbatim copy with the following
+    sanitization:
+      - cwd: `C:\\Users\\lianli\\source\\laa-workspace` →
+              `C:\\Users\\<user>\\source\\example-project`
+              (replaces the local Windows username and a private project
+              name; preserves the backslash-escaped path shape)
+      - name: replaced the ADO URL + branch name with a neutral
+              `fix example-project bug (Branch)` so no internal
+              org/project/PR-id leaks. The structural marker `(Branch)` is
+              preserved because it is part of the CLI's derived format.
+    All numeric IDs (pid, startedAt, updatedAt), the sessionId UUID, the
+    `version`, `peerProtocol`, `kind`, `entrypoint`, and `status` values
+    are preserved byte-for-byte. The PID is not sensitive.
+    synthetic: false

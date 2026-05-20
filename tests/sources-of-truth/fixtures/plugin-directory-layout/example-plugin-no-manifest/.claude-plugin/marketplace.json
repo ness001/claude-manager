@@ -1,0 +1,16 @@
+{
+  "name": "example-marketplace",
+  "owner": { "name": "Example Author", "email": "author@example.test" },
+  "metadata": {
+    "description": "Fixture marketplace.json for the plugin-directory-layout source-of-truth test (fallback path).",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "example-plugin-no-manifest",
+      "description": "Fixture plugin with no plugin.json — name/description must come from this marketplace.json entry (loader picks the first plugins[] item per commands.rs:272-289).",
+      "source": "./",
+      "strict": false
+    }
+  ]
+}

@@ -11,7 +11,7 @@ function makeSession(overrides: Partial<SessionMeta> = {}): SessionMeta {
     cwd: "/repos/foo",
     firstPrompt: "do the thing",
     messageCount: 5,
-    startedAt: "",
+    startedAt: 0,
     durationMs: 0,
     entrypoint: "interactive",
     kind: "interactive",
@@ -118,7 +118,7 @@ describe("SessionCard", () => {
   });
 
   it("renders tag pills, time-ago text, and message count", () => {
-    const startedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+    const startedAt = Date.now() - 5 * 60_000;
     render(
       <SessionCard
         session={makeSession({
@@ -270,7 +270,7 @@ describe("SessionCard", () => {
   // exact start time is recoverable without leaving the list. Mirrors
   // PR #185 (RecentSessions time-ago tooltip).
   it("time-ago span exposes the absolute timestamp via title tooltip", () => {
-    const startedAt = "2026-05-09T14:23:00";
+    const startedAt = Date.parse("2026-05-09T14:23:00");
     const expected = new Date(startedAt).toLocaleString();
     render(
       <SessionCard
@@ -287,7 +287,7 @@ describe("SessionCard", () => {
   it("time-ago span omits title when startedAt is empty", () => {
     render(
       <SessionCard
-        session={makeSession({ startedAt: "" })}
+        session={makeSession({ startedAt: 0 })}
         selected={false}
       />,
     );
@@ -302,7 +302,7 @@ describe("SessionCard", () => {
   it("time-ago span shows an em-dash placeholder when startedAt is empty", () => {
     render(
       <SessionCard
-        session={makeSession({ startedAt: "" })}
+        session={makeSession({ startedAt: 0 })}
         selected={false}
       />,
     );

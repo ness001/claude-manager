@@ -1,0 +1,456 @@
+# Source of truth: ~/.claude/projects/{encoded-cwd}/{sessionId}.jsonl
+#
+# Investigator: inv-session-jsonl (task #1)
+# Peer review: inv-sessions-index-cache (task #2)
+# Date: 2026-05-18
+# Real-disk evidence: 102 *.jsonl files across 19 project directories under
+#   C:/Users/lianli/.claude/projects/ (sampled 2026-05-18).
+
+id: session-jsonl-files
+path: ~/.claude/projects/{encoded-cwd}/{sessionId}.jsonl
+owner: claude-code-cli            # written exclusively by `@anthropic-ai/claude-code`
+claudeManagerAccess: read         # READ-ONLY. We never append/rewrite JSONL.
+format: jsonl                     # line-delimited JSON, one message per line, append-only
+writeTriggers:
+  - every CLI turn (user prompt, assistant response, tool call/result)
+  - every internal event (permission-mode change, file snapshot, queued cmd, hook event)
+  - "session compaction (writes a system/compact_boundary line at the seam)"
+readers:
+  - src-tauri/src/sessions/discovery.rs      # filesystem walk (no parse)
+  - src-tauri/src/sessions/parser.rs         # metadata parse + raw line reader
+  - src/lib/jsonl-parser.ts                  # frontend per-line ConversationEntry mapper
+  - src/lib/session-loader.ts                # orchestrator that calls both via IPC
+  - src/lib/session-types.ts                 # TS types consumed by parser + viewer
+
+# ---------------------------------------------------------------------------
+# Location / encoding
+# ---------------------------------------------------------------------------
+location:
+  root: ~/.claude/projects
+  layout: |
+    ~/.claude/projects/
+      <encoded-cwd>/                 # e.g. "C--Users-lianli-claude-manager"
+        <sessionId>.jsonl            # one session = one file
+        sessions-index.json          # STALE cache; see source #2
+  encodedCwdRule: |
+    The CLI slugifies the absolute CWD: drive letter and path separators become
+    "-" (Windows e.g. C:\Users\lianli\claude-manager -> C--Users-lianli-claude-manager).
+    POSIX absolute paths /home/x/proj -> -home-x-proj.
+  sessionIdFormat: lowercase UUIDv4 (8-4-4-4-12 hex).
+
+# ---------------------------------------------------------------------------
+# Lifecycle / mutation contract
+# ---------------------------------------------------------------------------
+lifecycle:
+  mutation: append-only         # CLI never rewrites earlier lines
+  rotationPolicy: none          # one file per session for the life of the session
+  truncatedTailRisk: true       # process kill mid-write can leave a half-written final line
+  ordering: writeOrder          # consumers MUST NOT assume strict chronological order;
+                                # `timestamp` is the only reliable temporal field
+  watchHint: |
+    File size grows monotonically; mtime advances on every append. Suitable for
+    tail-style incremental reads (byte offset bookmark).
+
+# ---------------------------------------------------------------------------
+# Top-level `type` discriminator — every line is dispatched on this field.
+# Values below were observed on real disk (102 files, 2026-05-18).
+# ---------------------------------------------------------------------------
+messageTypes:
+
+  user:
+    render: yes               # spec §5.8
+    description: |
+      A user turn. `message.content` is either a bare string (typical first
+      prompt) OR an array containing a single `tool_result` block (when the
+      CLI is echoing a tool's output back to the model).
+    fields:
+      type:        { type: literal, value: user, required: true }
+      uuid:        { type: string,  format: uuid, required: true }
+      sessionId:   { type: string,  format: uuid, required: true }
+      timestamp:   { type: string,  format: ISO-8601 instant, required: true }
+      parentUuid:  { type: union,   members: [string, "null"], required: true }
+      isSidechain: { type: boolean, required: true }
+      message:
+        type: object
+        required: true
+        fields:
+          role:    { type: literal, value: user, required: true }
+          content: { type: union, members: [string, "JsonlContent[]"], required: true }
+      version:        { type: string, required: false }
+      gitBranch:      { type: string, required: false }
+      cwd:            { type: string, required: false }
+      entrypoint:     { type: string, required: false }
+      userType:       { type: string, required: false }   # observed: "external"
+      promptId:       { type: string, format: uuid, required: false }   # only on prompt-origin user turns
+      permissionMode: { type: enum, ref: enums.permissionMode, required: false }
+      toolUseResult:  { type: object, required: false }   # only on tool_result echo turns
+
+  assistant:
+    render: yes               # spec §5.8 (text + tool_use)
+    description: |
+      A model turn. `message.content` is always an array of blocks (text and/or
+      tool_use). The assistant block's `model` lives at `message.model`.
+    fields:
+      type:        { type: literal, value: assistant, required: true }
+      uuid:        { type: string,  format: uuid, required: true }
+      sessionId:   { type: string,  format: uuid, required: true }
+      timestamp:   { type: string,  format: ISO-8601 instant, required: true }
+      parentUuid:  { type: union,   members: [string, "null"], required: true }
+      isSidechain: { type: boolean, required: true }
+      message:
+        type: object
+        required: true
+        fields:
+          id:           { type: string, required: true }    # "msg_..."
+          type:         { type: literal, value: message, required: true }
+          role:         { type: literal, value: assistant, required: true }
+          model:        { type: string, required: true }    # e.g. "claude-opus-4.7-1m-internal"
+          content:      { type: array,  items: JsonlContent, required: true }
+          stop_reason:  { type: string, required: false }   # "end_turn" | "tool_use" | ...
+          stop_sequence: { type: union, members: [string, "null"], required: false }
+          usage:        { type: object, required: false }   # input_tokens, output_tokens, cache_*, service_tier
+      version:   { type: string, required: false }
+      gitBranch: { type: string, required: false }
+      cwd:       { type: string, required: false }
+
+  system:
+    render: discriminated     # spec §5.8: turn_duration + compact_boundary render
+    description: |
+      Metadata / lifecycle event. Discriminated by `subtype`.
+      Observed subtypes (real disk): turn_duration, compact_boundary,
+      stop_hook_summary, local_command, informational.
+    fields:
+      type:        { type: literal, value: system, required: true }
+      subtype:     { type: enum, ref: enums.systemSubtype, required: true }
+      uuid:        { type: string, format: uuid, required: true }
+      sessionId:   { type: string, format: uuid, required: true }
+      timestamp:   { type: string, format: ISO-8601 instant, required: true }
+      parentUuid:  { type: union, members: [string, "null"], required: true }
+      isSidechain: { type: boolean, required: true }
+      isMeta:      { type: boolean, required: false }
+      level:       { type: string, required: false }    # "info" | "warning" | "suggestion"
+      # turn_duration only:
+      durationMs:   { type: number, required: conditional, when: "subtype == turn_duration" }
+      messageCount: { type: number, required: conditional, when: "subtype == turn_duration" }
+      # compact_boundary only:
+      content:         { type: string, required: conditional, when: "subtype in [compact_boundary, local_command, informational]" }
+      compactMetadata: { type: object, required: conditional, when: "subtype == compact_boundary", fields: { trigger: { type: string }, preTokens: { type: number } } }
+      logicalParentUuid: { type: string, required: conditional, when: "subtype == compact_boundary" }
+      # stop_hook_summary only:
+      hookCount:     { type: number,  required: conditional, when: "subtype == stop_hook_summary" }
+      hookInfos:     { type: array,   required: conditional, when: "subtype == stop_hook_summary" }
+      hookErrors:    { type: array,   required: conditional, when: "subtype == stop_hook_summary" }
+      preventedContinuation: { type: boolean, required: conditional, when: "subtype == stop_hook_summary" }
+
+  "permission-mode":
+    render: no                # spec §5.8 — metadata only
+    description: |
+      Snapshot of the active permission mode. May appear once at session start
+      AND again on every mode change. Sibling fields are slim: this entry has
+      neither `uuid` nor `timestamp` nor `parentUuid`.
+    fields:
+      type:           { type: literal, value: permission-mode, required: true }
+      permissionMode: { type: enum, ref: enums.permissionMode, required: true }
+      sessionId:      { type: string, format: uuid, required: true }
+
+  "file-history-snapshot":
+    render: no                # spec §5.8 — internal
+    description: |
+      Undo-tracking checkpoint. `snapshot.trackedFileBackups` maps absolute path
+      to backup metadata. Pure internal, never rendered.
+    fields:
+      type:             { type: literal, value: file-history-snapshot, required: true }
+      messageId:        { type: string, format: uuid, required: true }
+      snapshot:
+        type: object
+        required: true
+        fields:
+          messageId:          { type: string, format: uuid, required: true }
+          trackedFileBackups: { type: object, required: true }
+          timestamp:          { type: string, format: ISO-8601 instant, required: true }
+      isSnapshotUpdate: { type: boolean, required: true }
+
+  attachment:
+    render: no                # spec §5.8 — internal (deferred to v2 as badges)
+    description: |
+      Side-channel attachment (hook output, MCP instructions, skill listing,
+      etc.). Discriminator lives at `attachment.type`. Top-level carries the
+      same uuid/sessionId/timestamp shell as user/assistant lines.
+    fields:
+      type:        { type: literal, value: attachment, required: true }
+      uuid:        { type: string, format: uuid, required: true }
+      sessionId:   { type: string, format: uuid, required: true }
+      timestamp:   { type: string, format: ISO-8601 instant, required: true }
+      parentUuid:  { type: union, members: [string, "null"], required: true }
+      isSidechain: { type: boolean, required: true }
+      attachment:
+        type: object
+        required: true
+        fields:
+          type: { type: string, required: true }    # "hook_success" | "hook_additional_context" | "mcp_instructions_delta" | "skill_listing" | ...
+
+  "queue-operation":
+    render: no                # spec §5.8 — internal
+    description: |
+      Async-task queue event. Slim shell (no uuid/parentUuid), only `operation`,
+      `timestamp`, `sessionId`, and a free-form `content` payload.
+    fields:
+      type:      { type: literal, value: queue-operation, required: true }
+      operation: { type: string, required: true }     # observed: "enqueue"
+      sessionId: { type: string, format: uuid, required: true }
+      timestamp: { type: string, format: ISO-8601 instant, required: true }
+      content:   { type: string, required: false }
+
+  "last-prompt":
+    render: no                # spec §5.8 — cache
+    description: |
+      Pointer cache used by `claude --continue`. Either `leafUuid` (per-line
+      anchor) or `lastPrompt` (raw prompt text) is present; sometimes both.
+    fields:
+      type:       { type: literal, value: last-prompt, required: true }
+      sessionId:  { type: string, format: uuid, required: true }
+      leafUuid:   { type: string, format: uuid, required: false }
+      lastPrompt: { type: string, required: false }
+
+  "custom-title":
+    render: no                # not in spec §5.8 — metadata; observed in real data
+    description: User-set session title.
+    fields:
+      type:        { type: literal, value: custom-title, required: true }
+      sessionId:   { type: string, format: uuid, required: true }
+      customTitle: { type: string, required: true }
+
+  "ai-title":
+    render: no                # not in spec §5.8 — metadata; observed in real data
+    description: CLI-generated session title.
+    fields:
+      type:      { type: literal, value: ai-title, required: true }
+      sessionId: { type: string, format: uuid, required: true }
+      aiTitle:   { type: string, required: true }
+
+  "agent-name":
+    render: no                # not in spec §5.8 — metadata; observed in real data
+    description: Optional human-readable agent label for the session.
+    fields:
+      type:      { type: literal, value: agent-name, required: true }
+      sessionId: { type: string, format: uuid, required: true }
+      agentName: { type: string, required: true }
+
+  "pr-link":
+    render: no                # not in spec §5.8 — metadata; observed in real data
+    description: |
+      Pointer to a pull request opened from this session. Useful for the UI
+      to surface a "View PR" affordance.
+    fields:
+      type:         { type: literal, value: pr-link, required: true }
+      sessionId:    { type: string, format: uuid, required: true }
+      timestamp:    { type: string, format: ISO-8601 instant, required: true }
+      prNumber:     { type: number, required: true }
+      prUrl:        { type: string, format: uri, required: true }
+      prRepository: { type: string, required: true }
+
+# ---------------------------------------------------------------------------
+# Per-block schema for `message.content` arrays (assistant + user/tool_result).
+# Mirrors src/lib/session-types.ts JsonlContent.
+# ---------------------------------------------------------------------------
+contentBlocks:
+  text:
+    fields:
+      type: { type: literal, value: text, required: true }
+      text: { type: string, required: true }
+  tool_use:
+    fields:
+      type:  { type: literal, value: tool_use, required: true }
+      id:    { type: string, required: true }            # "toolu_..."
+      name:  { type: string, required: true }            # tool name, e.g. "Bash", "Read"
+      input: { type: object, required: true }            # tool-specific args
+  tool_result:
+    fields:
+      type:        { type: literal, value: tool_result, required: true }
+      tool_use_id: { type: string, required: true }      # pairs back to assistant.message.content[].id
+      content:     { type: union, members: [string, "{type:'text',text:string}[]"], required: true }
+      is_error:    { type: boolean, required: false }
+
+# ---------------------------------------------------------------------------
+# Enums
+# ---------------------------------------------------------------------------
+enums:
+
+  # Spec §2.7 / DESIGN-CONTEXT §2.7 / DESIGN-CONTEXT §3 lists 6 values.
+  # The fixture and runtime parser only need to ACCEPT all 6; the TS narrow
+  # set (PermissionMode) is a subset of the on-disk universe.
+  permissionMode:
+    values:
+      - acceptEdits
+      - auto
+      - bypassPermissions
+      - default
+      - dontAsk
+      - plan
+    observedInLiveData: [bypassPermissions, default]   # the two surveyed in the 102 sampled files
+    notes: |
+      `auto` and `dontAsk` are documented in the spec but were not seen in the
+      102-file sample. They are still valid on-disk values per the CLI contract.
+      The TS `PermissionMode` type at src/lib/session-types.ts narrows to
+      {default, acceptEdits, bypassPermissions, plan} — anything off-list is
+      coerced to undefined by `coercePermissionMode()` in session-loader.ts.
+
+  systemSubtype:
+    values:
+      - turn_duration         # rendered as "— Turn N — Xms —" divider (spec §5.8)
+      - compact_boundary      # rendered as "--- Context compacted ---" divider (spec §5.8)
+      - stop_hook_summary     # not rendered; hook execution telemetry
+      - local_command         # not rendered; echoes /command invocations (e.g. /mcp)
+      - informational         # not rendered; CLI warnings / notices
+    observedInLiveData: [turn_duration, compact_boundary, stop_hook_summary, local_command, informational]
+
+# ---------------------------------------------------------------------------
+# Gotchas — every one is either an observed defect or a documented spec
+# convention that callers commonly miss.
+# ---------------------------------------------------------------------------
+gotchas:
+  - id: stale-index
+    severity: critical
+    statement: |
+      The sibling `sessions-index.json` is STALE. In our 2026-05 audit, 17/20
+      JSONL files in one project were missing from the index, and 12 index
+      entries pointed at deleted files. Discovery agent's claim is CONFIRMED
+      against the current data.
+    consequence: |
+      Enumerate `*.jsonl` from disk first; consult sessions-index.json only as
+      a speed hint for `isSidechain` / `summary` / `firstPrompt`.
+    citation: DESIGN-CONTEXT §2.2, spec §5.2, src-tauri/src/sessions/discovery.rs
+
+  - id: content-string-or-array
+    severity: high
+    statement: |
+      `message.content` is `string | JsonlContent[]`. The first user message is
+      typically a bare string; subsequent user messages echoing tool results
+      are arrays. Code that always indexes `[0]` will crash on real fixtures.
+    citation: src/lib/session-types.ts (JsonlMessage.content), src/lib/jsonl-parser.ts (readContent)
+
+  - id: no-summary-type
+    severity: medium
+    statement: |
+      Spec §5.8 lists a `summary` row type, but in the 102-file real-disk
+      sample no `summary` line was observed. Session summaries instead live in
+      `sessions-index.json` (the cache) — not as JSONL rows. Renderer code may
+      ship support for it as a tolerant no-op, but YAML/test coverage cannot
+      assert presence in live data.
+    citation: spec §5.8 vs real-disk audit 2026-05-18
+
+  - id: no-progress-type
+    severity: medium
+    statement: |
+      DESIGN-CONTEXT §11 (table) listed a `progress` type as ~80% of lines.
+      Spec §5.7 reverses this: no `progress` type exists in actual JSONL. Real
+      disk confirms spec — the noise is the SKIP_TYPES set (permission-mode,
+      file-history-snapshot, attachment, queue-operation, last-prompt) plus
+      `system` lines with non-divider subtypes.
+    citation: spec §5.7, src/lib/session-types.ts (SKIP_TYPES)
+
+  - id: permission-mode-can-repeat
+    severity: low
+    statement: |
+      A `permission-mode` line is written on session start AND every time the
+      user changes mode. Consumers reading metadata from the first 10 lines
+      should NOT assume the value is final for the whole session.
+    citation: src/lib/jsonl-parser.ts (parseJsonlMetadata window)
+
+  - id: timestamp-only-temporal-source
+    severity: low
+    statement: |
+      Order on disk is write order, not strict chronological order. Use the
+      `timestamp` field for any temporal computation (the Rust parser tracks
+      MIN across the metadata window for `started_at_ms`).
+    citation: src-tauri/src/sessions/parser.rs (started_at_ms)
+
+  - id: truncated-tail
+    severity: low
+    statement: |
+      A process kill mid-write can leave a partial final line that fails JSON
+      parse. Parsers MUST skip unparseable lines, not throw. The Rust parser
+      does this; the frontend `parseJsonlLine` returns null on parse failure.
+    citation: src-tauri/src/sessions/parser.rs (continue on serde_json err), src/lib/jsonl-parser.ts
+
+  - id: slim-metadata-rows
+    severity: low
+    statement: |
+      `permission-mode`, `last-prompt`, `custom-title`, `ai-title`,
+      `agent-name`, `queue-operation`, `pr-link` lines carry only the fields
+      named in their schema — they do NOT carry the uuid/parentUuid/cwd/
+      version/gitBranch shell that user/assistant/system/attachment lines do.
+      Code that unconditionally reads `line.uuid` for de-duping will crash.
+
+# ---------------------------------------------------------------------------
+# Cross-references
+# ---------------------------------------------------------------------------
+crossReferences:
+  - id: sessions-index-cache
+    relation: cached-summary-of
+    note: |
+      sessions-index.json sits alongside *.jsonl in the same directory and
+      attempts to cache `summary`, `firstPrompt`, `isSidechain`. Stale per
+      gotcha `stale-index`. Source-of-truth #2 covers it.
+  - id: pid-files
+    relation: liveness-overlay
+    path: ~/.claude/sessions/{pid}.json
+    note: |
+      PID files are the only way to know a session is ALIVE. Their `sessionId`
+      field cross-references this file's filename stem.
+
+# ---------------------------------------------------------------------------
+# Citations
+# ---------------------------------------------------------------------------
+citations:
+  - docs/DESIGN-CONTEXT.md §2.2 (stale index)
+  - docs/DESIGN-CONTEXT.md §2.7 (6 permission modes)
+  - docs/DESIGN-CONTEXT.md §3 (session data model field origins)
+  - docs/DESIGN-CONTEXT.md §11 (JSONL message types rendering)
+  - docs/DESIGN-CONTEXT.md §19 (started_at from JSONL timestamp)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §5.1 (data sources)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §5.2 (discovery)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §5.7 (no progress type)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §5.8 (renderer types)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §17.11 (frontend boundaries)
+  - src/lib/session-types.ts (TS schema mirror)
+  - src/lib/jsonl-parser.ts (per-line dispatch)
+  - src-tauri/src/sessions/parser.rs (metadata extraction)
+
+# ---------------------------------------------------------------------------
+# Fixture
+# ---------------------------------------------------------------------------
+fixture:
+  path: tests/sources-of-truth/fixtures/session-jsonl-files.jsonl
+  sourceSession: |
+    Stitched from 6 real sessions across ~/.claude/projects/ (sampled 2026-05-18).
+    Sanitized: all user prompt text -> "[redacted prompt]", assistant text ->
+    "[redacted assistant]", tool inputs/outputs -> "[redacted ...]". All UUIDs
+    replaced with a stable fake (`11111111-1111-1111-1111-111111111111` for
+    sessionId; deterministic UUIDs for per-line uuid). CWD replaced with
+    `C:\Users\redacted\project`. PR repo/url replaced with `redacted/redacted`.
+    Timestamps, type/role/subtype enum values, version (`2.1.138`), model
+    (`claude-opus-4.7-1m-internal`) preserved verbatim.
+  lineCount: 18
+  coverage:
+    typesCovered:
+      - last-prompt
+      - permission-mode
+      - custom-title
+      - ai-title
+      - agent-name
+      - file-history-snapshot
+      - user                # string content (line 7) AND tool_result content (line 11)
+      - attachment
+      - assistant           # text (line 9) AND tool_use (line 10)
+      - system              # 5 subtypes (lines 12-16)
+      - queue-operation
+      - pr-link
+    systemSubtypesCovered:
+      - local_command
+      - informational
+      - turn_duration
+      - stop_hook_summary
+      - compact_boundary
+    permissionModesCovered:
+      - bypassPermissions   # the only mode in the fixture; enum has 6 values total

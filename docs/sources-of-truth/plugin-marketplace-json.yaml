@@ -1,0 +1,276 @@
+# =============================================================================
+# Source of Truth: marketplace.json (plugin marketplace manifest)
+# =============================================================================
+# Investigator : inv-plugin-marketplace
+# Task         : sot-investigation #4 (plugin-marketplace-json)
+# Status       : verified on disk 2026-05-18
+# Peer review  : inv-claude-json-config (task #5)
+# -----------------------------------------------------------------------------
+
+interface: plugin-marketplace-json
+human_name: "Marketplace manifest (marketplace.json)"
+one_liner: >
+  A per-marketplace catalog file. Each marketplace lists the plugins it
+  publishes; the entries here also serve as the metadata-fallback source for
+  any installed plugin whose own plugin.json is missing.
+
+# -----------------------------------------------------------------------------
+# Path on disk
+# -----------------------------------------------------------------------------
+# The canonical, always-present copy lives under `marketplaces/<name>/`. The
+# CLI also stores per-version copies under `cache/<name>/<plugin>/<ver>/`,
+# but those are install-time snapshots — Claude Manager should read the
+# `marketplaces/` copy because it reflects the marketplace's current state.
+paths:
+  primary:
+    glob: "~/.claude/plugins/marketplaces/{marketplace}/.claude-plugin/marketplace.json"
+    example: "C:\\Users\\lianli\\.claude\\plugins\\marketplaces\\claude-plugins-official\\.claude-plugin\\marketplace.json"
+    notes: |
+      One file per marketplace. `{marketplace}` is the marketplace `name`
+      (matches the key used as the `@<marketplace>` suffix in
+      installed_plugins.json registry keys, e.g. `superpowers@claude-plugins-official`).
+  cached_copies:
+    glob: "~/.claude/plugins/cache/{marketplace}/{plugin}/{version}/.claude-plugin/marketplace.json"
+    example: "C:\\Users\\lianli\\.claude\\plugins\\cache\\anthropic-agent-skills\\document-skills\\a5bcdd7e58cd\\.claude-plugin\\marketplace.json"
+    notes: |
+      Bundled inside each installed plugin's cached directory. These are
+      pinned to the version that was installed and may lag behind the
+      primary file. The Rust `read_manifest()` helper in
+      src-tauri/src/plugins/commands.rs reads THIS cached copy when it
+      falls back from a missing plugin.json (DESIGN-CONTEXT §2.9).
+
+writer: "Claude Code CLI (`@anthropic-ai/claude-code`) — written on `claude plugin marketplace add/update`"
+reader_role: "Claude Manager is a READ-ONLY consumer. Never write this file."
+discovered_via:
+  - "ls ~/.claude/plugins/marketplaces/ → 5 directories on this machine"
+  - "Confirmed 5 primary marketplace.json files + 7 cached copies on disk"
+
+# -----------------------------------------------------------------------------
+# Top-level schema (verified across all 5 real marketplaces on disk)
+# -----------------------------------------------------------------------------
+top_level_schema:
+  $schema:
+    type: "string (URL)"
+    required: false
+    example: "https://anthropic.com/claude-code/marketplace.schema.json"
+    notes: "Present only on the official Anthropic marketplace; community marketplaces omit it."
+  name:
+    type: "string"
+    required: true
+    example: "claude-plugins-official"
+    notes: |
+      Marketplace identifier. Matches the directory name under
+      `~/.claude/plugins/marketplaces/` AND the `@<marketplace>` suffix in
+      installed_plugins.json registry keys (e.g. the `claude-plugins-official`
+      in `superpowers@claude-plugins-official`).
+  id:
+    type: "string"
+    required: false
+    example: "karpathy-skills"
+    notes: "Optional alternate identifier. Observed on karpathy-skills only; usually equals `name`."
+  description:
+    type: "string"
+    required: false
+    example: "Directory of popular Claude Code extensions..."
+    notes: |
+      Anthropic uses a top-level `description`. Community marketplaces nest
+      it under `metadata.description` instead (see below). Both shapes seen
+      in the wild — readers must check both locations.
+  owner:
+    type: "object { name, email?, url? }"
+    required: true
+    example: { name: "Anthropic", email: "support@anthropic.com" }
+    notes: |
+      Present in ALL 5 real marketplaces. `email` and `url` are optional —
+      obsidian-skills uses `{name, url}`, ralph-marketplace uses `{name}` only.
+  metadata:
+    type: "object { description?, version? }"
+    required: false
+    example: { description: "Anthropic example skills", version: "1.0.0" }
+    notes: |
+      Alternate location for `description` and an overall marketplace version.
+      Used by 3 of 5 real marketplaces (anthropic-agent-skills, karpathy-skills,
+      ralph-marketplace). Anthropic's claude-plugins-official puts description
+      at the top level and has no `metadata` block at all.
+  plugins:
+    type: "array<PluginEntry>"
+    required: true
+    notes: "Always present; may be empty but that is not observed in practice."
+
+# -----------------------------------------------------------------------------
+# PluginEntry shape (each item of the `plugins:` array)
+# -----------------------------------------------------------------------------
+# This is the metadata-fallback contract: when an installed plugin lacks its
+# own plugin.json, Claude Manager pulls `name` and `description` from the
+# matching entry here. See `read_manifest()` in
+# src-tauri/src/plugins/commands.rs (~line 272).
+plugin_entry_schema:
+  name:
+    type: "string"
+    required: true
+    example: "superpowers"
+    notes: "Plugin name. Matches the part BEFORE `@` in installed_plugins.json registry keys."
+  description:
+    type: "string"
+    required: true (in practice)
+    example: "Superpowers teaches Claude brainstorming, subagent driven development..."
+    notes: |
+      Observed on every entry in every real marketplace. The fallback contract
+      relies on this — when plugin.json is absent, this is the only description.
+  version:
+    type: "string"
+    required: false
+    example: "1.0.0"
+    notes: |
+      Either semver (`"5.0.7"`, `"1.0.0"`) or a 12-char git SHA prefix
+      (`"a5bcdd7e58cd"`) — see DESIGN-CONTEXT §2.5 and spec §6.3. The full
+      40-char SHA lives in installed_plugins.json's `gitCommitSha`, not here.
+      Many entries in claude-plugins-official OMIT `version` entirely — when
+      missing, the CLI uses the latest commit of the source repository.
+  author:
+    type: "object { name, email?, url? }"
+    required: false
+    example: { name: "Anthropic", email: "support@anthropic.com" }
+    notes: "Per-plugin author block (may differ from marketplace `owner`)."
+  source:
+    type: "string | object"
+    required: true
+    examples:
+      - "./plugins/superpowers"            # relative path inside the marketplace repo
+      - "./"                                 # plugin IS the marketplace repo root
+      - { source: "url", url: "https://github.com/obra/superpowers.git" }  # external git
+    notes: |
+      Three observed shapes:
+        1. Relative path string  — plugin lives inside the marketplace repo.
+        2. "./" string           — the marketplace IS a single plugin.
+        3. { source: "url", url } — external git repository.
+      The CLI uses this to know where to clone/copy the plugin from.
+  category:
+    type: "string"
+    required: false
+    example: "development"
+    enum_observed:
+      - "development"
+      - "productivity"
+      - "security"
+      - "learning"
+      - "monitoring"
+      - "deployment"
+      - "design"
+      - "database"
+      - "testing"
+      - "workflow"
+    notes: "Free-form string but conventionally one of the values above."
+  homepage:
+    type: "string (URL)"
+    required: false
+    example: "https://github.com/anthropics/claude-plugins-public/tree/main/plugins/superpowers"
+  keywords:
+    type: "array<string>"
+    required: false
+    example: ["guidelines", "best-practices", "coding", "karpathy"]
+  tags:
+    type: "array<string>"
+    required: false
+    example: ["community-managed"]
+    notes: "Marketplace-curator labels (not user-applied tags)."
+  strict:
+    type: "boolean"
+    required: false
+    example: false
+    notes: "CLI-internal validation flag. Claude Manager does not act on it."
+  skills:
+    type: "array<string> | string"
+    required: false
+    examples:
+      - ["./skills/xlsx", "./skills/docx", "./skills/pptx"]
+      - "./skills/"
+    notes: |
+      Used by skills-only marketplaces (anthropic-agent-skills,
+      ralph-marketplace) to advertise the skills they bundle. Either an
+      array of paths or a single directory path.
+  lspServers:
+    type: "object<string, LspServerSpec>"
+    required: false
+    notes: |
+      Only used by LSP-type plugins (typescript-lsp, rust-analyzer-lsp, etc.).
+      Shape: { [serverName]: { command, args?, extensionToLanguage, startupTimeout? } }.
+      Out of scope for Claude Manager's plugin list — present here for
+      completeness so the test fixture exercises it.
+
+# -----------------------------------------------------------------------------
+# Relationship to installed_plugins.json
+# -----------------------------------------------------------------------------
+# THIS DISTINCTION IS LOAD-BEARING:
+#
+# marketplace.json     = "AVAILABLE"  — what this marketplace publishes
+# installed_plugins.json = "INSTALLED" — what the CLI has cloned to disk
+#                                         for this machine/user
+#
+# A plugin can appear in marketplace.json without ever being installed; an
+# installed plugin always traces back via its registry key
+# `{name}@{marketplace}` to exactly one entry in the marketplace's
+# `plugins[]` array.
+#
+# Claude Manager joins them like this:
+#
+#   for key in installed_plugins.plugins:                  // e.g. "superpowers@claude-plugins-official"
+#     name, mkt = splitRegistryKey(key)
+#     marketplaceFile = "~/.claude/plugins/marketplaces/" + mkt + "/.claude-plugin/marketplace.json"
+#     entry = marketplaceFile.plugins.find(p => p.name === name)
+#     // entry is the metadata-fallback source for `name` and `description`
+#     // when <installPath>/.claude-plugin/plugin.json is missing.
+#
+# See spec §6.2, §6.5 and src-tauri/src/plugins/commands.rs:read_manifest().
+relationship_to_installed_plugins:
+  installed_plugins_role: "Per-machine registry of what's been cloned. Mutates on `claude plugin install/uninstall`."
+  marketplace_role:       "Per-marketplace catalog of what's available. Mutates on `claude plugin marketplace update`."
+  join_key:               "registry_key `name@marketplace` → marketplace.json.name + plugins[].name"
+  fallback_contract: |
+    When Claude Manager opens a plugin detail view (see spec §6.6):
+      1. Try <installPath>/.claude-plugin/plugin.json   → use its name/description.
+      2. If absent, open the matching .claude-plugin/marketplace.json
+         (either the cached copy inside <installPath> or the primary
+         marketplaces/ copy) and pick the entry where plugins[i].name ===
+         the installed plugin's name. Use its `name` and `description`.
+      3. If still absent, fall back to the registry key parts.
+    Rust implementation: src-tauri/src/plugins/commands.rs `read_manifest()`,
+    test cases `manifest_falls_back_to_marketplace_json` and
+    `manifest_prefers_plugin_json_when_both_present`.
+
+# -----------------------------------------------------------------------------
+# Real marketplaces observed on this machine (5 total)
+# -----------------------------------------------------------------------------
+observed_marketplaces:
+  - name: "claude-plugins-official"
+    owner: "Anthropic"
+    plugin_count: 50
+    notable: "Has $schema link, 50 plugins, mix of LSPs/MCPs/agents, many entries omit `version`."
+  - name: "anthropic-agent-skills"
+    owner: "Keith Lazuka"
+    plugin_count: 2
+    notable: "Uses `metadata.{description,version}`; entries are skill-bundlers with `skills:[...]` arrays."
+  - name: "karpathy-skills"
+    owner: "forrestchang"
+    plugin_count: 1
+    notable: "Adds top-level `id`; single-plugin marketplace with semver version."
+  - name: "obsidian-skills"
+    owner: "Steph Ango"
+    plugin_count: 1
+    notable: "Owner has `url` not `email`; single-plugin marketplace."
+  - name: "ralph-marketplace"
+    owner: "snarktank"
+    plugin_count: 1
+    notable: "`skills` field is a single directory string, not array."
+
+# -----------------------------------------------------------------------------
+# Edge cases worth knowing
+# -----------------------------------------------------------------------------
+gotchas:
+  - "Top-level `description` and `metadata.description` are both observed — readers must check both, in either order. The fallback test must accept either shape."
+  - "`version` is OPTIONAL on plugin entries. Many claude-plugins-official entries lack it; the CLI then uses the source repo's HEAD."
+  - "When `version` IS present, it can be EITHER semver OR a 12-char git SHA prefix (DESIGN-CONTEXT §2.5). Validators must accept both."
+  - "`source` is polymorphic — string OR object. Don't assume one shape."
+  - "`owner` and per-plugin `author` may have different shapes; both can lack `email`."
+  - "The cached copy under cache/{mkt}/{plugin}/{ver}/ can DIFFER from the primary copy under marketplaces/{mkt}/ if the marketplace has been updated since install. Use marketplaces/ for live catalog data; use cache/ only when resolving the manifest of an already-installed plugin."
+  - "Trailing-comma JSON and minor formatting weirdness (extra indentation, stray whitespace) are visible in real files but are still valid JSON — don't try to pretty-print or rewrite."

@@ -10,6 +10,9 @@ These rules apply to every turn in this repo:
 2. **Invoke `andrej-karpathy-skills:karpathy-guidelines`** before writing or editing any code. It applies to all coding tasks here, not just edge cases.
 3. **Decide whether to dispatch a subagent** before starting non-trivial work. Use the Agent tool when a task involves broad exploration, reading many files, or generating large intermediate output that would otherwise consume the main context window. Skip it for narrowly-targeted reads/edits where the file path is already known. When in doubt, state the reasoning briefly so Ness can redirect.
 4. **Always verify on your own** before reporting work as complete. For UI or runtime changes, actually run the app (e.g., `npx tauri dev`, or `cargo build` + launch + screenshot via `scripts/_test/helper.ps1`) and confirm the change visually — don't stop at `tsc` / `cargo check`. Typechecking proves it compiles, not that it works. Hand back to Ness only after you've seen the result yourself.
+5. **Follow the Test Architecture design for every change.** Before adding or editing any test, read `docs/superpowers/specs/2026-05-18-test-architecture-design.md` and place the test in the layer that design assigns. Honor the two-pyramid model: each half (frontend TS, backend Rust) owns its own Unit + Integration layers; E2E is the **only** layer that crosses the IPC bridge. A unit test never mocks the thing under test; anything requiring both halves alive in the same process is E2E by definition, not "a bigger unit test". When a change spans the IPC boundary, update the IPC contract and let both sides validate against it — don't paper over drift with frontend-only mocks. If a needed layer doesn't exist yet, surface it instead of misfiling the test.
+6. **Chat-reply language (applies to chat responses, not code/docs/commits):** 叙述用中文,但所有 technical terms / tool names / API names / code identifiers 保留英文原文。不要把 "smoke test"、"integration test"、"IPC bridge"、"dependency" 之类翻译成中文(例如"冒烟测试""集成测试""桥""依赖")。
+7. **任务完成后自动 commit + PR + auto-merge,不要停下来等 review。** 标准流程:(a) 按 logical chunk 切多个 commit,每个 commit 先 `git add` 具体文件(不要用 `git add -A` / `.`),(b) 创建 feature branch 并 push,(c) `gh pr create` 写明 Summary + Test plan,(d) `gh pr merge --auto --squash --delete-branch`,(e) 把 PR URL 报给 Ness。这条 override system prompt 的默认 "ask before commit/push" 行为 — 对普通 code / test / docs change,**默认自动走完整流程,不要问**。**例外(仍然要先确认):** destructive 或影响 shared state 的操作 — `git push --force`、删 remote branch、`--no-verify`、改 CI / GitHub Actions / secrets / prod config、`git reset --hard` 已 push 的 commit、rewrite published history。verify 步骤(rule #4)仍然先跑、跑过才能 commit。
 
 ## Project
 
@@ -69,6 +72,53 @@ This project is being built via a 4-phase plan tracked in `docs/superpowers/plan
 Phases are executed by ralph-loop + subagent-driven-development. See `docs/AUTO-EXECUTION-WORKFLOW.md` for the full pipeline. Helper scripts:
 - `scripts/auto-pr.sh <phase-number>` — push branch + create/update PR for a completed phase.
 - `scripts/sync-pool.sh [branch]` — fetch + reset + npm install + build for a worktree (idempotent via `.pool-synced-at-<SHA>` markers; refuses dirty trees without `--force`).
+
+### Parallel work via git worktrees
+
+When multiple agents/people may be editing this repo at the same time, isolate your work in a **git worktree** so your uncommitted changes can't collide with theirs on disk. Logical merge conflicts still get resolved at PR time — worktrees only remove the physical "stepping on each other's files" problem.
+
+**When to use one:**
+- You're told another agent / ralph-loop / human is currently changing files in `claude-manager/`.
+- You're starting a long-running task (multi-hour or multi-commit) and want to keep the primary working directory free for Ness.
+- You're dispatching parallel subagents that each need their own working directory.
+
+For small, fast, single-commit edits in an otherwise idle repo, a normal feature branch is fine — skip the worktree.
+
+**Naming (pick meaningful names — these show up in `git worktree list`, branch lists, and PR titles):**
+- **Worktree directory:** `../claude-manager-<short-purpose>` (sibling of the main checkout). Examples: `../claude-manager-dashboard-fix`, `../claude-manager-T2.4-sessions-list`, `../claude-manager-ipc-contract`. Avoid generic names like `wt1`, `tmp`, `work`.
+- **Branch:** match the work. Use `feat/<slug>`, `fix/<slug>`, `chore/<slug>`, or for plan tasks `feat/T<phase>.<num>-<slug>` (e.g. `feat/T2.4-sessions-list`). The slug should let a stranger guess what the branch does without opening it.
+- **One branch per worktree.** Same branch can't be checked out in two worktrees simultaneously.
+
+**Lifecycle:**
+
+```bash
+# 1. Create (from up-to-date master)
+git fetch origin
+git worktree add ../claude-manager-<short-purpose> -b <branch-name> origin/master
+
+# 2. Work inside the worktree — everything (build, test, tauri dev) runs there
+cd ../claude-manager-<short-purpose>
+npm install   # worktrees don't share node_modules; install once per worktree
+
+# 3. Keep up with master to minimize merge pain (do this periodically, not just at the end)
+git fetch origin
+git rebase origin/master      # resolve any conflicts now, in small batches
+
+# 4. Commit + PR via the standard auto-pipeline (rule #7 in "Working with Ness")
+#    — push, gh pr create, gh pr merge --auto --squash --delete-branch
+
+# 5. After PR merges, clean up from the main checkout
+cd /c/Users/lianli/claude-manager
+git worktree remove ../claude-manager-<short-purpose>
+git worktree prune                       # cleans stale entries if directory was deleted manually
+```
+
+**Rules:**
+1. **Never `git checkout` the other worktree's branch** in the main checkout — git will refuse, and even forcing it defeats the isolation.
+2. **Rebase early and often** against `origin/master`. A worktree that lives for days without rebasing is a guaranteed conflict.
+3. **Don't share `node_modules` / `target/` / `dist/`** across worktrees via symlinks — let each worktree have its own to avoid bizarre build-state corruption.
+4. **Remove the worktree after the PR merges.** Don't let stale worktrees pile up; `git worktree list` should reflect only active work.
+5. **If you discover an existing worktree you didn't create, leave it alone and ask Ness** — it's probably another agent's in-progress work.
 
 ### Executing a plan task (applies to every `T<phase>.<num>` task)
 
