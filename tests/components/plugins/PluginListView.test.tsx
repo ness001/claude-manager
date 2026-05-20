@@ -331,27 +331,15 @@ describe("PluginListView", () => {
     }
   });
 
-  it("Install Plugin button is disabled until IPC is wired", () => {
+  // Task #29 / spec §6.7: Install Plugin is wired to the install_plugin IPC.
+  // Enabled at rest; the click flow itself is exercised in the plugin-store
+  // tests — here we just pin the button shape so the stub never regresses.
+  it("Install Plugin button is wired (enabled + accessible)", () => {
     render(<PluginListView />);
-    const btn = screen.getByTestId("install-plugin-btn");
-    expect(btn).toBeDisabled();
-    expect(btn).toHaveAttribute("title");
-  });
-
-  // WCAG 4.1.2 (Name, Role, Value): the Install Plugin button is rendered
-  // `disabled` with a long `title` tooltip explaining the CLI workaround.
-  // Sighted users get that hint on hover, but a screen-reader user navigating
-  // by buttons hears only "Install Plugin, button, dimmed" — leaving them to
-  // assume the app is broken with no recoverable instruction. Mirror the gist
-  // of the visual tooltip into the accessible name. Mirrors PR #181
-  // (QuickActions), PR #183 (SessionListPanel new-session), PR #184
-  // (SessionInfoBar actions).
-  it("Install Plugin button announces its (not yet wired) status via aria-label (WCAG 4.1.2)", () => {
-    render(<PluginListView />);
-    const btn = screen.getByTestId("install-plugin-btn");
-    expect(btn.getAttribute("aria-label")).toBe(
-      "Install Plugin (not yet wired — use the CLI)",
-    );
+    const btn = screen.getByTestId("install-plugin-btn") as HTMLButtonElement;
+    expect(btn.disabled).toBe(false);
+    expect(btn.getAttribute("aria-disabled")).not.toBe("true");
+    expect(btn.getAttribute("aria-label")).toBe("Install Plugin");
   });
 
   // WCAG 4.1.2 (Name, Role, Value): the Check-for-Updates button is disabled
@@ -468,23 +456,6 @@ describe("PluginListView", () => {
     expect(input.value).toBe("");
   });
 
-  // CLAUDE.md R2 (Orphan-placeholder rule): the Install Plugin header button
-  // is disabled until the IPC ships. The source MUST reference the open
-  // tracker in docs/superpowers/plans/2026-05-08-ui-defect-sweep.md (line
-  // 295) so the placeholder isn't an undiscoverable orphan. Mirrors PR #105.
-  it("PluginListView source has an R2 wire-up TODO for the Install Plugin stub", async () => {
-    const fs = await import("node:fs");
-    const path = await import("node:path");
-    const src = fs.readFileSync(
-      path.resolve(
-        __dirname,
-        "../../../src/components/plugins/PluginListView.tsx",
-      ),
-      "utf8",
-    );
-    expect(src).toMatch(/TODO\(ui-defect-sweep#L295\)[\s\S]*install-plugin-btn/);
-  });
-
   // WCAG 4.1.3 (Status Messages, Level AA) — while the Check-for-Updates
   // network call is in flight the button only signaled "busy" via a spinning
   // icon (sighted-only) and the `disabled` state. Screen-reader users heard
@@ -540,5 +511,69 @@ describe("PluginListView", () => {
     expect(heading).not.toBeNull();
     expect(heading!.tagName).toBe("H1");
     expect(heading!.textContent).toBe("Plugins");
+  });
+
+  // Task #29 / spec §6.7: clicking [Install Plugin] opens an in-page modal
+  // (not a native window.prompt — the e2e harness can't observe browser
+  // chrome dialogs). Cancel closes the modal; Submit invokes installPlugin.
+  describe("Install Plugin modal", () => {
+    it("clicking [Install Plugin] opens the prompt modal with input + Cancel + Submit", () => {
+      render(<PluginListView />);
+      expect(screen.queryByTestId("install-plugin-prompt")).toBeNull();
+      fireEvent.click(screen.getByTestId("install-plugin-btn"));
+      const prompt = screen.getByTestId("install-plugin-prompt");
+      expect(prompt.getAttribute("role")).toBe("dialog");
+      expect(prompt.getAttribute("aria-modal")).toBe("true");
+      expect(screen.getByTestId("install-plugin-input")).toBeTruthy();
+      expect(screen.getByTestId("install-plugin-cancel")).toBeTruthy();
+      expect(screen.getByTestId("install-plugin-submit")).toBeTruthy();
+    });
+
+    it("Cancel button closes the modal without invoking install_plugin", () => {
+      render(<PluginListView />);
+      fireEvent.click(screen.getByTestId("install-plugin-btn"));
+      fireEvent.click(screen.getByTestId("install-plugin-cancel"));
+      expect(screen.queryByTestId("install-plugin-prompt")).toBeNull();
+      expect(
+        invokeMock.mock.calls.filter((c) => c[0] === "install_plugin"),
+      ).toHaveLength(0);
+    });
+
+    it("Submit with non-empty input invokes install_plugin then closes modal", async () => {
+      invokeMock.mockResolvedValue(0);
+      render(<PluginListView />);
+      fireEvent.click(screen.getByTestId("install-plugin-btn"));
+      const input = screen.getByTestId("install-plugin-input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "example@mp" } });
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("install-plugin-submit"));
+      });
+      expect(screen.queryByTestId("install-plugin-prompt")).toBeNull();
+      const installCalls = invokeMock.mock.calls.filter(
+        (c) => c[0] === "install_plugin",
+      );
+      expect(installCalls).toHaveLength(1);
+      expect(installCalls[0][1]).toEqual({ name: "example@mp" });
+    });
+
+    it("Submit button is disabled while the input is empty/whitespace", () => {
+      render(<PluginListView />);
+      fireEvent.click(screen.getByTestId("install-plugin-btn"));
+      const submit = screen.getByTestId("install-plugin-submit") as HTMLButtonElement;
+      expect(submit.disabled).toBe(true);
+      const input = screen.getByTestId("install-plugin-input") as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "   " } });
+      expect(submit.disabled).toBe(true);
+      fireEvent.change(input, { target: { value: "x" } });
+      expect(submit.disabled).toBe(false);
+    });
+
+    it("Escape key in the input closes the modal", () => {
+      render(<PluginListView />);
+      fireEvent.click(screen.getByTestId("install-plugin-btn"));
+      const input = screen.getByTestId("install-plugin-input");
+      fireEvent.keyDown(input, { key: "Escape" });
+      expect(screen.queryByTestId("install-plugin-prompt")).toBeNull();
+    });
   });
 });

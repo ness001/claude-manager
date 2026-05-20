@@ -6,7 +6,7 @@
 // `checkPluginUpdates`, which talks to the Rust IPC and merges the result
 // back into the store via `setPlugins`.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { FileText, Plus, RefreshCw, Search } from "lucide-react";
 
@@ -20,9 +20,16 @@ export function PluginListView() {
   const setSearchQuery = usePluginStore((s) => s.setSearchQuery);
   const selectedPlugin = usePluginStore((s) => s.selectedPlugin);
   const isLoading = usePluginStore((s) => s.isLoading);
+  const installPlugin = usePluginStore((s) => s.installPlugin);
 
   const [isChecking, setIsChecking] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [installInput, setInstallInput] = useState("");
+  const installInputRef = useRef<HTMLInputElement | null>(null);
+  const installTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const filtered = useMemo(
     () => filterPlugins(plugins, searchQuery),
@@ -34,6 +41,17 @@ export function PluginListView() {
     (p) => p.state === "active" || p.state === "update-available",
   ).length;
   const disabledCount = plugins.filter((p) => p.state === "disabled").length;
+
+  // Focus the input as soon as the modal mounts so keyboard users can type
+  // immediately. Restore focus to the trigger when the modal closes (WAI-ARIA
+  // APG dialog focus-management).
+  useEffect(() => {
+    if (showInstallPrompt) {
+      installInputRef.current?.focus();
+    } else {
+      installTriggerRef.current?.focus();
+    }
+  }, [showInstallPrompt]);
 
   const onCheckForUpdates = async () => {
     setIsChecking(true);
@@ -50,6 +68,29 @@ export function PluginListView() {
       setUpdateError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsChecking(false);
+    }
+  };
+
+  const openInstallPrompt = () => {
+    setInstallInput("");
+    setInstallError(null);
+    setShowInstallPrompt(true);
+  };
+  const cancelInstallPrompt = () => {
+    setShowInstallPrompt(false);
+  };
+  const submitInstallPrompt = async () => {
+    const trimmed = installInput.trim();
+    if (trimmed === "") return;
+    setShowInstallPrompt(false);
+    setIsInstalling(true);
+    setInstallError(null);
+    try {
+      await installPlugin(trimmed);
+    } catch (err) {
+      setInstallError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsInstalling(false);
     }
   };
 
@@ -74,31 +115,25 @@ export function PluginListView() {
             Plugins
           </h1>
           <div className="flex gap-2">
-            {/* TODO(ui-defect-sweep#L295): wire Install Plugin to a `claude
-              * plugins install <name>` IPC. Tracked in
-              * docs/superpowers/plans/2026-05-08-ui-defect-sweep.md ("Install
-              * Plugin header button has no onClick handler"). Per CLAUDE.md
-              * R2 (Orphan-placeholder rule), every disabled stub must
-              * declare its wire-up tracker inline so the placeholder isn't
-              * an undiscoverable orphan. */}
+            {/* Spec §6.7 — header [Install Plugin] now wired. The prompt
+              * is intentionally minimal: marketplace pickers / autocomplete
+              * are post-MVP. CLI errors stream into the Plugins log window
+              * so failures aren't silent. */}
             <button
+              ref={installTriggerRef}
               type="button"
               data-testid="install-plugin-btn"
-              disabled
-              aria-disabled="true"
-              // Sighted users see the long "Not yet wired …" tooltip on
-              // hover; mirror the gist into the accessible name so
-              // screen-reader users hear the same hint instead of just
-              // "Install Plugin, button, dimmed" and assuming the app is
-              // broken (WCAG 4.1.2). Mirrors PR #181 (QuickActions),
-              // PR #183 (SessionListPanel new-session), PR #184
-              // (SessionInfoBar actions).
-              aria-label="Install Plugin (not yet wired — use the CLI)"
-              title="Not yet wired — run `claude plugins install <name>` in your terminal for now"
-              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary opacity-50 cursor-not-allowed"
+              onClick={openInstallPrompt}
+              disabled={isInstalling}
+              aria-busy={isInstalling}
+              aria-haspopup="dialog"
+              aria-expanded={showInstallPrompt}
+              aria-label="Install Plugin"
+              title="Install a plugin via the Claude CLI"
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <Plus size={14} aria-hidden="true" />
-              Install Plugin
+              {isInstalling ? "Installing…" : "Install Plugin"}
             </button>
             <button
               type="button"
@@ -198,6 +233,15 @@ export function PluginListView() {
             className="text-xs text-status-error"
           >
             Couldn't check for updates: {updateError}
+          </p>
+        )}
+        {installError && (
+          <p
+            data-testid="install-error"
+            role="alert"
+            className="text-xs text-status-error"
+          >
+            Install failed: {installError}
           </p>
         )}
         <div className="relative">
@@ -314,6 +358,82 @@ export function PluginListView() {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Spec §6.7 Install Plugin prompt. Minimal in-page modal — not a
+        * native `window.prompt`, because the e2e harness (WebView2 +
+        * tauri-driver) can't observe / interact with browser-chrome
+        * dialogs, and the spec asserts on these testids. Backdrop click
+        * and Esc both cancel; Enter submits. */}
+      {showInstallPrompt && (
+        <div
+          data-testid="install-plugin-prompt"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="install-plugin-prompt-heading"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={(e) => {
+            // Backdrop click cancels; clicks inside the inner card don't
+            // bubble here because we stopPropagation below.
+            if (e.target === e.currentTarget) cancelInstallPrompt();
+          }}
+        >
+          <div
+            className="w-full max-w-sm rounded-md border border-border bg-bg-primary p-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              id="install-plugin-prompt-heading"
+              className="mb-2 text-sm font-semibold text-text-primary"
+            >
+              Install plugin
+            </h2>
+            <p className="mb-3 text-xs text-text-muted">
+              Enter the plugin name (or <code>name@marketplace</code>).
+              Output streams to the Plugins log window.
+            </p>
+            <input
+              ref={installInputRef}
+              type="text"
+              data-testid="install-plugin-input"
+              value={installInput}
+              onChange={(e) => setInstallInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void submitInstallPrompt();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelInstallPrompt();
+                }
+              }}
+              placeholder="e.g. example-skills@anthropic-agent-skills"
+              aria-label="Plugin name or name@marketplace"
+              className="mb-3 w-full rounded-md border border-border bg-bg-tertiary px-2 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                data-testid="install-plugin-cancel"
+                onClick={cancelInstallPrompt}
+                className="rounded-md border border-border px-3 py-1 text-xs text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-testid="install-plugin-submit"
+                onClick={() => {
+                  void submitInstallPrompt();
+                }}
+                disabled={installInput.trim() === ""}
+                className="rounded-md border border-accent bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary"
+              >
+                Install
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );
