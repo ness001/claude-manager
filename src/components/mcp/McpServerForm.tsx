@@ -9,7 +9,15 @@
 // Save calls saveMcpServer via the parent's onSave; Cancel closes without
 // touching disk.
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { saveMcpServer } from "../../lib/mcp-loader";
 import type {
@@ -40,6 +48,17 @@ export function McpServerForm({
 }: McpServerFormProps) {
   const isEdit = initial !== null && initial !== undefined;
   const titleId = useId();
+  // Per-field input ids so the visible <label> can wire `htmlFor` to the
+  // corresponding <input id={…}>. Without this, clicking the visible "Name"
+  // / "Command" / "URL" label text did nothing — sighted users lost the
+  // standard click-the-label-to-focus-the-input behavior, and accessibility
+  // linters flag the orphan <label> (no `for`, no implicit wrap) as a
+  // missing label association. The inputs already carry an explicit
+  // aria-label so SR users had the right accessible name; this fixes the
+  // sighted-user click affordance and removes the orphan-label warning.
+  const nameInputId = useId();
+  const commandInputId = useId();
+  const urlInputId = useId();
   const [name, setName] = useState(initial?.name ?? "");
   const [scope, setScope] = useState<McpScope>(
     initial?.scope === "local" ? "local" : "user",
@@ -80,6 +99,15 @@ export function McpServerForm({
   // page to find the trigger again. Capture the previously-focused element
   // on mount, restore it on unmount.
   const nameRef = useRef<HTMLInputElement | null>(null);
+  // Focus-trap container ref. The dialog has `aria-modal="true"` (line ~164)
+  // but without a Tab/Shift+Tab interceptor, keyboard users can Tab past the
+  // last focusable element and land on background controls (the McpPanel
+  // toolbar buttons, the search field, the cards underneath) — which are
+  // visually obscured by the backdrop but still in the document focus order.
+  // WAI-ARIA APG modal-dialog pattern + WCAG 2.4.3 (Focus Order) requires
+  // focus to cycle within the modal until it's dismissed. Mirrors the same
+  // gap closed for native browser <dialog> via showModal()'s built-in trap.
+  const formRef = useRef<HTMLFormElement | null>(null);
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
     nameRef.current?.focus();
@@ -168,6 +196,40 @@ export function McpServerForm({
     >
       <form
         data-testid="mcp-form"
+        ref={formRef}
+        // Focus trap: cycle Tab / Shift+Tab among focusable descendants of
+        // the form so the modal honors WAI-ARIA APG (focus must not escape
+        // a modal). Query the focusable set on each Tab press because
+        // controls appear/disappear with type/scope changes and
+        // disabled-state transitions; caching would go stale. The selector
+        // matches the standard tabbable set (form fields + buttons +
+        // links + tabIndex-augmented elements), filters out disabled and
+        // tabindex="-1" entries.
+        onKeyDown={(e) => {
+          if (e.key !== "Tab") return;
+          const root = formRef.current;
+          if (!root) return;
+          const tabbables = Array.from(
+            root.querySelectorAll<HTMLElement>(
+              'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter((el) => el.tabIndex !== -1);
+          if (tabbables.length === 0) return;
+          const first = tabbables[0];
+          const last = tabbables[tabbables.length - 1];
+          const active = document.activeElement as HTMLElement | null;
+          if (e.shiftKey) {
+            if (active === first || !root.contains(active)) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (active === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }}
         // Wrapping the field stack in a real <form> + Enter-key default-submit
         // gives keyboard users the universally-expected "type, press Enter to
         // save" behavior — the previous <div> swallowed Enter silently and
@@ -191,9 +253,10 @@ export function McpServerForm({
           {isEdit ? "Edit MCP Server" : "Add MCP Server"}
         </h2>
 
-        <Field label="Name" error={nameError}>
+        <Field label="Name" htmlFor={nameInputId} error={nameError}>
           <input
             data-testid="form-name"
+            id={nameInputId}
             type="text"
             ref={nameRef}
             aria-label="Server name"
@@ -250,9 +313,10 @@ export function McpServerForm({
 
         {type === "stdio" ? (
           <>
-            <Field label="Command" error={commandError}>
+            <Field label="Command" htmlFor={commandInputId} error={commandError}>
               <input
                 data-testid="form-command"
+                id={commandInputId}
                 type="text"
                 aria-label="Command"
                 value={command}
@@ -300,9 +364,10 @@ export function McpServerForm({
           </>
         ) : (
           <>
-            <Field label="URL" error={urlError}>
+            <Field label="URL" htmlFor={urlInputId} error={urlError}>
               <input
                 data-testid="form-url"
+                id={urlInputId}
                 type="text"
                 aria-label="URL"
                 value={url}
@@ -365,22 +430,40 @@ export function McpServerForm({
 
 function Field({
   label,
+  htmlFor,
   error,
   children,
 }: {
   label: string;
+  htmlFor?: string;
   error?: string | null;
   children: React.ReactNode;
 }) {
+  // When this Field has an error, propagate aria-invalid + aria-describedby
+  // to the single child input so SR users hear "invalid entry, <error text>"
+  // when they focus the field. The error <p> below uses the same id.
+  // (WCAG 3.3.1 Error Identification, 1.3.1 Info and Relationships.)
+  const errorId = `form-error-${label.toLowerCase()}`;
+  const child =
+    error && isValidElement(children)
+      ? cloneElement(children, {
+          "aria-invalid": true,
+          "aria-describedby": errorId,
+        } as Partial<React.ComponentProps<"input">>)
+      : children;
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs uppercase tracking-wide text-text-muted">
+      <label
+        htmlFor={htmlFor}
+        className="text-xs uppercase tracking-wide text-text-muted"
+      >
         {label}
       </label>
-      {children}
+      {child}
       {error && (
         <p
-          data-testid={`form-error-${label.toLowerCase()}`}
+          id={errorId}
+          data-testid={errorId}
           className="text-[11px] text-status-error"
         >
           {error}

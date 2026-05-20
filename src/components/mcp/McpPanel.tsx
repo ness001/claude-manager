@@ -151,7 +151,18 @@ export function McpPanel() {
             role="alert"
             className="text-xs text-status-red"
           >
-            Couldn't refresh MCP status: {error}
+            {/* The store's `error` field is shared by `loadServers`,
+              * `addServer`, `updateServer`, `removeServer` AND
+              * `refreshStatus` (mcp-store.ts lines 68/76/86/96/116).
+              * The original "Couldn't refresh MCP status: …" copy was
+              * accurate only for refresh failures — when a Remove or
+              * Save action failed the user saw a misleading "refresh"
+              * banner that didn't match the action they had just
+              * taken. Make the prefix source-agnostic so it stays
+              * truthful no matter which action set the field. The
+              * underlying error message itself (e.g. "write_mcp_server
+              * failed: …") still carries the actionable detail. */}
+            MCP error: {error}
           </p>
         )}
       </header>

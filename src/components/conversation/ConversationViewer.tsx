@@ -521,8 +521,14 @@ function TurnInput({
       setDraft(String(currentTurn));
       return;
     }
-    onCommit(v); // jumpToTurn clamps to [1, totalTurns] and updates currentTurn
-    // The effect above will re-sync `draft` to the clamped value.
+    // Clamp here (mirroring jumpToTurn) and set draft authoritatively in the
+    // same batch as setEditing(false). Without this, the re-sync effect can
+    // run with editing=false but currentTurn still stale (parent's setCurrentTurn
+    // hasn't applied to this render yet) and overwrite the committed value back
+    // to the previous turn — observed as a CI-only flake.
+    const clamped = Math.max(1, Math.min(totalTurns, Math.trunc(v)));
+    setDraft(String(clamped));
+    onCommit(v);
   };
 
   return (
