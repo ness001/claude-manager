@@ -1,0 +1,504 @@
+# ============================================================================
+# Source-of-truth: Plugin directory layout
+# ----------------------------------------------------------------------------
+# Documents the on-disk shape of an installed Claude Code plugin under
+#   ~/.claude/plugins/cache/{marketplace}/{plugin-name}/{version}/
+# This is the layout claude-manager's plugin loader (src/lib/plugin-loader.ts)
+# and Rust IPC `read_plugin_contents` (src-tauri/src/plugins/commands.rs)
+# read at runtime to populate the Plugins section.
+# ============================================================================
+
+id: plugin-directory-layout
+title: Installed-plugin directory layout (cache/{marketplace}/{plugin}/{version}/)
+path: ~/.claude/plugins/cache/{marketplace}/{plugin-name}/{version}/
+format: directory-tree
+owner: claude-code  # the Claude Code CLI creates, updates, and deletes these trees
+claudeManagerAccess: read
+# claude-manager only READS this tree (manifest + skills/agents/hooks/CLAUDE.md).
+# Installs / updates / removes are delegated to the CLI; we do not mutate the
+# cache directory directly.
+
+# ---------------------------------------------------------------------------
+# Spec / context references
+# ---------------------------------------------------------------------------
+references:
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §6.1 (Plugin Data Model)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §6.2 (Key Files — cache path)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §6.5 (List View — metadata fallback note)
+  - docs/superpowers/specs/2026-05-03-claude-manager-design.md §6.6 (Detail View — tabs)
+  - docs/DESIGN-CONTEXT.md §4 (Plugin Data Model — hierarchy + key files + states)
+  - src/lib/plugin-loader.ts  (loadPlugins, loadPluginDetail; lines 100-225)
+  - src/lib/plugin-types.ts   (PluginMeta, PluginDetail, SkillInfo, AgentInfo, HookInfo)
+  - src-tauri/src/plugins/commands.rs  (read_plugin_contents, scan_skills, scan_agents, read_hooks; lines 140-225)
+
+# ---------------------------------------------------------------------------
+# Cache path anatomy
+# ---------------------------------------------------------------------------
+# Example fully-resolved install paths from the investigator's machine:
+#   ~/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/
+#   ~/.claude/plugins/cache/ralph-marketplace/ralph-skills/1.0.0/
+#   ~/.claude/plugins/cache/karpathy-skills/andrej-karpathy-skills/1.0.0/
+#   ~/.claude/plugins/cache/anthropic-agent-skills/document-skills/a5bcdd7e58cd/
+#   ~/.claude/plugins/cache/anthropic-agent-skills/example-skills/a5bcdd7e58cd/
+#   ~/.claude/plugins/cache/obsidian-skills/obsidian/1.0.1/
+#   ~/.claude/plugins/cache/claude-plugins-official/ralph-loop/27d2b86d72da/
+#   ~/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0/
+#
+# The third path segment (`{version}/`) is either:
+#   - semver string ("5.0.7", "1.0.0", "1.0.1")
+#   - 12-char short git SHA ("a5bcdd7e58cd", "27d2b86d72da")
+# per spec §6.3.
+cachePathAnatomy:
+  base: ~/.claude/plugins/cache/
+  segments:
+    - name: marketplace
+      example: claude-plugins-official
+      description: >
+        Marketplace slug. Multiple plugins from the same source share this
+        directory (e.g. claude-plugins-official hosts superpowers, ralph-loop,
+        rust-analyzer-lsp).
+    - name: plugin-name
+      example: superpowers
+      description: >
+        Plugin slug; matches the `name` field in `plugin.json` (when present)
+        and is the LHS of the `{name}@{marketplace}` registry key in
+        installed_plugins.json.
+    - name: version
+      example: "5.0.7"
+      description: >
+        Either a semver string OR a 12-character short git SHA. Same plugin
+        can appear under multiple version subdirs if multiple versions were
+        installed (treated as separate installations by the loader).
+
+# ---------------------------------------------------------------------------
+# Directory tree — what may live inside `{version}/`
+#
+# `required` means "the loader assumes this exists or degrades gracefully";
+# `optional` means "frequently absent in real plugins, must not error".
+# `manifestVariant` documents the plugin.json EITHER/OR location.
+# ---------------------------------------------------------------------------
+directoryTree:
+  # ---- manifest (canonical location, OR absent) --------------------------
+  manifestVariant:
+    - path: .claude-plugin/plugin.json
+      observed: true
+      observedIn:
+        - claude-plugins-official/superpowers/5.0.7/
+        - ralph-marketplace/ralph-skills/1.0.0/
+        - karpathy-skills/andrej-karpathy-skills/1.0.0/
+        - obsidian-skills/obsidian/1.0.1/
+      notes: >
+        Canonical and ONLY location the current Rust loader probes. Spec
+        §6.5 also documents this nested location as where plugin.json lives.
+        Co-located here with `marketplace.json` when both exist.
+    - path: plugin.json
+      observed: false
+      loaderSupport: false
+      notes: >
+        Root-level variant. Spec §6.5 permits root-level `plugin.json` in
+        principle; the current Rust loader (`read_manifest`,
+        src-tauri/src/plugins/commands.rs:272-289) does NOT probe this
+        location — only `.claude-plugin/plugin.json` is read. Root-level
+        plugins that ship without a `.claude-plugin/` wrapper will fall
+        through to the marketplace.json fallback (also looked for at the
+        per-plugin `.claude-plugin/` directory) and end up with empty
+        name/description. Add a `TODO(TBD): wire up root-level plugin.json
+        probe` if/when this gets supported.
+    - path: <absent>
+      observed: true
+      observedIn:
+        - anthropic-agent-skills/document-skills/a5bcdd7e58cd/  (NO plugin.json — only marketplace.json under .claude-plugin/)
+        - anthropic-agent-skills/example-skills/a5bcdd7e58cd/
+      notes: >
+        CRITICAL GOTCHA per spec §6.5: some plugins ship no plugin.json at
+        all. In that case `name` and `description` fall back to the
+        per-plugin `marketplace.json` at
+        `<installPath>/.claude-plugin/marketplace.json` (i.e., the same
+        `.claude-plugin/` directory the missing `plugin.json` would have
+        lived in, NOT a marketplace-root-level file). The Rust loader picks
+        the FIRST entry of `plugins[]` from that file
+        (commands.rs:272-289). The marketplace-root path
+        `cache/{marketplace}/.claude-plugin/marketplace.json` does NOT
+        exist on disk for any surveyed install.
+
+  # ---- content directories ----------------------------------------------
+  paths:
+    - path: skills/
+      kind: directory
+      required: false
+      description: >
+        Each immediate child is a directory containing `SKILL.md` with YAML
+        frontmatter. The directory name is the conventional skill slug; the
+        frontmatter `name` field is authoritative when present (Rust
+        `scan_skills` falls back to the directory name otherwise).
+      observedAlternate: >
+        The Rust scanner ALSO accepts a flat layout `skills/<name>.md` for
+        legacy plugins (see scan_skills @ commands.rs:166-197). Not seen in
+        the real plugins surveyed; documented here so future loader changes
+        do not silently drop support.
+
+    - path: skills/<name>/SKILL.md
+      kind: file
+      required: false  # required iff `skills/` exists with subdirectories
+      frontmatter: skillFrontmatter (see below)
+
+    - path: agents/
+      kind: directory
+      required: false
+      description: >
+        Each `.md` file is one agent. Frontmatter governs name/description;
+        optional fields (tools, model, color) tune dispatch.
+
+    - path: agents/<name>.md
+      kind: file
+      required: false
+      frontmatter: agentFrontmatter (see below)
+
+    - path: hooks/
+      kind: directory
+      required: false
+      description: >
+        Contains `hooks.json` and any helper scripts the hook commands invoke
+        (e.g. superpowers has `hooks/run-hook.cmd` + `hooks/session-start/`).
+        The loader only reads `hooks.json`; auxiliary files are
+        plugin-internal.
+
+    - path: hooks/hooks.json
+      kind: file
+      required: false  # required iff `hooks/` exists
+      description: >
+        Defines hook subscriptions keyed by lifecycle event name. See
+        `hooksJsonSchema` below.
+
+    - path: commands/
+      kind: directory
+      required: false
+      description: >
+        Deprecated per spec §6.1 — being replaced by skills. The loader does
+        not scan this directory; documented for completeness only.
+
+    - path: CLAUDE.md
+      kind: file
+      required: false
+      description: >
+        Plugin-scoped Claude Code instructions, loaded at session start. The
+        loader only reports whether the file EXISTS (PluginContents
+        `has_claude_md`); contents are not parsed.
+
+  # ---- noise commonly seen at the root (NOT consumed by the loader) -----
+  ignoredAtRoot:
+    - .git/                # plugins distributed as git clones leave this
+    - .github/             # CI for the plugin's own repo
+    - .in_use              # marker file Claude Code drops while a session has the plugin loaded
+    - .codex/, .codex-plugin/, .cursor-plugin/, .opencode/  # sibling editor formats
+    - LICENSE, README.md, package.json, gemini-extension.json
+    - tests/, docs/, scripts/, assets/
+
+# ---------------------------------------------------------------------------
+# plugin.json schema (top-level object)
+# ---------------------------------------------------------------------------
+pluginJsonSchema:
+  type: object
+  fields:
+    - name: name
+      type: string
+      required: true
+      description: >
+        Plugin slug. Should match the directory name two levels up
+        (`{plugin-name}/`) and the LHS of the registry key
+        `{name}@{marketplace}` in installed_plugins.json.
+      observedExample: "superpowers"
+    - name: description
+      type: string
+      required: false
+      description: >
+        Short prose description shown in the list view (spec §6.5).
+        Surfaces as `manifest_description` from the Rust IPC and overrides
+        the empty default in `PluginMeta.description` when present.
+    - name: version
+      type: string
+      required: false
+      description: >
+        Semver. Display only — the authoritative version comes from
+        installed_plugins.json (which may also store a git SHA). May be
+        absent for plugins versioned by git SHA.
+      observedExample: "5.0.7"
+    - name: author
+      type: object  # { name: string, email?: string } OR string
+      required: false
+      description: >
+        Either a `{name, email}` object (observed: superpowers) or a bare
+        string. Treat as opaque for display.
+    - name: homepage
+      type: string  # URL
+      required: false
+    - name: repository
+      type: string  # URL or git URL
+      required: false
+    - name: license
+      type: string  # SPDX identifier
+      required: false
+    - name: keywords
+      type: string[]
+      required: false
+  extraFields: tolerated
+  # Unknown keys MUST be ignored (and preserved round-trip if we ever write
+  # plugin.json, though claude-manager currently only reads it).
+
+# ---------------------------------------------------------------------------
+# marketplace.json (sibling fallback for missing plugin.json)
+# ---------------------------------------------------------------------------
+marketplaceJsonFallback:
+  path: <installPath>/.claude-plugin/marketplace.json
+  resolvedExample: ~/.claude/plugins/cache/{marketplace}/{plugin-name}/{version}/.claude-plugin/marketplace.json
+  whenToUse: >
+    When `<installPath>/.claude-plugin/plugin.json` is absent
+    (commands.rs:272-289 — the loader probes plugin.json then falls through
+    to marketplace.json in the SAME `.claude-plugin/` directory under the
+    per-plugin version root). The Rust loader uses the FIRST entry of
+    `plugins[]` for `name` and `description`. Spec §6.5 confirms the
+    fallback. Note: there is NO marketplace-root-level
+    `cache/{marketplace}/.claude-plugin/marketplace.json` on disk for the
+    surveyed installs — the fallback file lives under the per-plugin
+    install path, not the marketplace directory.
+  topLevel:
+    - name: string                       # marketplace slug
+    - owner: { name, email? }
+    - metadata: { description, version }
+    - plugins: array of plugin entries
+  pluginEntry:
+    - name: string                       # matches `{plugin-name}/` segment
+    - description: string
+    - source: string                     # usually "./"
+    - strict: boolean
+    - skills: string[]                   # optional list of skill paths
+
+# ---------------------------------------------------------------------------
+# Agent frontmatter (agents/<name>.md)
+#
+# Mirrors `AgentInfo` in src/lib/plugin-types.ts. The Rust scanner
+# (scan_agents @ commands.rs:200-225+) parses these fields and accepts a
+# bracketed comma list for `tools` (e.g. `[Read, Bash, "Grep"]`).
+# ---------------------------------------------------------------------------
+agentFrontmatter:
+  fields:
+    - name: name
+      type: string
+      required: true
+      description: >
+        Agent slug. The Rust scanner falls back to the filename stem when
+        absent, but real plugins always set it.
+    - name: description
+      type: string
+      required: true
+      description: >
+        Free-form description, often multi-line with embedded `<example>`
+        blocks (observed in superpowers/code-reviewer.md).
+    - name: tools
+      type: string[]
+      required: false
+      description: >
+        Whitelist of tool names the agent is permitted to use. On disk this
+        is YAML-list syntax (`tools: [Read, Bash]` or a block list). The Rust
+        scanner strips `[` `]` and splits on `,` — so any YAML serializer
+        that emits a flow sequence works.
+    - name: model
+      type: string
+      required: false
+      description: >
+        Model identifier the agent prefers. The literal `"inherit"` means
+        "use whatever the parent session is using" (observed in
+        superpowers/code-reviewer.md).
+    - name: color
+      type: string
+      required: false
+      description: >
+        UI hint color (e.g. `"blue"`, `"green"`). Purely cosmetic.
+
+# ---------------------------------------------------------------------------
+# Skill frontmatter (skills/<name>/SKILL.md)
+#
+# Mirrors `SkillInfo` in src/lib/plugin-types.ts.
+# ---------------------------------------------------------------------------
+skillFrontmatter:
+  fields:
+    - name: name
+      type: string
+      required: true
+      description: >
+        Skill slug. Falls back to the parent directory name when missing.
+    - name: description
+      type: string
+      required: true
+      description: >
+        Surfaces in the Detail-view Skills tab and in the skill auto-trigger
+        heuristics inside Claude Code itself. Often a multi-sentence
+        description with usage triggers (observed: docx, foo-skill).
+    - name: license
+      type: string
+      required: false
+      description: >
+        Some Anthropic-shipped skills (e.g. anthropic-agent-skills/docx)
+        carry a `license` field. The loader does not consume it; document
+        for completeness.
+
+# ---------------------------------------------------------------------------
+# hooks/hooks.json schema
+# ---------------------------------------------------------------------------
+hooksJsonSchema:
+  topLevel:
+    type: object
+    fields:
+      - name: hooks
+        type: object  # keyed by lifecycle event name
+        required: true
+        description: >
+          Map from event name (e.g. "SessionStart", "PreToolUse",
+          "PostToolUse") to an array of matcher entries.
+  matcherEntry:
+    type: object
+    fields:
+      - name: matcher
+        type: string
+        required: false
+        description: >
+          Pipe-separated alternation of sub-event names. For SessionStart the
+          observed values are `"startup|clear|compact"`. For tool-related
+          events the matcher is a tool name (e.g. `"Bash"`).
+      - name: hooks
+        type: array of hookCommand
+        required: true
+  hookCommand:
+    type: object
+    fields:
+      - name: type
+        type: string  # observed: "command"
+        required: true
+      - name: command
+        type: string
+        required: true
+        description: >
+          Shell command. May contain `${CLAUDE_PLUGIN_ROOT}` which Claude
+          Code expands to the plugin's install path at execution time.
+      - name: async
+        type: boolean
+        required: false
+        defaultValue: false
+
+# ---------------------------------------------------------------------------
+# Gotchas (load-bearing — code that ignores these will break in the wild)
+# ---------------------------------------------------------------------------
+gotchas:
+  - id: plugin-json-canonical-location
+    severity: critical
+    description: >
+      `plugin.json` lives at `<installPath>/.claude-plugin/plugin.json` —
+      that is the ONLY location the current Rust `read_manifest`
+      (src-tauri/src/plugins/commands.rs:272-289) probes. Spec §6.5 permits
+      a root-level `plugin.json` in principle, but the loader does NOT
+      currently support it; a root-only plugin will degrade to the
+      marketplace.json fallback and likely surface empty metadata. Track as
+      `TODO(TBD): wire up root-level plugin.json probe` if support is
+      desired.
+
+  - id: no-plugin-json-fallback-to-marketplace
+    severity: critical
+    description: >
+      Some plugins (verified: `anthropic-agent-skills/document-skills`,
+      `anthropic-agent-skills/example-skills`) ship NO plugin.json. Per
+      spec §6.5 and the Rust loader (commands.rs:272-289), `name` and
+      `description` then come from
+      `<installPath>/.claude-plugin/marketplace.json` — the SAME
+      `.claude-plugin/` directory at the per-plugin version root, NOT a
+      marketplace-level directory. The loader picks the FIRST entry of
+      `plugins[]`. Failing to colocate marketplace.json here gives the user
+      a card with no description.
+
+  - id: version-can-be-git-sha
+    severity: warning
+    description: >
+      The `{version}/` directory name is EITHER a semver string OR a 12-char
+      short git SHA (observed: `a5bcdd7e58cd`, `27d2b86d72da`). Do not parse
+      it as semver — display as-is. The full 40-char SHA for update checks
+      lives in installed_plugins.json under `gitCommitSha` (spec §6.3).
+
+  - id: skills-layout-two-shapes
+    severity: warning
+    description: >
+      The Rust `scan_skills` accepts BOTH `skills/<name>/SKILL.md`
+      (canonical, spec §6.1) and a flat `skills/<name>.md` (legacy). All
+      surveyed plugins use the directory form. Keep flat-file support in
+      the scanner to avoid silently breaking older plugins.
+
+  - id: agents-tools-frontmatter-encoding
+    severity: warning
+    description: >
+      The `tools` field on agent frontmatter is parsed by the Rust scanner
+      with a bracket-strip + comma-split (commands.rs:213-220). YAML flow
+      sequences (`tools: [Read, Bash]`) and quoted variants
+      (`tools: ["Read", "Bash"]`) both parse correctly. Block list syntax
+      may NOT be supported by the current scanner — flow form is the safe
+      bet for fixtures and any plugins we author ourselves.
+
+  - id: claude-md-existence-only
+    severity: info
+    description: >
+      The loader reports only whether the root `CLAUDE.md` exists
+      (`has_claude_md` boolean in PluginContents). The Detail view does not
+      currently render its contents.
+
+  - id: in-use-marker-file
+    severity: info
+    description: >
+      Claude Code drops an `.in_use` marker file/directory at the plugin
+      root while a session has the plugin loaded. It is not part of the
+      plugin's distributable contents — the loader should ignore it (the
+      Rust scanner naturally does, since it only looks at specific
+      subdirectories).
+
+  - id: per-plugin-failure-isolation
+    severity: warning
+    description: >
+      One malformed plugin must not poison the whole list. The TS loader
+      catches per-plugin errors in `loadPlugins`'s hydration loop
+      (plugin-loader.ts:182-186) and leaves the bad entry's counts at zero.
+      Rust `read_plugin_contents` returns `PluginContents::default()` if
+      `install_path` does not point at a directory (commands.rs:144-148).
+
+# ---------------------------------------------------------------------------
+# Fixture & test
+# ---------------------------------------------------------------------------
+fixture:
+  path: tests/sources-of-truth/fixtures/plugin-directory-layout/
+  layout: |
+    plugin-directory-layout/
+      example-plugin/                     # happy path: plugin.json present
+        .claude-plugin/
+          plugin.json                     # canonical manifest location
+        skills/
+          foo-skill/
+            SKILL.md                      # SkillInfo frontmatter (name, description)
+        agents/
+          bar-agent.md                    # AgentInfo frontmatter (name, description, tools, model, color)
+        hooks/
+          hooks.json                      # SessionStart + PreToolUse matchers
+        CLAUDE.md                         # existence only (loader does not parse contents)
+      example-plugin-no-manifest/         # fallback path: no plugin.json
+        .claude-plugin/
+          marketplace.json                # per-plugin marketplace.json with plugins[]
+  sanitization: >
+    All names neutral (`example-plugin`, `example-plugin-no-manifest`,
+    `foo-skill`, `bar-agent`). No real secrets, no real author emails
+    (uses `example.test` per RFC 6761).
+
+test:
+  path: tests/sources-of-truth/plugin-directory-layout.test.ts
+  asserts:
+    - Happy-path fixture has plugin.json at <plugin-root>/.claude-plugin/plugin.json (canonical, ONLY location loader probes)
+    - Happy-path fixture has SKILL.md, agent .md, hooks.json, CLAUDE.md
+    - Fallback fixture (`example-plugin-no-manifest/`) has NO root or .claude-plugin/ plugin.json AND has .claude-plugin/marketplace.json with a plugins[] array
+    - plugin.json has `name` and `description` strings; `version` parses as semver-like
+    - Agent frontmatter exposes name + description; optional `tools` is a non-empty string[]; `model` and `color` are strings
+    - Skill frontmatter exposes name + description strings
+    - hooks.json `hooks` object has at least one event key; each matcher entry has `matcher` (string) and `hooks` array; each command has `type`+`command` strings
+    - Type-level (`expectTypeOf`) checks against PluginMeta / SkillInfo / AgentInfo / HookInfo in src/lib/plugin-types.ts

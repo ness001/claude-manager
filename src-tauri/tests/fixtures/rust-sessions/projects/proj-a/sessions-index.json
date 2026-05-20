@@ -1,1 +1,1 @@
-{"sessions":[{"id":"sess-normal","isSidechain":false,"summary":"hello"},{"id":"sess-sidechain","isSidechain":true,"summary":"sub-agent"},{"id":"sess-dangling","isSidechain":false,"summary":"deleted on disk"}]}
+{"version":1,"entries":[{"sessionId":"sess-normal","isSidechain":false,"summary":"hello"},{"sessionId":"sess-sidechain","isSidechain":true,"summary":"sub-agent"},{"sessionId":"sess-dangling","isSidechain":false,"summary":"deleted on disk"}]}

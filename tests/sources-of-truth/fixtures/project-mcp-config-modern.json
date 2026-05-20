@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "xcodebuildmcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "xcodebuildmcp@latest", "mcp"],
+      "env": {
+        "XCODEBUILDMCP_ENABLED_WORKFLOWS": "REDACTED_WORKFLOW_LIST"
+      }
+    },
+    "cloudflare-api": {
+      "type": "http",
+      "url": "https://mcp.example.test/mcp",
+      "headers": {
+        "Authorization": "Bearer ${REDACTED_TOKEN_ENV_VAR}"
+      },
+      "env": {}
+    }
+  }
+}
