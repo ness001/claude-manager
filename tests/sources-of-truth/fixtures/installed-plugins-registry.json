@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "plugins": {
+    "document-skills@anthropic-agent-skills": [
+      {
+        "scope": "user",
+        "installPath": "<sanitized>/cache/anthropic-agent-skills/document-skills/a5bcdd7e58cd",
+        "version": "a5bcdd7e58cd",
+        "installedAt": "2026-02-04T05:39:01.774Z",
+        "lastUpdated": "2026-02-04T05:39:01.774Z",
+        "gitCommitSha": "a5bcdd7e58cdff48566bf876f0a72a2008dcefbc"
+      }
+    ],
+    "obsidian@obsidian-skills": [
+      {
+        "scope": "user",
+        "installPath": "<sanitized>/cache/obsidian-skills/obsidian/1.0.1",
+        "version": "1.0.1",
+        "installedAt": "2026-03-24T07:27:19.415Z",
+        "lastUpdated": "2026-03-24T07:27:19.415Z",
+        "gitCommitSha": "bb9ec95e1b59c3471bd6fd77a78a4042430bfac3"
+      }
+    ],
+    "superpowers@claude-plugins-official": [
+      {
+        "scope": "project",
+        "projectPath": "<sanitized>/projects/learn-authoring-ai-assistant",
+        "installPath": "<sanitized>/cache/claude-plugins-official/superpowers/5.0.7",
+        "version": "5.0.7",
+        "installedAt": "2026-04-20T06:18:47.050Z",
+        "lastUpdated": "2026-04-20T06:18:47.050Z",
+        "gitCommitSha": "b55764852ac78870e65c6565fb585b6cd8b3c5c9"
+      },
+      {
+        "scope": "user",
+        "installPath": "<sanitized>/cache/claude-plugins-official/superpowers/5.0.7",
+        "version": "5.0.7",
+        "installedAt": "2026-05-03T07:08:49.656Z",
+        "lastUpdated": "2026-05-03T07:08:49.656Z",
+        "gitCommitSha": "e7a2d16476bf042e9add4699c9d018a90f86e4a6"
+      }
+    ],
+    "ralph-loop@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "<sanitized>/cache/claude-plugins-official/ralph-loop/27d2b86d72da",
+        "version": "27d2b86d72da",
+        "installedAt": "2026-05-03T10:04:48.744Z",
+        "lastUpdated": "2026-05-03T10:04:48.744Z",
+        "gitCommitSha": "27d2b86d72da27c64585150857cee8472ad47abb"
+      }
+    ]
+  }
+}

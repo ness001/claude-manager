@@ -5,7 +5,7 @@
 // spec §17.6: "No MCP servers configured. Add one to extend Claude's
 // capabilities." + [+ Add Server].
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Plus, RefreshCw, Search } from "lucide-react";
 
 import {
@@ -44,6 +44,22 @@ export function McpPanel() {
     [servers, searchQuery],
   );
   const grouped = useMemo(() => serversByScope(filtered), [filtered]);
+
+  // Local in-flight flag for the Refresh Status button. The store action
+  // doesn't track this (refreshStatus mutates servers in-place without an
+  // isLoading toggle), so without a local flag the button gives zero
+  // feedback during the IPC round-trip — sighted users see no spinner /
+  // disabled state, SR users hear no aria-busy. Mirrors PluginListView's
+  // `isChecking` pattern around `checkPluginUpdates` (lines 23 + 102-134).
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const onRefreshStatus = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshStatus();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const onAdd = () => {
     startEditing({
@@ -91,12 +107,14 @@ export function McpPanel() {
               type="button"
               data-testid="refresh-status-btn"
               onClick={() => {
-                void refreshStatus();
+                void onRefreshStatus();
               }}
-              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              disabled={isRefreshing}
+              aria-busy={isRefreshing}
+              className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
-              <RefreshCw size={14} aria-hidden="true" />
-              Refresh Status
+              <RefreshCw size={14} aria-hidden="true" className={isRefreshing ? "animate-spin" : ""} />
+              {isRefreshing ? "Refreshing…" : "Refresh Status"}
             </button>
           </div>
         </div>

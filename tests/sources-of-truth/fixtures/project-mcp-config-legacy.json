@@ -1,0 +1,19 @@
+{
+  "playwright": {
+    "type": "stdio",
+    "command": "REDACTED_CMD",
+    "args": ["-y", "@playwright/mcp@latest"],
+    "env": {
+      "PLAYWRIGHT_BROWSERS_PATH": "REDACTED_PATH"
+    }
+  },
+  "internal-bus": {
+    "type": "sse",
+    "url": "https://bus.internal.example.test/mcp",
+    "headers": {
+      "Authorization": "Bearer ${REDACTED_BUS_TOKEN}"
+    },
+    "env": {}
+  },
+  "_comment": "Hand-edited legacy format: top-level keys are server names. This _comment key has no 'type' field and MUST be ignored by the loader."
+}

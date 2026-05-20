@@ -2,14 +2,23 @@
 //
 // Tied directly to the session store; clicking a button updates `viewMode`.
 //
-// Keyboard model: implements the WAI-ARIA Tabs pattern (manual activation
-// flavor) — only the active tab is in the focus order (`tabIndex=0`); the
-// others are `tabIndex=-1`. Left/Right arrows roving-focus between tabs;
-// Home/End jump to the first/last. Tab key moves focus OUT of the tablist
-// rather than between tabs. Activation (selecting the focused tab) happens
-// on Enter/Space — matching the click handler. This is required because
-// announcing `role="tab"` to assistive tech but failing to provide arrow-
-// key navigation violates WCAG 4.1.2 (Name, Role, Value).
+// ARIA pattern: WAI-ARIA Radio Group (NOT Tabs). The previous incarnation
+// declared `role="tablist"` / `role="tab"`, which is wrong because the
+// WAI-ARIA Tabs pattern *requires* each tab to control a sibling
+// `role="tabpanel"` element via `aria-controls`. There are no panels here —
+// the toggle is a one-of-three filter selector that re-orders the same
+// `SessionListPanel` sibling. SR users hearing "tab, 1 of 3" expected a
+// tabpanel and got nothing, and tab-aware keyboard models in some
+// screen readers (NVDA in browse mode) try to move focus into the
+// nonexistent panel. Radio Group is the correct pattern for "pick one of
+// N" with no associated panel: announces "radio button, checked / not
+// checked", and arrow-key roving + auto-activation are part of the
+// pattern (https://www.w3.org/WAI/ARIA/apg/patterns/radio/).
+//
+// Keyboard model (unchanged from prior fix): roving tabindex — only the
+// checked radio is `tabIndex=0`, others `tabIndex=-1`. Left/Right arrows
+// move + select the prev/next radio (wraps); Home/End jump to first/last.
+// Tab moves focus OUT of the group.
 
 import { useRef } from "react";
 
@@ -56,7 +65,7 @@ export function ViewModeToggle() {
 
   return (
     <div
-      role="tablist"
+      role="radiogroup"
       aria-label="Session view mode"
       className="flex items-center rounded-md bg-bg-tertiary p-0.5"
     >
@@ -69,8 +78,8 @@ export function ViewModeToggle() {
               refs.current[i] = el;
             }}
             type="button"
-            role="tab"
-            aria-selected={active}
+            role="radio"
+            aria-checked={active}
             tabIndex={active ? 0 : -1}
             data-testid={`view-mode-${mode}`}
             onClick={() => setViewMode(mode)}

@@ -211,6 +211,53 @@ describe("AssistantMessage", () => {
     );
   });
 
+  // Functional defect: onClick only fires for left-click. Middle-click
+  // (mouse button 1, fired as auxClick) bypasses the handler entirely —
+  // the browser-default link navigation runs against the link's `href`
+  // and inside Tauri's single-window WebView2 that navigates the WHOLE
+  // app away to that URL. Same death-by-navigation the onClick handler
+  // exists to prevent for left-click. Mirror the shell hand-off on
+  // auxClick (button 1 only — let button 2's contextmenu keep its
+  // default so users can still "Copy Link Address").
+  it("middle-click on a link also opens via plugin-shell (button 1)", () => {
+    openShellMock.mockReset().mockResolvedValue(undefined);
+    render(
+      <AssistantMessage text="See [Anthropic](https://www.anthropic.com)." />,
+    );
+    const link = screen.getByTestId("assistant-link");
+    // Synthesize an auxclick MouseEvent — Testing Library's fireEvent
+    // namespace doesn't expose `.auxClick` as a sugar method (only the
+    // common left-click `click`), so dispatch the raw DOM event. React's
+    // SyntheticEvent layer maps the native `auxclick` to onAuxClick.
+    const evt = new MouseEvent("auxclick", {
+      bubbles: true,
+      cancelable: true,
+      button: 1,
+    });
+    const notDefaultPrevented = link.dispatchEvent(evt);
+    // dispatchEvent returns false when preventDefault was called.
+    expect(notDefaultPrevented).toBe(false);
+    expect(openShellMock).toHaveBeenCalledWith("https://www.anthropic.com");
+  });
+
+  // Companion: button 2 (right-click) must NOT trigger openShell —
+  // right-click fires `contextmenu`, not `auxClick`, so the WebView's
+  // default context menu (which lets users "Copy Link Address") is left
+  // alone. If a button-2 auxClick somehow fires (rare), we still skip
+  // the shell handoff to preserve the right-click affordance.
+  it("aux-click with button 2 does NOT trigger openShell", () => {
+    openShellMock.mockReset().mockResolvedValue(undefined);
+    render(<AssistantMessage text="[x](https://x.test)" />);
+    const link = screen.getByTestId("assistant-link");
+    const evt = new MouseEvent("auxclick", {
+      bubbles: true,
+      cancelable: true,
+      button: 2,
+    });
+    link.dispatchEvent(evt);
+    expect(openShellMock).not.toHaveBeenCalled();
+  });
+
   // WCAG 1.4.1 (Use of Color): links must be distinguishable from prose by
   // more than color. Underline + accent color is the standard affordance.
   it("assistant-message links are visibly underlined and accent-colored (WCAG 1.4.1)", () => {

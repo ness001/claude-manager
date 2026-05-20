@@ -1,0 +1,145 @@
+{
+  "_comment": "Fixture for ~/.claude.json. Synthesized from real-file schema; all paths/IDs/secrets sanitized. See docs/sources-of-truth/claude-json-config.yaml.",
+
+  "numStartups": 42,
+  "installMethod": "<sanitized>",
+  "autoUpdates": true,
+  "autoUpdatesProtectedForNative": false,
+  "hasCompletedOnboarding": true,
+  "hasSeenTasksHint": true,
+  "hasUsedBackslashReturn": true,
+  "ideHintShownCount": 1,
+  "lastPlanModeUse": 1715000000000,
+  "lastReleaseNotesSeen": "<sanitized>",
+  "migrationVersion": 7,
+  "userID": "<redacted>",
+  "firstStartTime": "2026-01-01T00:00:00.000Z",
+  "btwUseCount": 0,
+  "promptQueueUseCount": 0,
+  "opus47LaunchSeenCount": 1,
+  "unpinOpus47LaunchEffort": false,
+  "opus45MigrationComplete": true,
+  "opus47MigrationComplete": true,
+  "opusProMigrationComplete": true,
+  "sonnet45MigrationComplete": true,
+  "sonnet1m45MigrationComplete": true,
+  "thinkingMigrationComplete": true,
+  "officialMarketplaceAutoInstallAttempted": true,
+  "officialMarketplaceAutoInstalled": true,
+  "cachedChromeExtensionInstalled": false,
+  "showSpinnerTree": true,
+  "changelogLastFetched": 1715000000000,
+  "cachedStatsigGates": {},
+  "clientDataCache": {},
+  "metricsStatusCache": {},
+  "seenNotifications": {},
+  "skillUsage": {},
+  "tipsHistory": {},
+  "githubRepoPaths": {},
+
+  "mcpServers": {
+    "stdio-example": {
+      "type": "stdio",
+      "command": "<sanitized>",
+      "args": ["<sanitized>", "<sanitized>", "<sanitized>"],
+      "env": {}
+    },
+    "sse-example": {
+      "type": "sse",
+      "url": "https://sse.example.test/mcp",
+      "headers": {
+        "Authorization": "<redacted>",
+        "X-Client-Id": "${EXAMPLE_CLIENT_ID}"
+      },
+      "env": {}
+    },
+    "http-example": {
+      "type": "http",
+      "url": "https://http.example.test/mcp",
+      "headers": {
+        "Authorization": "<redacted>"
+      },
+      "env": {}
+    }
+  },
+
+  "projects": {
+    "<sanitized>/project-alpha": {
+      "allowedTools": [],
+      "exampleFiles": [],
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "hasCompletedProjectOnboarding": true,
+      "hasTrustDialogAccepted": true,
+      "projectOnboardingSeenCount": 1,
+      "lastAPIDuration": 1234,
+      "lastAPIDurationWithoutRetries": 1100,
+      "lastCost": 0.0123,
+      "lastDuration": 5000,
+      "lastFpsAverage": 60,
+      "lastFpsLow1Pct": 55,
+      "lastGracefulShutdown": true,
+      "lastHintSessionId": "<redacted>",
+      "lastLinesAdded": 10,
+      "lastLinesRemoved": 2,
+      "lastSessionFirstPrompt": "<redacted>",
+      "lastSessionId": "<redacted>",
+      "lastSessionMetrics": {},
+      "lastSessionModified": 1715000000000,
+      "lastModelUsage": {},
+      "lastToolDuration": 100,
+      "lastTotalCacheCreationInputTokens": 0,
+      "lastTotalCacheReadInputTokens": 0,
+      "lastTotalInputTokens": 0,
+      "lastTotalOutputTokens": 0,
+      "lastTotalWebSearchRequests": 0,
+      "reactVulnerabilityCache": {},
+      "mcpContextUris": [],
+      "enabledMcpjsonServers": ["project-tool-a", "project-tool-b"],
+      "disabledMcpjsonServers": ["project-tool-untrusted"],
+      "mcpServers": {
+        "alpha-local-stdio": {
+          "type": "stdio",
+          "command": "<sanitized>",
+          "args": ["<sanitized>"],
+          "env": {}
+        }
+      }
+    },
+    "<sanitized>/project-beta": {
+      "allowedTools": [],
+      "exampleFiles": [],
+      "hasClaudeMdExternalIncludesApproved": false,
+      "hasClaudeMdExternalIncludesWarningShown": false,
+      "hasCompletedProjectOnboarding": false,
+      "hasTrustDialogAccepted": false,
+      "projectOnboardingSeenCount": 0,
+      "lastAPIDuration": 0,
+      "lastAPIDurationWithoutRetries": 0,
+      "lastCost": 0,
+      "lastDuration": 0,
+      "lastFpsAverage": 0,
+      "lastFpsLow1Pct": 0,
+      "lastGracefulShutdown": true,
+      "lastHintSessionId": null,
+      "lastLinesAdded": 0,
+      "lastLinesRemoved": 0,
+      "lastSessionFirstPrompt": "",
+      "lastSessionId": "<redacted>",
+      "lastSessionMetrics": {},
+      "lastSessionModified": 0,
+      "lastModelUsage": {},
+      "lastToolDuration": 0,
+      "lastTotalCacheCreationInputTokens": 0,
+      "lastTotalCacheReadInputTokens": 0,
+      "lastTotalInputTokens": 0,
+      "lastTotalOutputTokens": 0,
+      "lastTotalWebSearchRequests": 0,
+      "reactVulnerabilityCache": {},
+      "mcpContextUris": [],
+      "enabledMcpjsonServers": [],
+      "disabledMcpjsonServers": [],
+      "mcpServers": {}
+    }
+  }
+}

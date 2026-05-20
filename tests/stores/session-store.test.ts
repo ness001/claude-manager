@@ -21,7 +21,7 @@ function makeSession(overrides: Partial<SessionMeta> = {}): SessionMeta {
     cwd: "/repos/foo",
     firstPrompt: "do the thing",
     messageCount: 5,
-    startedAt: "",
+    startedAt: 0,
     durationMs: 0,
     entrypoint: "interactive",
     kind: "interactive",

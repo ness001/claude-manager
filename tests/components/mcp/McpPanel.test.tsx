@@ -7,6 +7,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react";
 
@@ -340,5 +341,52 @@ describe("McpPanel", () => {
     expect(heading).not.toBeNull();
     expect(heading!.tagName).toBe("H1");
     expect(heading!.textContent).toBe("MCP Servers");
+  });
+
+  // Defect: clicking Refresh Status produced zero in-flight feedback. The
+  // store's refreshStatus action mutates `servers` in-place without an
+  // isLoading toggle, so without local component state the button stayed
+  // un-disabled with no spinner and no aria-busy. Sighted users couldn't
+  // tell the click registered until the IPC round-trip completed; SR
+  // users heard nothing. Mirrors PluginListView's `isChecking`/`aria-busy`
+  // pattern around `checkPluginUpdates` (lines 23 + 102-134).
+  it("refresh-status-btn shows in-flight feedback (aria-busy + disabled + spinner) until IPC resolves", async () => {
+    // Pending invoke that never resolves until we tell it to — lets us
+    // observe the mid-flight UI state.
+    let resolveInvoke!: (value: string) => void;
+    invokeMock.mockImplementationOnce(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveInvoke = resolve;
+        }),
+    );
+
+    render(<McpPanel />);
+    const btn = screen.getByTestId("refresh-status-btn") as HTMLButtonElement;
+    // Pre-click: idle state.
+    expect(btn.disabled).toBe(false);
+    expect(btn.getAttribute("aria-busy")).toBe("false");
+    expect(btn.textContent).toContain("Refresh Status");
+
+    fireEvent.click(btn);
+
+    // Mid-flight: disabled, aria-busy=true, label flips to Refreshing…,
+    // and the icon picks up the spinner class.
+    await waitFor(() => {
+      expect(btn.disabled).toBe(true);
+    });
+    expect(btn.getAttribute("aria-busy")).toBe("true");
+    expect(btn.textContent).toContain("Refreshing…");
+    const icon = btn.querySelector("svg");
+    expect(icon).not.toBeNull();
+    expect(icon!.getAttribute("class") ?? "").toContain("animate-spin");
+
+    // Resolve the IPC and confirm the button returns to idle.
+    resolveInvoke("");
+    await waitFor(() => {
+      expect(btn.disabled).toBe(false);
+    });
+    expect(btn.getAttribute("aria-busy")).toBe("false");
+    expect(btn.textContent).toContain("Refresh Status");
   });
 });
