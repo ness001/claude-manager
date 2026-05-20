@@ -227,8 +227,8 @@ mod tests {
 
     #[test]
     fn epoch_to_utc_matches_known_date() {
-        // 2026-05-20T00:00:00Z = 1779580800 seconds since epoch
-        let (y, mo, d, h, mi, s) = epoch_to_utc(1_779_580_800);
+        // 2026-05-20T00:00:00Z = 1779235200 seconds since epoch
+        let (y, mo, d, h, mi, s) = epoch_to_utc(1_779_235_200);
         assert_eq!((y, mo, d, h, mi, s), (2026, 5, 20, 0, 0, 0));
     }
 
