@@ -25,7 +25,7 @@ export function TitleBar() {
   const win = getCurrentWindow();
 
   return (
-    <div className="flex h-8 w-full shrink-0 items-center bg-sidebar-bg text-text-secondary select-none">
+    <div className="flex h-8 w-full shrink-0 items-center border-b border-border bg-sidebar-bg text-text-secondary select-none">
       <div
         data-tauri-drag-region
         className="flex h-full flex-1 items-center px-3 text-xs font-medium"

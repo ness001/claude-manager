@@ -470,7 +470,7 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
           // ("Control" not "Ctrl", "ArrowDown" not "Down"). Mirrors PR
           // #276 (SidebarRailItem Ctrl+1..6 shortcuts).
           aria-keyshortcuts="Control+ArrowDown Control+ArrowUp"
-          className="absolute bottom-2 right-3 flex items-center gap-1 rounded-md border border-border bg-bg-secondary px-2 py-1 text-xs text-text-secondary shadow"
+          className="absolute bottom-2 right-3 flex items-center gap-1 rounded-md border border-border bg-bg-secondary px-2 py-1 text-xs text-text-secondary shadow-panel"
         >
           <span>Turn</span>
           <TurnInput

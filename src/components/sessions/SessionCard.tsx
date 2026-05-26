@@ -76,7 +76,7 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
       onClick={() => selectSession(session.sessionId)}
       style={style}
       className={[
-        "w-full text-left flex flex-col gap-1 px-3 py-2 rounded-md",
+        "w-full text-left flex flex-col gap-1 px-3 py-2 rounded-md shadow-card transition-shadow hover:shadow-card-hover",
         "border border-transparent",
         "hover:bg-bg-tertiary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",

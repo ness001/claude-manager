@@ -51,7 +51,7 @@ export function DashboardSection() {
     <section
       data-testid="dashboard-section"
       aria-labelledby="dashboard-heading"
-      className="flex flex-col gap-4 p-6 h-full overflow-auto"
+      className="flex flex-col gap-6 p-6 h-full overflow-auto"
     >
       {/* Visually hidden but exposed to AT — gives the section landmark an
           accessible name (WCAG 2.4.6 / 1.3.1) and starts the heading
@@ -105,7 +105,7 @@ export function DashboardSection() {
       <ul
         data-testid="dashboard-row-1"
         aria-label="Key statistics"
-        className="grid grid-cols-4 gap-4"
+        className="grid grid-cols-4 gap-5"
       >
         <li>
           <StatCard value={totalSessions} label="Sessions" accent="green" />

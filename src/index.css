@@ -48,6 +48,10 @@
   --color-sidebar-active: #ede9fe;
   --color-card-bg: #ffffff;
   --color-user-bubble: #f3f4f6;
+
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --shadow-panel: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
 }
 
 /* Dark theme: override the same tokens whenever `.dark` is on `<html>`. */
@@ -83,6 +87,26 @@
   --color-sidebar-active: #2a1f4a;
   --color-card-bg: #1e1e2e;
   --color-user-bubble: #313244;
+
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-panel: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.25);
+}
+
+/* ---------------------------------------------------------------------------
+ * Global interaction transitions
+ *
+ * All buttons and interactive elements get smooth background-color and
+ * color transitions by default. This avoids sprinkling `transition-colors`
+ * on every component — one rule, consistent 150ms ease across the app.
+ * Individual components can override with more specific transition props.
+ * ------------------------------------------------------------------------- */
+button,
+[role="button"],
+[role="switch"],
+[role="tab"],
+a {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
 }
 
 /* ---------------------------------------------------------------------------
@@ -134,5 +158,12 @@ html {
   .animate-pulse,
   .animate-spin {
     animation: none !important;
+  }
+  button,
+  [role="button"],
+  [role="switch"],
+  [role="tab"],
+  a {
+    transition: none !important;
   }
 }

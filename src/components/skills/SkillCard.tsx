@@ -45,7 +45,7 @@ export function SkillCard({ skill }: SkillCardProps) {
     <div
       data-testid="skill-card"
       data-skill-name={skill.name}
-      className="flex flex-col gap-2 rounded-md border border-border bg-card-bg p-3 hover:bg-bg-tertiary"
+      className="flex flex-col gap-2 rounded-md border border-border bg-card-bg p-3 shadow-card transition-shadow hover:bg-bg-tertiary hover:shadow-card-hover"
     >
       <div className="flex items-center gap-2">
         <FileText

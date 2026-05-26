@@ -50,7 +50,7 @@ export function ToolCallBlock({
       aria-label={
         isError ? `Tool call failed: ${toolName || "tool"}` : `Tool call: ${toolName || "tool"}`
       }
-      className={`rounded-md border-l-4 ${borderClass} bg-bg-secondary px-3 py-2 text-sm`}
+      className={`rounded-md border-l-4 ${borderClass} bg-bg-secondary px-4 py-3 text-sm shadow-card`}
     >
       <button
         type="button"

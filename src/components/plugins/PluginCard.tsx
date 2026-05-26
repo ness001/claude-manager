@@ -168,12 +168,12 @@ export function PluginCard({ plugin, selected }: PluginCardProps) {
       data-state={plugin.state}
       data-selected={selected ? "true" : "false"}
       className={[
-        "flex flex-col gap-2 rounded-md border p-3",
+        "flex flex-col gap-2 rounded-md border p-3 transition-shadow",
         isBroken
           ? "border-status-red/60 bg-card-bg"
           : selected
           ? "border-accent/40 bg-sidebar-active"
-          : "border-border bg-card-bg hover:bg-bg-tertiary",
+          : "border-border bg-card-bg shadow-card hover:bg-bg-tertiary hover:shadow-card-hover",
         isDisabled ? "opacity-70" : "",
       ].join(" ")}
     >

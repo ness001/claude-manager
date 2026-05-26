@@ -93,7 +93,7 @@ export function McpServerCard({
       data-server-name={server.name}
       data-scope={server.scope}
       data-status={server.status}
-      className={`flex flex-col gap-2 rounded-md border border-border bg-card-bg p-3 ${dimmed ? "opacity-60" : ""}`}
+      className={`flex flex-col gap-2 rounded-md border border-border bg-card-bg p-3 shadow-card ${dimmed ? "opacity-60" : ""}`}
     >
       <div className="flex items-center gap-2">
         <button

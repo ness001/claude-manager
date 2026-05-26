@@ -152,7 +152,7 @@ export function SystemHealth({
     <section
       data-testid="system-health"
       aria-labelledby={headingId}
-      className="flex flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
+      className="flex flex-col gap-2 rounded-md border border-border bg-card-bg p-4 shadow-card"
     >
       <h3
         id={headingId}

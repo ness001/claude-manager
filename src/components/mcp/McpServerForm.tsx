@@ -246,7 +246,7 @@ export function McpServerForm({
           e.preventDefault();
           if (canSubmit && !submitting) void handleSubmit();
         }}
-        className="flex max-h-[90vh] w-[500px] flex-col gap-3 overflow-auto rounded-md border border-border bg-card-bg p-4"
+        className="flex max-h-[90vh] w-[500px] flex-col gap-3 overflow-auto rounded-md border border-border bg-card-bg p-4 shadow-panel"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId} className="text-base font-semibold text-text-primary">
