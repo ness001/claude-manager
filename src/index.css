@@ -94,6 +94,22 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * Global interaction transitions
+ *
+ * All buttons and interactive elements get smooth background-color and
+ * color transitions by default. This avoids sprinkling `transition-colors`
+ * on every component — one rule, consistent 150ms ease across the app.
+ * Individual components can override with more specific transition props.
+ * ------------------------------------------------------------------------- */
+button,
+[role="button"],
+[role="switch"],
+[role="tab"],
+a {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+/* ---------------------------------------------------------------------------
  * Base document styles
  * ------------------------------------------------------------------------- */
 html,
@@ -142,5 +158,12 @@ html {
   .animate-pulse,
   .animate-spin {
     animation: none !important;
+  }
+  button,
+  [role="button"],
+  [role="switch"],
+  [role="tab"],
+  a {
+    transition: none !important;
   }
 }
