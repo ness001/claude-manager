@@ -25,7 +25,7 @@ export function UserMessage({ text }: UserMessageProps) {
       data-testid="user-message"
       role="region"
       aria-labelledby={labelId}
-      className="flex flex-col gap-1 rounded-lg bg-user-bubble px-3 py-2"
+      className="flex flex-col gap-1 rounded-lg bg-user-bubble px-4 py-3 ml-8"
     >
       <span
         id={labelId}

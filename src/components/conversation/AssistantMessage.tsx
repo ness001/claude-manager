@@ -48,7 +48,7 @@ export function AssistantMessage({ text, model }: AssistantMessageProps) {
       data-testid="assistant-message"
       role="region"
       aria-labelledby={labelId}
-      className="flex flex-col gap-1 rounded-lg bg-bg-secondary px-3 py-2"
+      className="flex flex-col gap-1 rounded-lg bg-bg-secondary px-4 py-3 mr-8"
     >
       <div className="flex items-center gap-2">
         <span
