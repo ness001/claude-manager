@@ -3,7 +3,7 @@
 // Layout:
 //   Row 1: 4 StatCards in a grid (Sessions / Messages / Longest / Active Since)
 //   Row 2: ActivityChart (60%) + ModelDonut (40%)
-//   Row 3: RecentSessions (60%) + (QuickActions + SystemHealth) (40%)
+//   Row 3: RecentSessions (60%) + SystemHealth (40%)
 //
 // One-shot data load on mount via dashboardStore.loadDashboard(). FS watchers
 // and live updates are deferred to Phase 4 Task 10.
@@ -13,7 +13,6 @@ import { AlertTriangle } from "lucide-react";
 
 import { ActivityChart } from "../components/dashboard/ActivityChart";
 import { ModelDonut } from "../components/dashboard/ModelDonut";
-import { QuickActions } from "../components/dashboard/QuickActions";
 import { RecentSessions } from "../components/dashboard/RecentSessions";
 import { StatCard } from "../components/dashboard/StatCard";
 import { SystemHealth } from "../components/dashboard/SystemHealth";
@@ -144,7 +143,7 @@ export function DashboardSection() {
         </div>
       </div>
 
-      {/* Row 3 — Recent sessions (60%) + (Quick actions + System health) (40%) */}
+      {/* Row 3 — Recent sessions (60%) + System health (40%) */}
       <div
         data-testid="dashboard-row-3"
         className="grid grid-cols-5 gap-4 min-h-[260px]"
@@ -153,7 +152,6 @@ export function DashboardSection() {
           <RecentSessions data={recentSessions} />
         </div>
         <div className="col-span-2 flex flex-col gap-4">
-          <QuickActions />
           <SystemHealth />
         </div>
       </div>
