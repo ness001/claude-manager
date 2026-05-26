@@ -5,6 +5,7 @@
 // SessionInfoBar at the top and the ConversationViewer below (T2.13 wires
 // the JSONL path on SessionMeta so this works end-to-end).
 
+import { MessageSquare } from "lucide-react";
 import { SessionInfoBar } from "./SessionInfoBar";
 import { ConversationViewer } from "../conversation/ConversationViewer";
 import { useSessionStore } from "../../stores/session-store";
@@ -21,9 +22,10 @@ export function SessionDetailPanel() {
         data-testid="session-detail-empty"
         role="status"
         aria-live="polite"
-        className="flex flex-1 items-center justify-center text-sm text-text-muted"
+        className="flex flex-1 flex-col items-center justify-center gap-3 text-text-muted"
       >
-        Select a session to view its conversation
+        <MessageSquare size={40} strokeWidth={1.5} aria-hidden="true" className="opacity-30" />
+        <p className="text-sm">Select a session to view its conversation</p>
       </div>
     );
   }
