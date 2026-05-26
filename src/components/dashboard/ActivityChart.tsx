@@ -177,7 +177,7 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
         // #207 (SkillsListView), #212 (SessionDetailPanel).
         role="status"
         aria-live="polite"
-        className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
+        className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4 shadow-card"
       >
         {/* WCAG 1.3.1 / 2.4.6: sibling dashboard sections (SystemHealth,
             ModelDonut, RecentSessions, QuickActions) all expose an <h3>
@@ -203,7 +203,7 @@ export function ActivityChart({ data, nowMs = Date.now() }: ActivityChartProps) 
       data-testid="activity-chart"
       data-empty="false"
       aria-labelledby={headingId}
-      className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
+      className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4 shadow-card"
     >
       {isStale ? (
         <div

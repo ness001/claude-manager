@@ -28,7 +28,7 @@ export function RecentSessions({ data }: RecentSessionsProps) {
     <section
       data-testid="recent-sessions"
       aria-labelledby="recent-sessions-heading"
-      className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4"
+      className="flex h-full min-h-[240px] flex-col gap-2 rounded-md border border-border bg-card-bg p-4 shadow-card"
     >
       <div className="flex items-center justify-between">
         <h3

@@ -90,7 +90,7 @@ export function ModelDonut({ data }: ModelDonutProps) {
       data-testid="model-donut"
       data-empty={isEmpty ? "true" : "false"}
       aria-labelledby={headingId}
-      className="flex h-full min-h-[240px] flex-col gap-3 rounded-md border border-border bg-card-bg p-4"
+      className="flex h-full min-h-[240px] flex-col gap-3 rounded-md border border-border bg-card-bg p-4 shadow-card"
     >
       <h3
         id={headingId}

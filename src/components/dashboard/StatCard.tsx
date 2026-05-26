@@ -77,7 +77,7 @@ export function StatCard({ value, label, accent, sublabel }: StatCardProps) {
       data-accent={accent}
       role="group"
       aria-label={ariaLabel}
-      className="relative flex flex-col gap-1 rounded-md border border-border bg-card-bg p-4 overflow-hidden"
+      className="relative flex flex-col gap-1 rounded-md border border-border bg-card-bg p-4 overflow-hidden shadow-card transition-shadow hover:shadow-card-hover"
     >
       {/* Left accent stripe — 4px wide, full height. */}
       <span
