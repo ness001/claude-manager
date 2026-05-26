@@ -82,7 +82,7 @@ function buildServer(args: {
     name,
     type,
     scope,
-    status: "disconnected",
+    status: "checking",
     env: wire.env ?? {},
     isOverridden: false,
   };

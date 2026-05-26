@@ -1,14 +1,28 @@
 // Tests for PluginDetailView — tab switching renders the correct tab body.
 
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, act } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, act, waitFor } from "@testing-library/react";
 
 import { PluginDetailView } from "../../../src/components/plugins/PluginDetailView";
-import type { PluginDetail } from "../../../src/lib/plugin-types";
+import { usePluginStore } from "../../../src/stores/plugin-store";
+import type { PluginDetail, PluginState } from "../../../src/lib/plugin-types";
 
 const openShellMock = vi.fn();
 vi.mock("@tauri-apps/plugin-shell", () => ({
   open: (...args: unknown[]) => openShellMock(...args),
+}));
+
+// `uninstallPlugin` in the store calls `invoke("uninstall_plugin")` and then
+// `loadPlugins()` (which itself invokes more commands). Mock invoke and the
+// plugin-loader so unit tests don't try to reach Tauri or the real disk.
+const invokeMock = vi.fn();
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: (...args: unknown[]) => invokeMock(...args),
+}));
+const loadPluginsMock = vi.fn();
+vi.mock("../../../src/lib/plugin-loader", () => ({
+  loadPlugins: () => loadPluginsMock(),
+  loadPluginDetail: vi.fn(),
 }));
 
 function makeDetail(overrides: Partial<PluginDetail> = {}): PluginDetail {
@@ -407,5 +421,110 @@ describe("PluginDetailView", () => {
     expect(heading!.tagName).toBe("H2");
     expect(heading!.getAttribute("data-testid")).toBe("plugin-detail-name");
     expect(heading!.textContent).toBe("my-plugin");
+  });
+
+  // Spec §6.7 — active plugins need a UI route to `claude plugins uninstall`.
+  // PluginCard only surfaces Remove on broken cards; the store action existed
+  // without any caller for active plugins (R2 half-built). The detail view is
+  // the right home: it's the per-plugin landing surface that already groups
+  // every other plugin-scoped action (Open in File Browser / VS Code).
+  describe("Uninstall action (spec §6.7)", () => {
+    let confirmSpy: ReturnType<typeof vi.spyOn>;
+    beforeEach(() => {
+      invokeMock.mockReset();
+      invokeMock.mockResolvedValue(0);
+      loadPluginsMock.mockReset();
+      loadPluginsMock.mockResolvedValue([]);
+      usePluginStore.setState({
+        plugins: [],
+        selectedPlugin: null,
+        searchQuery: "",
+        isLoading: false,
+        error: null,
+      });
+      confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    });
+    afterEach(() => {
+      confirmSpy.mockRestore();
+    });
+
+    it("is visible for active plugins inside the actions toolbar", () => {
+      render(<PluginDetailView plugin={makeDetail({ state: "active" })} />);
+      const btn = screen.getByTestId("detail-uninstall-btn");
+      expect(btn.tagName).toBe("BUTTON");
+      expect(btn.getAttribute("aria-label")).toBe("Uninstall alpha");
+      const toolbar = screen.getByTestId("plugin-detail-actions-toolbar");
+      expect(toolbar.contains(btn)).toBe(true);
+    });
+
+    const visibleStates: PluginState[] = ["active", "disabled", "update-available"];
+    it.each(visibleStates)(
+      "renders for state=%s (uninstall is meaningful when CLI has a live install to remove)",
+      (state) => {
+        render(<PluginDetailView plugin={makeDetail({ state })} />);
+        expect(screen.queryByTestId("detail-uninstall-btn")).not.toBeNull();
+      },
+    );
+
+    const hiddenStates: PluginState[] = ["broken", "orphaned"];
+    it.each(hiddenStates)(
+      "is hidden for state=%s (PluginCard already exposes the recovery affordance)",
+      (state) => {
+        render(<PluginDetailView plugin={makeDetail({ state })} />);
+        expect(screen.queryByTestId("detail-uninstall-btn")).toBeNull();
+      },
+    );
+
+    it("clicking confirms then calls uninstall_plugin IPC with name@marketplace", async () => {
+      render(
+        <PluginDetailView
+          plugin={makeDetail({ name: "alpha", marketplace: "official" })}
+        />,
+      );
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("detail-uninstall-btn"));
+      });
+      expect(confirmSpy).toHaveBeenCalledOnce();
+      // First invoke call is `uninstall_plugin`; subsequent ones come from
+      // the store's post-uninstall loadPlugins(). Pin the first.
+      expect(invokeMock.mock.calls[0][0]).toBe("uninstall_plugin");
+      expect(invokeMock.mock.calls[0][1]).toEqual({ key: "alpha@official" });
+    });
+
+    it("declining the confirm dialog is a no-op (no IPC fired)", async () => {
+      confirmSpy.mockReturnValue(false);
+      render(<PluginDetailView plugin={makeDetail()} />);
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("detail-uninstall-btn"));
+      });
+      expect(confirmSpy).toHaveBeenCalledOnce();
+      expect(invokeMock).not.toHaveBeenCalled();
+    });
+
+    // Surface failures inline. Matches the openError pattern above + the
+    // toggleError pattern on PluginCard — silent failure is the family bug.
+    it("surfaces uninstall errors inline as role=alert", async () => {
+      invokeMock.mockReset().mockRejectedValue(new Error("claude not in PATH"));
+      render(<PluginDetailView plugin={makeDetail()} />);
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("detail-uninstall-btn"));
+      });
+      await waitFor(() => {
+        expect(screen.queryByTestId("plugin-uninstall-error")).not.toBeNull();
+      });
+      const err = screen.getByTestId("plugin-uninstall-error");
+      expect(err.getAttribute("role")).toBe("alert");
+      expect(err.textContent).toContain("claude not in PATH");
+    });
+
+    // Decorative icon next to the text label must be aria-hidden (WCAG 4.1.2),
+    // mirroring the existing assertion for open-folder-btn / open-vscode-btn.
+    it("button icon is aria-hidden", () => {
+      render(<PluginDetailView plugin={makeDetail()} />);
+      const btn = screen.getByTestId("detail-uninstall-btn");
+      const svg = btn.querySelector("svg");
+      expect(svg).not.toBeNull();
+      expect(svg!.getAttribute("aria-hidden")).toBe("true");
+    });
   });
 });

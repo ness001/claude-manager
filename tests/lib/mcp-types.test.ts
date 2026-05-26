@@ -19,7 +19,7 @@ describe("mcp-types", () => {
     expectTypeOf<McpScope>().toEqualTypeOf<"user" | "local" | "project">();
     expectTypeOf<McpServerType>().toEqualTypeOf<"stdio" | "sse" | "http">();
     expectTypeOf<McpServerState>().toEqualTypeOf<
-      "connected" | "disconnected" | "error" | "starting"
+      "connected" | "disconnected" | "error" | "starting" | "checking"
     >();
 
     // @ts-expect-error — "global" is not in the McpScope union.
