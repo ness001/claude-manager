@@ -485,6 +485,33 @@ describe("Dashboard section — UI vs spec §4.1 gap audit", () => {
     }
   });
 
+  it("§4.1 Row 3: QuickActions buttons are enabled and clickable (RED until Phase 4 wires them)", async () => {
+    // Business-logic check (per team-lead 2026-05-26 guidance): spec §4.1
+    // lists QuickActions as functional ("New Session (prominent), Resume
+    // Latest, Open CWD, Rebuild Stats"). Shipped code renders them
+    // `disabled` with "Coming soon" tooltips and TODO(T4.1/T4.2/T4.5)
+    // markers. A real user reasonably expects these buttons to DO
+    // something — the spec agrees, code is the outlier. Per the new
+    // guidance ("don't silently assert against shipped code when it
+    // contradicts obvious user value"), this test asserts the correct
+    // behavior and is expected to FAIL until Phase 4 wires the actions.
+    //
+    // Same template as the old RCA Bug 3 ("All Quick Actions buttons are
+    // enabled (not disabled placeholders)"). Restored as a deliberate
+    // red gate so the gap is visible in every run.
+    for (const id of ["new-session", "resume-latest", "open-cwd", "rebuild-stats"]) {
+      const btn = await browser.$(`[data-testid="action-${id}"]`);
+      const disabled = await btn.getAttribute("disabled");
+      const ariaDisabled = await btn.getAttribute("aria-disabled");
+      const isEnabled = disabled === null && ariaDisabled !== "true";
+      record(
+        `§4.1 quick-action "${id}" is enabled (user-value gate, fails until Phase 4)`,
+        isEnabled,
+        `disabled="${disabled}" aria-disabled="${ariaDisabled}"`,
+      );
+    }
+  });
+
   // ─── §4.1 Row 3 — System health ─────────────────────────────────────────
 
   it("§4.1 Row 3: SystemHealth card present with 4 indicators (MCP / Plugins / API / CLI)", async () => {
