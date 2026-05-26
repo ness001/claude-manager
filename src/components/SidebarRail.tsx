@@ -86,7 +86,7 @@ export function SidebarRail() {
   return (
     <nav
       aria-label="Primary"
-      className="flex h-full w-12 flex-col bg-sidebar-bg"
+      className="flex h-full w-12 flex-col border-r border-border bg-sidebar-bg"
     >
       {/* WAI-ARIA APG navigation pattern + WCAG 1.3.1 (Info and Relationships):
           a <nav> rail of N items should expose its links as a list so the SR
