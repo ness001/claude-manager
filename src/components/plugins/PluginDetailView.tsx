@@ -3,10 +3,11 @@
 // Body: Skills / Agents / Hooks tabs.
 
 import { useId, useRef, useState } from "react";
-import { ExternalLink, FolderOpen } from "lucide-react";
+import { ExternalLink, FolderOpen, Trash2 } from "lucide-react";
 import { open as openShell } from "@tauri-apps/plugin-shell";
 
 import type { PluginDetail } from "../../lib/plugin-types";
+import { usePluginStore } from "../../stores/plugin-store";
 import { PluginSkillsTab } from "./PluginSkillsTab";
 import { PluginAgentsTab } from "./PluginAgentsTab";
 import { PluginHooksTab } from "./PluginHooksTab";
@@ -61,6 +62,9 @@ function useTablistKeyboard<T>(
 export function PluginDetailView({ plugin }: PluginDetailViewProps) {
   const [tab, setTab] = useState<Tab>("skills");
   const tabKb = useTablistKeyboard(TABS, setTab);
+  const uninstallPlugin = usePluginStore((s) => s.uninstallPlugin);
+  const [isUninstalling, setIsUninstalling] = useState(false);
+  const [uninstallError, setUninstallError] = useState<string | null>(null);
   // Stable per-instance ids so each tab button can be linked by aria-controls
   // to its tabpanel and each panel can be linked back via aria-labelledby.
   const idBase = useId();
@@ -96,6 +100,34 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
       setOpenError(err instanceof Error ? err.message : String(err));
     }
   };
+
+  // Uninstall = `claude plugins uninstall <name>@<marketplace>` — the same
+  // codepath the broken-card Remove uses on PluginCard, surfaced here so
+  // active plugins also have an in-UI uninstall route (spec §6.7). Confirm
+  // gates the CLI call because uninstall deletes the on-disk cache entry.
+  const onUninstall = async () => {
+    if (
+      !window.confirm(
+        `Uninstall ${plugin.name}? This runs \`claude plugins uninstall\` and removes the plugin from disk.`,
+      )
+    ) {
+      return;
+    }
+    setUninstallError(null);
+    setIsUninstalling(true);
+    try {
+      await uninstallPlugin(plugin);
+    } catch (err) {
+      setUninstallError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsUninstalling(false);
+    }
+  };
+  // Broken / orphaned plugins already expose their own Remove affordances on
+  // PluginCard (spec §6.7); hiding the Uninstall button here keeps the
+  // recovery path single-sourced and avoids two buttons doing slightly
+  // different things on the same plugin.
+  const canUninstall = plugin.state !== "broken" && plugin.state !== "orphaned";
 
   return (
     // WCAG 1.3.1 + WAI-ARIA APG: the detail-view <section> already wrapped
@@ -204,6 +236,23 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
               <ExternalLink size={14} aria-hidden="true" />
               Open in VS Code
             </button>
+            {canUninstall && (
+              <button
+                type="button"
+                data-testid="detail-uninstall-btn"
+                onClick={() => {
+                  void onUninstall();
+                }}
+                disabled={isUninstalling}
+                aria-busy={isUninstalling}
+                aria-label={`Uninstall ${plugin.name}`}
+                title="Uninstall via the Claude CLI"
+                className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-tertiary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <Trash2 size={14} aria-hidden="true" />
+                {isUninstalling ? "Uninstalling…" : "Uninstall"}
+              </button>
+            )}
           </div>
         </div>
         <p className="text-sm text-text-secondary">{plugin.description}</p>
@@ -216,6 +265,15 @@ export function PluginDetailView({ plugin }: PluginDetailViewProps) {
           className="text-xs text-status-red"
         >
           Couldn't open: {openError}
+        </p>
+      )}
+      {uninstallError !== null && (
+        <p
+          data-testid="plugin-uninstall-error"
+          role="alert"
+          className="text-xs text-status-red"
+        >
+          Uninstall failed: {uninstallError}
         </p>
       )}
 
