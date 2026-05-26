@@ -18,6 +18,7 @@ interface McpServerCardProps {
   onRemove: (server: McpServer) => void;
   onRetry?: (server: McpServer) => void;
   onCancel?: (server: McpServer) => void;
+  onConnect?: (server: McpServer) => void;
   onViewLogs?: (server: McpServer) => void;
   onViewTools?: (server: McpServer) => void;
   /** Substring to highlight inside the server name (spec §17.7). */
@@ -30,6 +31,7 @@ export function McpServerCard({
   onRemove,
   onRetry,
   onCancel,
+  onConnect,
   onViewLogs,
   onViewTools,
   highlightQuery,
@@ -211,14 +213,24 @@ export function McpServerCard({
           </>
         )}
         {server.status === "disconnected" && (
-          <ActionButton
-            testid="action-view-logs"
-            onClick={() => onViewLogs?.(server)}
-            disabled={!onViewLogs}
-            title={onViewLogs ? undefined : "Coming soon"}
-          >
-            View Logs
-          </ActionButton>
+          <>
+            <ActionButton
+              testid="action-connect"
+              onClick={() => onConnect?.(server)}
+              disabled={!onConnect}
+              title={onConnect ? undefined : "Coming soon"}
+            >
+              Connect
+            </ActionButton>
+            <ActionButton
+              testid="action-view-logs"
+              onClick={() => onViewLogs?.(server)}
+              disabled={!onViewLogs}
+              title={onViewLogs ? undefined : "Coming soon"}
+            >
+              View Logs
+            </ActionButton>
+          </>
         )}
         {server.status === "error" && (
           <>
@@ -341,6 +353,8 @@ function StatusDot({ state }: { state: McpServerState }) {
         return "bg-status-error";
       case "starting":
         return "animate-pulse bg-status-warning";
+      case "checking":
+        return "animate-pulse border border-text-muted bg-transparent";
     }
   })();
   // WCAG 1.4.1 (Use of Color) + 4.1.2 (Name, Role, Value): the colored dot
@@ -363,7 +377,7 @@ type Tone = "default" | "warning" | "success" | "error";
 function statusTone(state: McpServerState): Tone {
   if (state === "connected") return "success";
   if (state === "error") return "error";
-  if (state === "starting") return "warning";
+  if (state === "starting" || state === "checking") return "warning";
   return "default";
 }
 

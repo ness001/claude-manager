@@ -328,7 +328,7 @@ describe("source of truth: ~/.claude.json", () => {
 
     it("McpServerState enumerates exactly the four documented states", () => {
       expectTypeOf<McpServerState>().toEqualTypeOf<
-        "connected" | "disconnected" | "error" | "starting"
+        "connected" | "disconnected" | "error" | "starting" | "checking"
       >();
     });
 
@@ -354,7 +354,7 @@ describe("source of truth: ~/.claude.json", () => {
         name: stdio.name,
         type: "stdio",
         scope: "user",
-        status: "disconnected",
+        status: "checking",
         env: wire.env ?? {},
         command: wire.command,
         args: wire.args,
@@ -373,7 +373,7 @@ describe("source of truth: ~/.claude.json", () => {
         name: http.name,
         type: "http",
         scope: "user",
-        status: "disconnected",
+        status: "checking",
         env: wire.env ?? {},
         url: wire.url,
         headers: wire.headers,

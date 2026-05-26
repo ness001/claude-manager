@@ -201,11 +201,35 @@ pub struct RealStatusRunner;
 
 impl StatusRunner for RealStatusRunner {
     fn run(&self) -> Result<String, String> {
-        let output = std::process::Command::new("claude")
+        let mut child = std::process::Command::new("claude")
             .args(["mcp", "list"])
-            .output()
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::null())
+            .spawn()
             .map_err(|e| e.to_string())?;
-        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+
+        let stdout = child.stdout.take();
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let status = child.wait();
+            let _ = tx.send(status);
+        });
+
+        let timeout = std::time::Duration::from_secs(30);
+        match rx.recv_timeout(timeout) {
+            Ok(Ok(_)) => {
+                let mut out = String::new();
+                if let Some(mut pipe) = stdout {
+                    use std::io::Read;
+                    let _ = pipe.read_to_string(&mut out);
+                }
+                Ok(out)
+            }
+            Ok(Err(e)) => Err(e.to_string()),
+            Err(_) => {
+                Err("claude mcp list timed out after 30s".to_string())
+            }
+        }
     }
 }
 

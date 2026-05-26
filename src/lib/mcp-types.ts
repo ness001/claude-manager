@@ -17,7 +17,8 @@ export type McpServerState =
   | "connected"
   | "disconnected"
   | "error"
-  | "starting";
+  | "starting"
+  | "checking";
 
 /**
  * MCP server entry assembled from `~/.claude.json` (user/local) or

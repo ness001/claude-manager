@@ -273,6 +273,9 @@ export function McpPanel() {
                         onRemove={(srv) => {
                           void removeServer(srv.scope, srv.name);
                         }}
+                        onConnect={() => {
+                          void refreshStatus();
+                        }}
                       />
                     </li>
                   ))}
