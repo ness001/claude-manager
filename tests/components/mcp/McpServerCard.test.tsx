@@ -23,6 +23,7 @@ import {
   FIX_DISCONNECTED,
   FIX_ERROR,
   FIX_STARTING,
+  FIX_CHECKING,
   FIX_SHADOWED_USER,
   FIX_HTTP,
 } from "../../fixtures/mcp-ui/servers";
@@ -55,8 +56,8 @@ describe("McpServerCard", () => {
     expect(calls).not.toContain("check_mcp_status");
   });
 
-  it("status dot per state (spec §8.3): connected=green, disconnected=hollow, error=red, starting=amber pulsing", () => {
-    for (const fix of [FIX_CONNECTED, FIX_DISCONNECTED, FIX_ERROR, FIX_STARTING]) {
+  it("status dot per state (spec §8.3): connected=green, disconnected=hollow, error=red, starting=amber pulsing, checking=pulsing hollow", () => {
+    for (const fix of [FIX_CONNECTED, FIX_DISCONNECTED, FIX_ERROR, FIX_STARTING, FIX_CHECKING]) {
       const { unmount } = render(
         <McpServerCard server={fix} onEdit={noop} onRemove={noop} />,
       );
@@ -78,6 +79,10 @@ describe("McpServerCard", () => {
           expect(cls).toContain("animate-pulse");
           expect(cls).toContain("bg-status-warning");
           break;
+        case "checking":
+          expect(cls).toContain("animate-pulse");
+          expect(cls).toContain("bg-transparent");
+          break;
       }
       unmount();
     }
@@ -88,7 +93,7 @@ describe("McpServerCard", () => {
   // the bare aria-label sits on a generic <span> that screen readers skip
   // during element-by-element navigation. Mirrors SessionCard / PluginCard.
   it("status dot exposes role='img' with the state in its aria-label (a11y)", () => {
-    for (const fix of [FIX_CONNECTED, FIX_DISCONNECTED, FIX_ERROR, FIX_STARTING]) {
+    for (const fix of [FIX_CONNECTED, FIX_DISCONNECTED, FIX_ERROR, FIX_STARTING, FIX_CHECKING]) {
       const { unmount } = render(
         <McpServerCard server={fix} onEdit={noop} onRemove={noop} />,
       );
@@ -112,13 +117,14 @@ describe("McpServerCard", () => {
       ],
       [
         FIX_DISCONNECTED,
-        ["action-view-logs", "action-edit", "action-remove"],
+        ["action-connect", "action-view-logs", "action-edit", "action-remove"],
       ],
       [
         FIX_ERROR,
         ["action-retry", "action-view-logs", "action-edit", "action-remove"],
       ],
       [FIX_STARTING, ["action-cancel", "action-view-logs"]],
+      [FIX_CHECKING, []],
     ];
     for (const [fix, expected] of cases) {
       const { unmount } = render(
@@ -299,7 +305,7 @@ describe("McpServerCard", () => {
     expect(onViewTools).toHaveBeenCalledWith(FIX_CONNECTED);
   });
 
-  it("View Logs button is disabled with 'Coming soon' across all 4 states when no onViewLogs callback is wired", () => {
+  it("View Logs button is disabled with 'Coming soon' across states that show it when no onViewLogs callback is wired", () => {
     const noop = () => {};
     for (const fix of [FIX_CONNECTED, FIX_DISCONNECTED, FIX_ERROR, FIX_STARTING]) {
       const { unmount } = render(

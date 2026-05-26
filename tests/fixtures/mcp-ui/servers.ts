@@ -48,6 +48,17 @@ export const FIX_STARTING: McpServer = {
   isOverridden: false,
 };
 
+export const FIX_CHECKING: McpServer = {
+  name: "fs-checking",
+  type: "stdio",
+  scope: "user",
+  status: "checking",
+  command: "npx",
+  args: [],
+  env: {},
+  isOverridden: false,
+};
+
 export const FIX_HTTP: McpServer = {
   name: "remote-http",
   type: "http",
@@ -100,6 +111,7 @@ export const ALL_FIXTURES: McpServer[] = [
   FIX_DISCONNECTED,
   FIX_ERROR,
   FIX_STARTING,
+  FIX_CHECKING,
   FIX_HTTP,
   FIX_SSE,
   FIX_SHADOWED_USER,

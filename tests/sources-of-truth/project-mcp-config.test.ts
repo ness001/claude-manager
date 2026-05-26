@@ -113,7 +113,7 @@ function normalizeProjectEntry(name: string, wire: ServerWire): McpServer {
     name,
     type,
     scope: "project",
-    status: "disconnected",
+    status: "checking",
     env: wire.env ?? {},
     isOverridden: false,
   };
@@ -172,7 +172,7 @@ function assertCommonShape(server: McpServer): void {
   expect(typeof server.name).toBe("string");
   expect(server.name.length).toBeGreaterThan(0);
   expect(server.scope).toBe("project");
-  expect(server.status).toBe("disconnected");
+  expect(server.status).toBe("checking");
   expect(server.isOverridden).toBe(false);
   // env is ALWAYS present (`{}` when empty) — spec §8.2.
   expect(isPlainObject(server.env)).toBe(true);
@@ -203,7 +203,7 @@ describe("project-mcp-config — type contract against src/lib/mcp-types", () =>
 
   it("McpServerState includes 'disconnected' (loader default)", () => {
     expectTypeOf<McpServerState>().toEqualTypeOf<
-      "connected" | "disconnected" | "error" | "starting"
+      "connected" | "disconnected" | "error" | "starting" | "checking"
     >();
   });
 });
@@ -344,7 +344,7 @@ describe("project-mcp-config — cross-format invariants", () => {
   it("every normalized entry across BOTH fixtures has scope='project', status='disconnected', isOverridden=false, env defined", () => {
     for (const s of [...modern, ...legacy]) {
       expect(s.scope).toBe("project");
-      expect(s.status).toBe("disconnected");
+      expect(s.status).toBe("checking");
       expect(s.isOverridden).toBe(false);
       expect(isPlainObject(s.env)).toBe(true);
     }
