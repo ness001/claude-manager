@@ -60,7 +60,6 @@ type ActionId =
   | "view-live"
   | "resume-terminal"
   | "resume"
-  | "fork"
   | "view-conversation"
   | "open-cwd"
   | "open-vscode"
@@ -89,7 +88,6 @@ const ACTIONS: Record<SessionState, Action[]> = {
   ],
   ended: [
     { id: "resume", label: "Resume", variant: "primary" },
-    { id: "fork", label: "Fork" },
     { id: "view-conversation", label: "View Conversation" },
     { id: "open-cwd", label: "Open CWD" },
     { id: "open-vscode", label: "Open in VS Code" },
@@ -116,6 +114,12 @@ const CWD_DEPENDENT: ReadonlySet<ActionId> = new Set([
 
 export function SessionInfoBar({ session }: SessionInfoBarProps) {
   const setSessionDisplayName = useSessionStore((s) => s.setSessionDisplayName);
+  const archiveSession = useSessionStore((s) => s.archiveSession);
+  const unarchiveSession = useSessionStore((s) => s.unarchiveSession);
+  const deleteSession = useSessionStore((s) => s.deleteSession);
+  const stopSession = useSessionStore((s) => s.stopSession);
+  const launchSession = useSessionStore((s) => s.launchSession);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
   // Local controlled state for the editable name. We mirror the canonical
   // store value via a useEffect so switching sessions resets the input.
   const [name, setName] = useState(
@@ -262,6 +266,7 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
         * span so users (and SR users) know edits won't survive reload. */}
       <div className="flex items-center gap-3 min-w-0">
         <input
+          ref={nameInputRef}
           data-testid="session-name-input"
           type="text"
           value={name}
@@ -368,18 +373,7 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
         </span>
       </div>
 
-      {/* Row 2: actions
-        *
-        * Most actions (terminal launch, SIGTERM, archive, delete, …) are
-        * later-phase wiring and stay `disabled` with "Coming soon". The two
-        * CWD actions (`open-cwd`, `open-vscode`) ARE wired now via the same
-        * @tauri-apps/plugin-shell open() pattern that SkillCard uses — they
-        * have no IPC dependency, the capability is already allowlisted, and
-        * leaving them disabled when every other piece is ready was a real
-        * functional gap.
-        *
-        * The dead-CWD case (§17.5) keeps its own tooltip + disabled state so
-        * the more specific reason wins. */}
+      {/* Row 2: actions */}
       {/* WAI-ARIA Toolbar pattern: this row is a group of related action
         * buttons (View Live / Resume / Stop / Archive / …). Without
         * role="toolbar" + an accessible name, screen-reader users hear the
@@ -395,34 +389,52 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
       >
         {actions.map((a, i) => {
           const cwdDead = CWD_DEPENDENT.has(a.id) && !cwdExists;
-          const wired =
-            (a.id === "open-cwd" || a.id === "open-vscode") && !cwdDead;
-          const onClick =
-            a.id === "open-cwd"
-              ? openCwd
-              : a.id === "open-vscode"
-                ? openInVsCode
-                : undefined;
-          // Sighted users get the disabled hint via the `title` tooltip
-          // (either "Directory not found" for the dead-CWD case or
-          // "Coming soon" for unwired actions). Mirror it into the
-          // accessible name so screen-reader users hear the same hint
-          // instead of just "<action>, button, dimmed" and assuming the
-          // app is broken (WCAG 4.1.2). Mirrors PR #181 (QuickActions)
-          // and PR #183 (SessionListPanel new-session button).
+          const disabled = cwdDead;
+
+          const handleClick = async () => {
+            switch (a.id) {
+              case "open-cwd":
+                return openCwd();
+              case "open-vscode":
+                return openInVsCode();
+              case "view-live":
+                return launchSession(["--continue", session.sessionId], session.cwd || undefined);
+              case "resume-terminal":
+              case "resume":
+                return launchSession(["--resume", session.sessionId], session.cwd || undefined);
+              case "view-conversation":
+                document.querySelector('[data-testid="session-detail-panel"]')?.scrollTo(0, 0);
+                return;
+              case "tag-rename":
+                nameInputRef.current?.focus();
+                nameInputRef.current?.select();
+                return;
+              case "stop":
+                if (session.pid && window.confirm(`Stop session (PID ${session.pid})?`)) {
+                  await stopSession(session.pid);
+                }
+                return;
+              case "archive":
+                return archiveSession(session.sessionId);
+              case "unarchive":
+                return unarchiveSession(session.sessionId);
+              case "delete":
+                if (window.confirm("Delete this session record?")) {
+                  await deleteSession(session.sessionId);
+                }
+                return;
+            }
+          };
+
           const ariaLabel = cwdDead
             ? `${a.label} (directory not found)`
-            : !wired
-              ? `${a.label} (coming soon)`
-              : undefined;
+            : undefined;
           const baseCls =
             a.variant === "primary"
               ? "bg-accent text-white"
               : a.variant === "danger"
                 ? "bg-bg-tertiary text-status-red"
                 : "bg-bg-tertiary text-text-secondary";
-          // Roving tabindex: only the active stop is in the Tab order; the
-          // rest are -1 so arrow keys (handled below) move focus among them.
           const isTabStop = i === tabStopIdx;
           return (
             <button
@@ -432,26 +444,20 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
               }}
               type="button"
               data-testid={`action-${a.id}`}
-              disabled={!wired}
-              aria-disabled={!wired || undefined}
+              disabled={disabled}
+              aria-disabled={disabled || undefined}
               aria-label={ariaLabel}
               tabIndex={isTabStop ? 0 : -1}
-              onClick={wired ? onClick : undefined}
+              onClick={disabled ? undefined : handleClick}
               onFocus={() => setTabStopIdx(i)}
               onKeyDown={(e) => onToolbarKeyDown(e, i, actions.length)}
-              title={
-                cwdDead
-                  ? "Directory not found"
-                  : wired
-                    ? undefined
-                    : "Coming soon"
-              }
+              title={cwdDead ? "Directory not found" : undefined}
               className={[
                 "rounded-md px-3 py-1 text-xs font-medium",
                 baseCls,
-                wired
-                  ? "hover:bg-bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                  : "opacity-50 cursor-not-allowed",
+                disabled
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
               ].join(" ")}
             >
               {a.label}

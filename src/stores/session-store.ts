@@ -9,7 +9,9 @@
 
 import { create } from "zustand";
 
+import { invoke } from "@tauri-apps/api/core";
 import { loadAllSessions } from "../lib/session-loader";
+import { dbExecute } from "../lib/db";
 import type { SessionMeta } from "../lib/session-types";
 
 export type SessionViewMode = "my" | "project" | "timeline";
@@ -31,6 +33,11 @@ interface SessionState {
    * field on `SessionInfoBar` (T2.10) reactive without round-tripping yet.
    */
   setSessionDisplayName: (id: string, name: string) => void;
+  archiveSession: (id: string) => Promise<void>;
+  unarchiveSession: (id: string) => Promise<void>;
+  deleteSession: (id: string) => Promise<void>;
+  stopSession: (pid: number) => Promise<void>;
+  launchSession: (args: string[], cwd?: string) => Promise<void>;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -60,6 +67,35 @@ export const useSessionStore = create<SessionState>((set) => ({
         s.sessionId === id ? { ...s, displayName: name } : s,
       ),
     })),
+  archiveSession: async (id) => {
+    await dbExecute(
+      "UPDATE sessions SET archived_at = ? WHERE session_id = ?",
+      [Date.now(), id],
+    );
+    const sessions = await loadAllSessions();
+    set({ sessions, selectedId: null });
+  },
+  unarchiveSession: async (id) => {
+    await dbExecute(
+      "UPDATE sessions SET archived_at = NULL WHERE session_id = ?",
+      [id],
+    );
+    const sessions = await loadAllSessions();
+    set({ sessions });
+  },
+  deleteSession: async (id) => {
+    await dbExecute("DELETE FROM sessions WHERE session_id = ?", [id]);
+    const sessions = await loadAllSessions();
+    set({ sessions, selectedId: null });
+  },
+  stopSession: async (pid) => {
+    await invoke("kill_session_process", { pid });
+    const sessions = await loadAllSessions();
+    set({ sessions });
+  },
+  launchSession: async (args, cwd) => {
+    await invoke("launch_claude_session", { args, cwd: cwd || null });
+  },
 }));
 
 /**
