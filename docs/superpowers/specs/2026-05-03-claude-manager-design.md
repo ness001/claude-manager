@@ -113,8 +113,9 @@ Data source: `stats-cache.json` — fields: `dailyActivity`, `dailyModelTokens`,
 
 **Row 3 — Info** (60/40 split):
 - Left: Recent sessions list (last 8). Status dot + name + time ago + message count. "View All Sessions" link.
-- Right top: Quick actions — New Session (prominent), Resume Latest, Open CWD, Rebuild Stats.
-- Right bottom: System health — MCP connection status, plugin count, API reachability, CLI version.
+- Right: System health — MCP connection status, plugin count, API reachability, CLI version.
+
+> Quick actions panel (New Session / Resume Latest / Open CWD / Rebuild Stats) is deferred — it requires the Phase 4 session launcher (T4.1, T4.2) and command palette (T4.5). It will land as one vertical slice (UI + IPC) when those tasks ship, per R2 (no half-built features). Until then the dashboard has no quick-actions card.
 
 **Mockup:** `dashboard.html`
 
