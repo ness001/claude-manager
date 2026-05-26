@@ -295,14 +295,14 @@ describe("MCP section — spec §8 surface audit", () => {
 
   // ─── §8.4 Refresh Status (functional) ───────────────────────────────────
 
-  it("§8.4 [Refresh Status] click flips the button to aria-busy=true (UI wiring)", async function () {
-    // We only assert the UI wiring: clicking the button triggers the
-    // refresh state. The IPC backing it (`claude mcp list`) actually
-    // SPAWNS every configured server for health checks (spec §8.3
-    // warning) and can run for minutes on machines with slow-spawning
-    // servers — testing IPC completion here would conflate UI wiring
-    // with backend wall-time and produce flakes that are not UI bugs.
-    this.timeout(30_000);
+  it("§8.4 [Refresh Status] click completes (UI wiring + IPC round-trip within 60s)", async function () {
+    // R1: assert what a real user expects — click triggers a refresh AND
+    // it eventually finishes within a human-attention window. Per spec
+    // §8.3, `claude mcp list` spawns every server for health checks, so a
+    // generous 60s ceiling absorbs realistic spawn latency. If this fails
+    // it's a real code bug (no per-server timeout / no surfaced error),
+    // not a flake — the test SHOULD expose it.
+    this.timeout(90_000);
     const btn = await browser.$('[data-testid="refresh-status-btn"]');
     const busyBefore = await btn.getAttribute("aria-busy");
     record(
@@ -311,9 +311,6 @@ describe("MCP section — spec §8 surface audit", () => {
       `aria-busy=${busyBefore}`,
     );
     await btn.click();
-    // Poll up to 3s for the busy flip. The refresh-status onClick wraps
-    // the IPC call in setIsRefreshing(true) BEFORE awaiting, so the DOM
-    // update should land within React's next render tick.
     const wentBusy = await browser
       .waitUntil(
         async () => (await btn.getAttribute("aria-busy")) === "true",
@@ -325,6 +322,69 @@ describe("MCP section — spec §8 surface audit", () => {
       "§8.4 [Refresh Status] click flips aria-busy to true",
       wentBusy,
       wentBusy ? undefined : "button never became busy within 3s after click",
+    );
+    const finished = await browser
+      .waitUntil(
+        async () => (await btn.getAttribute("aria-busy")) !== "true",
+        { timeout: 60_000, interval: 500 },
+      )
+      .then(() => true)
+      .catch(() => false);
+    record(
+      "§8.4 [Refresh Status] IPC round-trip completes within 60s",
+      finished,
+      finished
+        ? undefined
+        : "button stayed aria-busy=true >60s — `claude mcp list` likely hangs spawning a slow server with no per-server timeout (code gap)",
+    );
+  });
+
+  // ─── §8.3 Connected-state Restart action (spec §8.3 vs code gap) ────────
+
+  it("§8.3 connected card exposes Restart action (spec §8.3 line 390)", async () => {
+    // Spec §8.3: Connected → Edit, Remove, Restart, View Tools, View Logs.
+    // Code currently ships everything except Restart. A user with a stale
+    // running server reasonably wants one-click restart instead of
+    // remove+re-add. If this fails it's a missing-feature gap (R2
+    // build-it task), not a test flake.
+    const connectedCards = await browser.$$('[data-testid="mcp-server-card"][data-status="connected"]');
+    if (connectedCards.length === 0) {
+      skip(
+        "§8.3 connected Restart action",
+        "no connected mcp servers on this machine — can't observe live",
+      );
+      return;
+    }
+    const card = connectedCards[0];
+    const restart = await card.$('[data-testid="action-restart"]');
+    record(
+      "§8.3 connected card exposes [Restart]",
+      await restart.isExisting(),
+      "If FAIL: Restart action per spec §8.3 is not implemented on Connected cards",
+    );
+  });
+
+  // ─── §8.3 Disconnected-state Connect action (spec §8.3 vs code gap) ─────
+
+  it("§8.3 disconnected card exposes Connect action (spec §8.3 line 391)", async () => {
+    // Spec §8.3: Disconnected → Edit, Remove, Connect, View Logs. Code
+    // currently ships everything except Connect. A user looking at a
+    // disconnected stdio server reasonably wants one-click Connect
+    // instead of editing+saving to retrigger a spawn.
+    const disconnectedCards = await browser.$$('[data-testid="mcp-server-card"][data-status="disconnected"]');
+    if (disconnectedCards.length === 0) {
+      skip(
+        "§8.3 disconnected Connect action",
+        "no disconnected mcp servers on this machine — can't observe live",
+      );
+      return;
+    }
+    const card = disconnectedCards[0];
+    const connect = await card.$('[data-testid="action-connect"]');
+    record(
+      "§8.3 disconnected card exposes [Connect]",
+      await connect.isExisting(),
+      "If FAIL: Connect action per spec §8.3 is not implemented on Disconnected cards",
     );
   });
 
