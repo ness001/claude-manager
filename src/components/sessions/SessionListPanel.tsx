@@ -155,6 +155,7 @@ export function SessionListPanel() {
   const searchQuery = useSessionStore((s) => s.searchQuery);
   const viewMode = useSessionStore((s) => s.viewMode);
   const selectedId = useSessionStore((s) => s.selectedId);
+  const launchSession = useSessionStore((s) => s.launchSession);
 
   // useMemo so we don't recompute on every parent render — only when the
   // inputs actually change. This is the referential-equality guard the spec
@@ -184,24 +185,11 @@ export function SessionListPanel() {
       aria-label="Session list"
       className="flex h-full w-[260px] shrink-0 flex-col gap-2 border-r border-border bg-sidebar-bg p-3"
     >
-      {/* TODO(T4.1, T4.2): wire New Session button to launch the New Session
-        * dialog. Phase 4 plan tasks: T4.1 (New Session Dialog Types & Launcher),
-        * T4.2 (New Session Dialog UI). Per CLAUDE.md R2 (Orphan-placeholder
-        * rule), every disabled stub must declare its wire-up task ID inline
-        * so the placeholder isn't an undiscoverable orphan. */}
       <button
         type="button"
         data-testid="new-session-btn"
-        disabled
-        aria-disabled="true"
-        // Sighted users see the "Coming soon …" tooltip on hover; mirror
-        // the gist into the accessible name so screen-reader users hear
-        // the same hint instead of just "New Session, button, dimmed"
-        // and assuming the app is broken (WCAG 4.1.2). Mirrors the same
-        // fix applied to QuickActions buttons.
-        aria-label="New Session (coming soon)"
-        title="Coming soon — launch a new Claude session from here once the IPC is wired"
-        className="flex items-center justify-center gap-1 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white opacity-50 cursor-not-allowed"
+        onClick={() => launchSession([])}
+        className="flex items-center justify-center gap-1 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <Plus size={14} aria-hidden="true" />
         New Session

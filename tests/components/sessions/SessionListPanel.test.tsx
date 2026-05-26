@@ -5,6 +5,8 @@ import { SessionListPanel } from "../../../src/components/sessions/SessionListPa
 import { useSessionStore } from "../../../src/stores/session-store";
 import type { SessionMeta } from "../../../src/lib/session-types";
 
+vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+
 function makeSession(overrides: Partial<SessionMeta> = {}): SessionMeta {
   return {
     sessionId: overrides.sessionId ?? "id-" + Math.random().toString(36).slice(2),
@@ -217,27 +219,17 @@ describe("SessionListPanel", () => {
     expect(empty.textContent).toContain("No matches");
   });
 
-  it("New Session button is reachable", () => {
+  it("New Session button is reachable and enabled", () => {
     render(<SessionListPanel />);
     const btn = screen.getByTestId("new-session-btn");
     expect(btn).toBeInTheDocument();
-    // Until the IPC is wired, the button must be disabled with a tooltip
-    // explaining why — clickable-but-dead is worse than visibly-not-yet.
-    expect(btn).toBeDisabled();
-    expect(btn).toHaveAttribute("title");
+    expect(btn).not.toBeDisabled();
   });
 
-  // WCAG 4.1.2 (Name, Role, Value): the disabled "New Session" button
-  // shows a "Coming soon …" tooltip on hover for sighted users, but the
-  // accessible name was just "New Session" — a screen-reader user
-  // navigating by buttons hears "New Session, button, dimmed" with no
-  // hint that the dimmed state is intentional and reasonably concludes
-  // the app is broken. Mirror the visual tooltip into aria-label so SR
-  // and sighted users get the same affordance.
-  it("New Session button announces (coming soon) status to assistive tech", () => {
+  it("New Session button has no (coming soon) aria-label", () => {
     render(<SessionListPanel />);
     const btn = screen.getByTestId("new-session-btn");
-    expect(btn.getAttribute("aria-label")).toBe("New Session (coming soon)");
+    expect(btn.getAttribute("aria-label")).toBeNull();
   });
 
   // WCAG 4.1.2 (Name, Role, Value): the decorative Plus lucide icon next to
