@@ -13,6 +13,12 @@ import path from "node:path";
 import { expect } from "@wdio/globals";
 
 const SETTINGS_PATH = path.join(os.homedir(), ".claude", "settings.json");
+const INSTALLED_PLUGINS_PATH = path.join(
+  os.homedir(),
+  ".claude",
+  "plugins",
+  "installed_plugins.json",
+);
 const TARGET_KEY = "example-skills@anthropic-agent-skills";
 
 interface SpecResult {
@@ -433,5 +439,145 @@ describe("Plugins section — UI vs spec §6 gap audit", () => {
       await remove.isExisting(),
       "If FAIL: orphaned-Remove per §6.7 is not implemented yet",
     );
+  });
+
+  // ─── §6.7 install / uninstall round-trip (A2 — happy path CLI coverage) ─
+  //
+  // Until now no e2e actually drove `claude plugins install` / `uninstall`
+  // end-to-end; we only verified the modal opens and the buttons are
+  // interactive. This block closes that gap by round-tripping the
+  // `example-skills` plugin: uninstall via the detail-view button, verify
+  // the installed_plugins.json key disappears + card vanishes, then install
+  // it back via the header modal and verify both reappear. The finally
+  // block re-installs as a safety net so the host machine returns to its
+  // starting state even when an assertion fails mid-round-trip.
+  it("§6.7 round-trip: detail-uninstall removes example-skills; header Install brings it back", async function () {
+    // CLI install/uninstall can take a while on first run (git clone +
+    // marketplace fetch). Give Mocha plenty of headroom; the assertions
+    // themselves still time out independently inside waitUntil.
+    this.timeout(180_000);
+
+    const readInstalledKeys = (): string[] => {
+      try {
+        const raw = fs.readFileSync(INSTALLED_PLUGINS_PATH, "utf8");
+        const parsed = JSON.parse(raw) as { plugins?: Record<string, unknown> };
+        return Object.keys(parsed.plugins ?? {});
+      } catch {
+        return [];
+      }
+    };
+
+    const keys0 = readInstalledKeys();
+    if (!keys0.includes(TARGET_KEY)) {
+      skip(
+        "§6.7 install/uninstall round-trip",
+        `${TARGET_KEY} not installed on this machine — fixture precondition not met`,
+      );
+      return;
+    }
+
+    // `window.confirm` opens a native WebView2 dialog the harness can't
+    // click; stub it to auto-accept for the duration of this test, restore
+    // after.
+    await browser.execute(() => {
+      (window as unknown as { __origConfirm: typeof window.confirm }).__origConfirm =
+        window.confirm;
+      window.confirm = () => true;
+    });
+
+    let uninstalled = false;
+    try {
+      // ── Step 1: open detail view for example-skills, click Uninstall ──
+      const cardSel = `[data-testid="plugin-card"][data-plugin-key="${TARGET_KEY}"]`;
+      const card = await browser.$(cardSel);
+      await card.waitForExist({ timeout: 5_000 });
+      await (await browser.$(`${cardSel} [data-testid="plugin-card-body"]`)).click();
+      const detail = await browser.$('[data-testid="plugin-detail-view"]');
+      await detail.waitForExist({ timeout: 10_000 });
+
+      const uninstallBtn = await browser.$('[data-testid="detail-uninstall-btn"]');
+      record(
+        "§6.7 detail view exposes [Uninstall] for active plugins",
+        await uninstallBtn.isExisting(),
+        "If FAIL: PluginDetailView is missing the Uninstall button",
+      );
+      if (!(await uninstallBtn.isExisting())) return;
+
+      await uninstallBtn.click();
+
+      // CLI must finish + store must reload + card must vanish from the
+      // list. waitUntil is the truth — the disk state changes when CLI
+      // exits.
+      await browser.waitUntil(
+        () => !readInstalledKeys().includes(TARGET_KEY),
+        { timeout: 120_000, interval: 1_000, timeoutMsg: "installed_plugins.json still has key after uninstall" },
+      );
+      uninstalled = true;
+      record(
+        "§6.7 uninstall removes example-skills from installed_plugins.json",
+        true,
+        `keys=${readInstalledKeys().length}`,
+      );
+
+      // The Plugins UI typically auto-returns to the list (selection drops
+      // when the plugin disappears from the store), but we don't depend on
+      // that — go back explicitly if we're still on the detail view.
+      const backBtn = await browser.$('[data-testid="plugin-back-btn"]');
+      if (await backBtn.isExisting()) await backBtn.click();
+      await browser.$('[data-testid="plugin-list-view"]').waitForExist({ timeout: 10_000 });
+
+      // ── Step 2: header Install modal → submit → card reappears ────────
+      const installBtn = await browser.$('[data-testid="install-plugin-btn"]');
+      await installBtn.click();
+      const input = await browser.$('[data-testid="install-plugin-input"]');
+      await input.waitForExist({ timeout: 5_000 });
+      await input.setValue(TARGET_KEY);
+      const submit = await browser.$('[data-testid="install-plugin-submit"]');
+      await submit.click();
+
+      await browser.waitUntil(
+        () => readInstalledKeys().includes(TARGET_KEY),
+        { timeout: 120_000, interval: 1_000, timeoutMsg: "installed_plugins.json never re-added key after install" },
+      );
+      uninstalled = false;
+      record(
+        "§6.7 install re-adds example-skills to installed_plugins.json",
+        true,
+        `keys=${readInstalledKeys().length}`,
+      );
+
+      // Card surface returns.
+      await browser.$(cardSel).waitForExist({ timeout: 10_000 });
+      record(
+        "§6.7 example-skills card re-renders after reinstall",
+        await browser.$(cardSel).isExisting(),
+      );
+    } finally {
+      // Restore confirm even if the test threw.
+      await browser.execute(() => {
+        const w = window as unknown as { __origConfirm?: typeof window.confirm };
+        if (w.__origConfirm) {
+          window.confirm = w.__origConfirm;
+          delete w.__origConfirm;
+        }
+      });
+
+      // Safety net: if we successfully uninstalled but then failed before
+      // re-installing, attempt to put it back from the test process so the
+      // host machine doesn't keep a half-mutated state. Best-effort —
+      // never throw out of finally.
+      if (uninstalled) {
+        try {
+          const { spawnSync } = await import("node:child_process");
+          const cmd = process.platform === "win32" ? "claude.cmd" : "claude";
+          spawnSync(cmd, ["plugins", "install", TARGET_KEY], {
+            stdio: "ignore",
+            timeout: 120_000,
+          });
+        } catch {
+          /* leave the machine in its current state — operator will see */
+        }
+      }
+    }
   });
 });
