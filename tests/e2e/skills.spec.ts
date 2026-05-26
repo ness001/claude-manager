@@ -247,14 +247,19 @@ describe("Skills section — UI vs spec §7.1", () => {
       return;
     }
     // Use the first card's data-skill-name as a query that should narrow
-    // the list. Even if multiple cards share a prefix, the filter must at
-    // least shrink the count (or stay equal when the substring is shared).
+    // the list. A 4-char prefix of one skill's name MUST shrink the visible
+    // set — anything else (no change, growth) means the filter is broken.
+    // Originally this was `after <= before` but per Ness's triangulation
+    // heads-up (spec/code/user) that lets a no-op filter silently pass.
     const firstName = (await cards[0].getAttribute("data-skill-name")) ?? "";
     if (firstName.length < 3) {
       skip("§17.7 search filter", `first skill name too short to use as query: "${firstName}"`);
       return;
     }
-    // Pick a 4-char prefix that's unlikely to match every card.
+    // Pick a 4-char prefix; with ≥2 cards present, a real filter MUST drop
+    // at least one card unless every name shares that prefix (vanishingly
+    // unlikely; surface as a real failure if it happens so we can pick a
+    // better discriminator).
     const query = firstName.slice(0, 4);
     const before = cards.length;
 
@@ -263,8 +268,8 @@ describe("Skills section — UI vs spec §7.1", () => {
     await browser.pause(300);
     const after = await browser.$$('[data-testid="skill-card"]');
     record(
-      "§17.7 search reduces (or keeps) visible cards when query matches a subset",
-      after.length <= before && after.length >= 1,
+      "§17.7 search strictly reduces visible cards when query is a 4-char prefix of one name",
+      after.length < before && after.length >= 1,
       `before=${before}, after=${after.length}, query="${query}"`,
     );
 

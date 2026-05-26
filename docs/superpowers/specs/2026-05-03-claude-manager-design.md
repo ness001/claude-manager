@@ -343,10 +343,10 @@ Standalone skills that are NOT bundled inside plugins. These live at `~/.claude/
 
 ### 7.1 Skills List View
 
-Dedicated panel accessible from the sidebar rail (📝 icon).
+Dedicated panel accessible from the sidebar rail (BookOpen icon).
 
 - Header: title, skill count, path (`~/.claude/skills/`), [+ Create Skill] button, search bar
-- Skill cards: 📝 icon, name, description, file path, actions (Open in VS Code, Open in File Browser)
+- Skill cards: FileText icon, name, description, file path, actions (Open in VS Code, Open in File Browser)
 - Info box at bottom explaining what custom skills are and linking to the Plugins panel for plugin-bundled skills
 
 **Mockup:** `skills-list.html`

@@ -494,7 +494,7 @@ describe("Sessions section — UI vs spec §5 gap audit", () => {
 
   // ─── §5.3 ALIVE detection exercises the PID-file path ───────────────────
 
-  it("§5.3 when PID files exist on disk, ≥1 card OR no card renders state=alive (PID-path exercised)", async () => {
+  it("§5.3 when PID files exist on disk, ≥1 card renders state=alive (real-user expectation)", async () => {
     if (pidFileCount === 0) {
       skip(
         "§5.3 ALIVE PID-file path",
@@ -502,18 +502,25 @@ describe("Sessions section — UI vs spec §5 gap audit", () => {
       );
       return;
     }
-    // PID files are ephemeral and may belong to sessions whose JSONL is
-    // sidechain-filtered, so the count of rendered ALIVE cards can legitimately
-    // be 0 even with PID files present. What we CAN verify: the loader
-    // didn't crash and the page rendered. The fact that we got this far with
-    // PID files on disk proves the read_pid_files IPC path didn't fail.
+    // Business-logic check: a real user who has live Claude sessions running
+    // (their own PID files on disk) MUST see at least one green/pulsing dot
+    // in the list. Silently showing zero ALIVE cards while N PID files exist
+    // is a bug — it tells the user "nothing is running" when something is.
+    //
+    // Caveat: a single PID may belong to a sidechain-only session (which the
+    // list intentionally hides). To stay honest about that edge case we
+    // require ≥1 alive card only when pidFileCount ≥ 3 — at three or more
+    // live processes the all-sidechain case is implausible. The previous
+    // assertion accepted alive-cards=0 unconditionally, which would have
+    // masked exactly the "your sessions look dead" regression.
     const aliveCards = await browser.$$(
       '[data-testid="session-card"][data-state="alive"]',
     );
+    const tolerated = pidFileCount < 3;
     record(
-      "§5.3 PID-file path exercised without crashing the loader",
-      true,
-      `pid-files=${pidFileCount}, alive-cards=${aliveCards.length}`,
+      "§5.3 PID files on disk surface as ≥1 alive card (or pidFileCount<3 sidechain-tolerated)",
+      tolerated || aliveCards.length >= 1,
+      `pid-files=${pidFileCount}, alive-cards=${aliveCards.length}${tolerated ? " (tolerated: <3 PIDs)" : ""}`,
     );
   });
 
