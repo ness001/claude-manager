@@ -17,6 +17,8 @@ vi.mock("@tauri-apps/plugin-shell", () => ({
   open: (...args: unknown[]) => openMock(...args),
 }));
 
+vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+
 function makeSession(overrides: Partial<SessionMeta> = {}): SessionMeta {
   return {
     sessionId: overrides.sessionId ?? "id-x",
@@ -90,7 +92,6 @@ describe("SessionInfoBar", () => {
       ],
       ended: [
         "Resume",
-        "Fork",
         "View Conversation",
         "Open CWD",
         "Open in VS Code",
@@ -114,37 +115,26 @@ describe("SessionInfoBar", () => {
     expect(screen.getByTestId("action-resume-terminal")).toBeInTheDocument();
   });
 
-  it("all action buttons are disabled with a 'Coming soon' tooltip until handlers are wired (except wired open-cwd / open-vscode)", () => {
-    // Action wiring (terminal launch, SIGTERM, archive, …) is later-phase.
-    // The defect: every button looks interactive but does nothing on click.
-    // Fix: render `disabled` + `title="Coming soon"` so users can tell.
-    //
-    // open-cwd / open-vscode are now wired via @tauri-apps/plugin-shell and
-    // ARE interactive (when CWD exists). Skip them in this audit.
-    const WIRED = new Set(["action-open-cwd", "action-open-vscode"]);
+  it("all action buttons are enabled (CWD-dependent ones disabled only when CWD is dead)", () => {
+    existsMock.mockResolvedValue(true);
     for (const state of ALL_STATES) {
       cleanup();
       render(<SessionInfoBar session={makeSession({ state })} />);
       const buttons = document.querySelectorAll('[data-testid^="action-"]');
       expect(buttons.length).toBeGreaterThan(0);
       for (const btn of Array.from(buttons)) {
-        if (WIRED.has(btn.getAttribute("data-testid") ?? "")) continue;
-        expect(btn).toBeDisabled();
-        expect(btn.getAttribute("title")).toBe("Coming soon");
+        expect(btn).not.toBeDisabled();
       }
     }
   });
 
-  it("clicking a disabled action button does nothing — no confirm prompt, no error", () => {
-    // Regression guard: previously Stop spawned a window.confirm even though
-    // the SIGTERM wiring did not exist. Now the button is disabled, so no
-    // dialog should appear.
+  it("clicking Stop prompts for confirmation before killing", () => {
     const confirmSpy = vi
       .spyOn(window, "confirm")
-      .mockImplementation(() => true);
-    render(<SessionInfoBar session={makeSession({ state: "alive" })} />);
+      .mockImplementation(() => false);
+    render(<SessionInfoBar session={makeSession({ state: "alive", pid: 1234, isAlive: true })} />);
     fireEvent.click(screen.getByTestId("action-stop"));
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(confirmSpy).toHaveBeenCalled();
     confirmSpy.mockRestore();
   });
 
@@ -398,14 +388,16 @@ describe("SessionInfoBar", () => {
   // user navigating by buttons hears "<action>, button, dimmed" with no
   // hint why. Mirror the visual tooltip into aria-label so SR and sighted
   // users get the same affordance.
-  it("unwired actions announce (coming soon) status to AT", () => {
+  it("wired actions have no (coming soon) aria-label", () => {
     existsMock.mockResolvedValue(true);
     render(<SessionInfoBar session={makeSession({ state: "ended" })} />);
-    // Resume/Fork/View Conversation/Tag-Rename/Archive are unwired in this
-    // state row; pick one we know is in the row regardless of CWD checks.
-    const fork = screen.getByTestId("action-fork");
-    expect(fork.getAttribute("aria-label")).toBe("Fork (coming soon)");
-    expect(fork).toBeDisabled();
+    const buttons = document.querySelectorAll('[data-testid^="action-"]');
+    for (const btn of Array.from(buttons)) {
+      const label = btn.getAttribute("aria-label");
+      if (label) {
+        expect(label).not.toContain("coming soon");
+      }
+    }
   });
 
   it("dead-CWD actions announce (directory not found) status to AT", async () => {

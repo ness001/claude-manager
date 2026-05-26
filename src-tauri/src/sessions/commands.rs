@@ -123,6 +123,88 @@ pub fn read_pid_files() -> Result<Vec<PidFileData>, String> {
     }
 }
 
+/// Resolve the Claude CLI binary name. On Windows the npm shim is
+/// `claude.cmd`; elsewhere it's plain `claude`.
+fn claude_cli_name() -> &'static str {
+    if cfg!(windows) { "claude.cmd" } else { "claude" }
+}
+
+/// Kill a session process by PID. On Windows uses `taskkill /T` to
+/// terminate the process tree; on Unix sends SIGTERM.
+#[tauri::command]
+pub fn kill_session_process(pid: u32) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        let status = std::process::Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/T", "/F"])
+            .output()
+            .map_err(|e| format!("failed to run taskkill: {}", e))?;
+        if !status.status.success() {
+            let stderr = String::from_utf8_lossy(&status.stderr);
+            return Err(format!("taskkill failed: {}", stderr.trim()));
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        use std::os::unix::process::CommandExt;
+        let status = std::process::Command::new("kill")
+            .arg(pid.to_string())
+            .output()
+            .map_err(|e| format!("failed to send signal: {}", e))?;
+        if !status.status.success() {
+            return Err(format!("kill failed for pid {}", pid));
+        }
+    }
+    Ok(())
+}
+
+/// Launch `claude` in a new visible terminal window. Fire-and-forget —
+/// the spawned terminal is fully detached from the Tauri process.
+#[tauri::command]
+pub fn launch_claude_session(args: Vec<String>, cwd: Option<String>) -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        // `cmd /c start "" cmd /k claude <args>` opens a new cmd window.
+        let mut claude_args = vec!["plugins".to_string(); 0]; // empty vec
+        claude_args.push(claude_cli_name().to_string());
+        claude_args.extend(args);
+        let joined = claude_args.join(" ");
+
+        let mut cmd = std::process::Command::new("cmd");
+        cmd.args(["/c", "start", "", "cmd", "/k", &joined]);
+        if let Some(ref dir) = cwd {
+            cmd.current_dir(dir);
+        }
+        cmd.spawn().map_err(|e| format!("failed to launch terminal: {}", e))?;
+    }
+    #[cfg(not(windows))]
+    {
+        let mut cmd_args = vec![claude_cli_name().to_string()];
+        cmd_args.extend(args);
+        let script = cmd_args.join(" ");
+
+        // Try common terminal emulators in order.
+        let terminals = [
+            ("x-terminal-emulator", vec!["-e"]),
+            ("gnome-terminal", vec!["--"]),
+            ("xterm", vec!["-e"]),
+        ];
+        for (term, prefix) in &terminals {
+            let mut cmd = std::process::Command::new(term);
+            cmd.args(prefix).arg(&script);
+            if let Some(ref dir) = cwd {
+                cmd.current_dir(dir);
+            }
+            if cmd.spawn().is_ok() {
+                return Ok(());
+            }
+        }
+        return Err("no terminal emulator found".to_string());
+    }
+    #[allow(unreachable_code)]
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
