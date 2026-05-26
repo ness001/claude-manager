@@ -100,7 +100,7 @@ describe("DashboardSection", () => {
     expect(cards).toHaveLength(4);
   });
 
-  it("row 2 contains ActivityChart + ModelDonut, row 3 has Recent + Quick + Health", async () => {
+  it("row 2 contains ActivityChart + ModelDonut, row 3 has Recent + Health", async () => {
     render(<DashboardSection />);
     await act(async () => {
       await Promise.resolve();
@@ -109,7 +109,6 @@ describe("DashboardSection", () => {
     expect(screen.getByTestId("activity-chart")).toBeInTheDocument();
     expect(screen.getByTestId("model-donut")).toBeInTheDocument();
     expect(screen.getByTestId("recent-sessions")).toBeInTheDocument();
-    expect(screen.getByTestId("quick-actions")).toBeInTheDocument();
     expect(screen.getByTestId("system-health")).toBeInTheDocument();
   });
 

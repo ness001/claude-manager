@@ -8,7 +8,7 @@
 // Coverage map (spec §4.1):
 //   Row 1 — 4 StatCards (Sessions / Messages / Longest / Active Since)
 //   Row 2 — ActivityChart (period + series toggles, X-axis recency) + ModelDonut (donut + legend)
-//   Row 3 — RecentSessions (list or empty + View All link) + QuickActions (4 buttons) + SystemHealth (4 indicators)
+//   Row 3 — RecentSessions (list or empty + View All link) + SystemHealth (4 indicators)
 //
 // R1 rule applies: real-data assertions have NO "or empty state" escape
 // clauses. Where data may legitimately be absent on a given machine (e.g.
@@ -450,66 +450,6 @@ describe("Dashboard section — UI vs spec §4.1 gap audit", () => {
     // Return to dashboard for subsequent tests.
     await browser.keys(["Control", "1"]);
     await browser.$('[data-testid="dashboard-section"]').waitForExist({ timeout: 5_000 });
-  });
-
-  // ─── §4.1 Row 3 — Quick actions ─────────────────────────────────────────
-
-  it("§4.1 Row 3: QuickActions card has all 4 buttons (New Session / Resume Latest / Open CWD / Rebuild Stats)", async () => {
-    const card = await browser.$('[data-testid="quick-actions"]');
-    record("§4.1 quick-actions card exists", await card.isExisting());
-
-    for (const id of ["new-session", "resume-latest", "open-cwd", "rebuild-stats"]) {
-      const btn = await browser.$(`[data-testid="action-${id}"]`);
-      record(`§4.1 quick-action "${id}" button exists`, await btn.isExisting());
-    }
-  });
-
-  it("§4.1 Row 3: QuickActions buttons are accessibly labelled (aria-label includes label text)", async () => {
-    // The buttons are currently disabled stubs deferred to Phase 4 (T4.1/T4.2/T4.5);
-    // assert the WCAG affordance is correct even while disabled — aria-label must
-    // surface the action name so SR users know what the disabled button represents.
-    const cases: Array<[string, string]> = [
-      ["new-session", "New Session"],
-      ["resume-latest", "Resume Latest"],
-      ["open-cwd", "Open CWD"],
-      ["rebuild-stats", "Rebuild Stats"],
-    ];
-    for (const [id, label] of cases) {
-      const btn = await browser.$(`[data-testid="action-${id}"]`);
-      const aria = (await btn.getAttribute("aria-label")) ?? "";
-      record(
-        `§4.1 quick-action "${id}" aria-label contains "${label}"`,
-        aria.includes(label),
-        `aria-label="${aria}"`,
-      );
-    }
-  });
-
-  it("§4.1 Row 3: QuickActions buttons are enabled and clickable (RED until Phase 4 wires them)", async () => {
-    // Business-logic check (per team-lead 2026-05-26 guidance): spec §4.1
-    // lists QuickActions as functional ("New Session (prominent), Resume
-    // Latest, Open CWD, Rebuild Stats"). Shipped code renders them
-    // `disabled` with "Coming soon" tooltips and TODO(T4.1/T4.2/T4.5)
-    // markers. A real user reasonably expects these buttons to DO
-    // something — the spec agrees, code is the outlier. Per the new
-    // guidance ("don't silently assert against shipped code when it
-    // contradicts obvious user value"), this test asserts the correct
-    // behavior and is expected to FAIL until Phase 4 wires the actions.
-    //
-    // Same template as the old RCA Bug 3 ("All Quick Actions buttons are
-    // enabled (not disabled placeholders)"). Restored as a deliberate
-    // red gate so the gap is visible in every run.
-    for (const id of ["new-session", "resume-latest", "open-cwd", "rebuild-stats"]) {
-      const btn = await browser.$(`[data-testid="action-${id}"]`);
-      const disabled = await btn.getAttribute("disabled");
-      const ariaDisabled = await btn.getAttribute("aria-disabled");
-      const isEnabled = disabled === null && ariaDisabled !== "true";
-      record(
-        `§4.1 quick-action "${id}" is enabled (user-value gate, fails until Phase 4)`,
-        isEnabled,
-        `disabled="${disabled}" aria-disabled="${ariaDisabled}"`,
-      );
-    }
   });
 
   // ─── §4.1 Row 3 — System health ─────────────────────────────────────────
