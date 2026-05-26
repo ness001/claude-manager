@@ -7,7 +7,7 @@
 // with an "Overridden by [scope]" badge.
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import type { McpServer, McpServerState } from "../../lib/mcp-types";
 import { McpServerDetail } from "./McpServerDetail";
@@ -117,11 +117,11 @@ export function McpServerCard({
           onClick={() => setExpanded((e) => !e)}
           className="rounded-sm text-text-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          {expanded ? (
-            <ChevronDown size={14} aria-hidden="true" />
-          ) : (
-            <ChevronRight size={14} aria-hidden="true" />
-          )}
+          <ChevronRight
+            size={14}
+            aria-hidden="true"
+            className={`transition-transform ${expanded ? "rotate-90" : ""}`}
+          />
         </button>
         <StatusDot state={server.status} />
         <span
