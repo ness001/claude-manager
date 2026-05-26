@@ -119,6 +119,17 @@ describe("Plugins section — UI vs spec §6 gap audit", () => {
       }
       await browser.$('[data-testid="plugin-list-view"]').waitForExist({ timeout: 10_000 });
     }
+
+    // plugin-list-view mounts immediately, but cards only render after
+    // plugin-store.loadPlugins() resolves (async IPC reading
+    // ~/.claude/plugins/). Without this wait, the first few it() blocks
+    // can race the loader and not find their target card. Once any card
+    // exists, loadPlugins has resolved and all plugins are in the store
+    // (it's a single atomic set({ plugins, isLoading: false })).
+    await browser.$('[data-testid="plugin-card"]').waitForExist({
+      timeout: 15_000,
+      timeoutMsg: "no plugin cards rendered within 15s — store never loaded plugins",
+    });
   });
 
   after(async () => {
