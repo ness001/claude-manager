@@ -124,8 +124,9 @@ describe("session-loader: loadAllSessions", () => {
 
     await loadAllSessions();
 
-    expect(dbExecuteMock).toHaveBeenCalledTimes(1);
-    const sql = (dbExecuteMock.mock.calls[0][0] as string).toLowerCase();
+    expect(dbExecuteMock).toHaveBeenCalledTimes(3);
+    // calls[0] = BEGIN, calls[1] = INSERT, calls[2] = COMMIT
+    const sql = (dbExecuteMock.mock.calls[1][0] as string).toLowerCase();
     expect(sql).toContain("on conflict(session_id) do update set");
     // User-managed columns must be absent from the UPDATE SET clause.
     const setClause = sql.split("do update set")[1];
@@ -157,9 +158,9 @@ describe("session-loader: loadAllSessions", () => {
 
     await loadAllSessions();
 
-    expect(dbExecuteMock).toHaveBeenCalledTimes(1);
-    const sql = (dbExecuteMock.mock.calls[0][0] as string).toLowerCase();
-    const params = dbExecuteMock.mock.calls[0][1] as unknown[];
+    expect(dbExecuteMock).toHaveBeenCalledTimes(3);
+    const sql = (dbExecuteMock.mock.calls[1][0] as string).toLowerCase();
+    const params = dbExecuteMock.mock.calls[1][1] as unknown[];
 
     expect(sql).toContain("started_at");
     // The bound startedAtMs value must appear in the params array.
@@ -179,7 +180,7 @@ describe("session-loader: loadAllSessions", () => {
 
     await loadAllSessions();
 
-    const sql = (dbExecuteMock.mock.calls[0][0] as string).toLowerCase();
+    const sql = (dbExecuteMock.mock.calls[1][0] as string).toLowerCase();
     expect(sql).toContain("coalesce(excluded.started_at, sessions.started_at)");
   });
 
@@ -387,7 +388,9 @@ describe("session-loader: loadAllSessions", () => {
       "invoke:discover_sessions",
       "invoke:read_pid_files",
       "dbSelect",
-      "dbExecute",
+      "dbExecute", // BEGIN
+      "dbExecute", // INSERT ... ON CONFLICT
+      "dbExecute", // COMMIT
     ]);
   });
 });

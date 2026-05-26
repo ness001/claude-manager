@@ -164,7 +164,7 @@ async function resolveSessionPath(
     const home = await homeDir();
     claudeProjectsRoot = await join(home, ".claude", "projects");
   }
-  const path = await join(claudeProjectsRoot, projectDir, `${sessionId}.jsonl`);
+  const path = `${claudeProjectsRoot}/${projectDir}/${sessionId}.jsonl`;
   pathCache.set(sessionId, path);
   return path;
 }
@@ -314,11 +314,24 @@ export async function loadAllSessions(): Promise<SessionMeta[]> {
   const rowsBySessionId = new Map(rows.map((r) => [r.session_id, r]));
 
   const syncedAt = Date.now();
+  const toUpsert: DiscoveredSession[] = [];
   for (const d of discovered) {
     projectDirBySessionId.set(d.sessionId, d.projectDir);
     const row = rowsBySessionId.get(d.sessionId);
     if (!isCacheFresh(row, d.mtimeMs)) {
-      await upsertSession(d, syncedAt);
+      toUpsert.push(d);
+    }
+  }
+  if (toUpsert.length > 0) {
+    await dbExecute("BEGIN TRANSACTION");
+    try {
+      for (const d of toUpsert) {
+        await upsertSession(d, syncedAt);
+      }
+      await dbExecute("COMMIT");
+    } catch (e) {
+      await dbExecute("ROLLBACK");
+      throw e;
     }
   }
 
