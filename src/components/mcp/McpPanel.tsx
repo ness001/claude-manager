@@ -83,7 +83,7 @@ export function McpPanel() {
     <section
       data-testid="mcp-panel"
       aria-labelledby="mcp-panel-heading"
-      className="flex h-full flex-col gap-4 p-6"
+      className="flex h-full min-w-0 flex-1 flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between">

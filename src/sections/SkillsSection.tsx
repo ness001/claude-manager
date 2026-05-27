@@ -14,7 +14,7 @@ export function SkillsSection() {
     <section
       data-testid="skills-section"
       aria-label="Custom Skills"
-      className="flex h-full"
+      className="flex h-full w-full"
     >
       <SkillsListView />
     </section>
