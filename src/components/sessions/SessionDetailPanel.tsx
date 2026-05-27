@@ -5,9 +5,11 @@
 // SessionInfoBar at the top and the ConversationViewer below (T2.13 wires
 // the JSONL path on SessionMeta so this works end-to-end).
 
+import { useCallback, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { SessionInfoBar } from "./SessionInfoBar";
 import { ConversationViewer } from "../conversation/ConversationViewer";
+import { ChatInput } from "../conversation/ChatInput";
 import { useSessionStore } from "../../stores/session-store";
 
 export function SessionDetailPanel() {
@@ -15,6 +17,10 @@ export function SessionDetailPanel() {
   const session = useSessionStore((s) =>
     selectedId ? s.sessions.find((x) => x.sessionId === selectedId) : undefined,
   );
+  const [reloadKey, setReloadKey] = useState(0);
+  const handleMessageSent = useCallback(() => {
+    setReloadKey((k) => k + 1);
+  }, []);
 
   if (!session) {
     return (
@@ -47,7 +53,7 @@ export function SessionDetailPanel() {
     >
       <SessionInfoBar session={session} />
       {session.jsonlPath ? (
-        <ConversationViewer path={session.jsonlPath} />
+        <ConversationViewer key={reloadKey} path={session.jsonlPath} />
       ) : (
         <div
           data-testid="conversation-viewer-placeholder"
@@ -58,6 +64,7 @@ export function SessionDetailPanel() {
           No conversation file available for this session.
         </div>
       )}
+      <ChatInput session={session} onMessageSent={handleMessageSent} />
     </section>
   );
 }

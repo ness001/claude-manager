@@ -253,20 +253,21 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
   // `currentTurn` carries over — leaking the previous session's turn
   // position into the new one. Reset to 1 on path change so the turn
   // input + turn-jump scroller start fresh.
-  //
-  // Also reset the actual scroll offset: the browser preserves the
-  // scroller's scrollTop across the path change, so without this the
-  // new session opens at whatever pixel offset the previous session
-  // happened to be scrolled to. Visible symptom: user clicks a 5-turn
-  // session in the list after browsing a 200-turn one and lands in
-  // the middle of a (now-empty) overflow region with the new
-  // conversation invisible above.
+  const initialScrollFiredRef = useRef(false);
   useEffect(() => {
     setCurrentTurn(1);
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = 0;
-    }
+    initialScrollFiredRef.current = false;
   }, [path]);
+
+  // Auto-scroll to bottom once the conversation has finished loading for
+  // this path. Chat UX convention: newest turn at bottom is visible first.
+  useEffect(() => {
+    if (loading) return;
+    if (initialScrollFiredRef.current) return;
+    if (rendered.length === 0) return;
+    initialScrollFiredRef.current = true;
+    virtualizer.scrollToIndex(rendered.length - 1, { align: "end" });
+  }, [loading, rendered.length, virtualizer]);
 
   const jumpToTurn = useCallback(
     (n: number) => {

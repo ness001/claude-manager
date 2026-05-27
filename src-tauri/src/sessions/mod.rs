@@ -7,6 +7,7 @@
 //!   - `read_pid_files`        — list PID files in `~/.claude/sessions/`
 
 pub mod commands;
+pub mod chat;
 pub mod discovery;
 pub mod parser;
 pub mod pid;
