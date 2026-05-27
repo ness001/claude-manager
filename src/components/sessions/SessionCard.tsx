@@ -5,6 +5,7 @@
 // count. Clicking the card calls `selectSession(id)` on the store.
 
 import type { CSSProperties } from "react";
+import { GripVertical } from "lucide-react";
 
 import { useSessionStore } from "../../stores/session-store";
 import { timeAgo } from "../../lib/time-utils";
@@ -15,6 +16,8 @@ interface SessionCardProps {
   selected: boolean;
   /** Optional inline style — used by the virtualized list to position the row. */
   style?: CSSProperties;
+  /** When true, render a drag-handle icon (visible on hover). */
+  showDragHandle?: boolean;
 }
 
 /**
@@ -56,7 +59,7 @@ function truncate(s: string, max: number): string {
   return s.slice(0, max - 1).trimEnd() + "…";
 }
 
-export function SessionCard({ session, selected, style }: SessionCardProps) {
+export function SessionCard({ session, selected, style, showDragHandle }: SessionCardProps) {
   const selectSession = useSessionStore((s) => s.selectSession);
   const label = session.displayName ?? truncate(session.firstPrompt, 60);
   const dotClass = STATUS_COLOR[session.state];
@@ -76,7 +79,7 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
       onClick={() => selectSession(session.sessionId)}
       style={style}
       className={[
-        "w-full text-left flex flex-col gap-1 px-3 py-2 rounded-md shadow-card transition-shadow hover:shadow-card-hover",
+        "group w-full text-left flex flex-col gap-1 px-3 py-2 rounded-md shadow-card transition-shadow hover:shadow-card-hover",
         "border border-transparent",
         "hover:bg-bg-tertiary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
@@ -86,6 +89,14 @@ export function SessionCard({ session, selected, style }: SessionCardProps) {
       ].join(" ")}
     >
       <div className="flex items-center gap-2 min-w-0">
+        {showDragHandle && (
+          <GripVertical
+            size={12}
+            aria-hidden="true"
+            data-testid="drag-handle"
+            className="shrink-0 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity"
+          />
+        )}
         <span
           role="img"
           aria-label={STATUS_LABEL[session.state]}

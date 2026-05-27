@@ -28,8 +28,8 @@ import {
 } from "../../stores/session-store";
 
 const MODES: ReadonlyArray<{ mode: SessionViewMode; label: string }> = [
-  { mode: "my", label: "My View" },
-  { mode: "project", label: "Project" },
+  { mode: "my", label: "Group" },
+  { mode: "project", label: "Path" },
   { mode: "timeline", label: "Timeline" },
 ];
 

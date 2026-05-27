@@ -58,18 +58,19 @@ describe("SessionListPanel", () => {
     }
   });
 
-  it("My View: pinned sessions render under a 'Pinned' header", () => {
+  it("Group view: sessions render under their group's header + Ungrouped fallback", () => {
     useSessionStore.setState({
       sessions: [
-        makeSession({ sessionId: "p1", isPinned: true, displayName: "PinOne" }),
-        makeSession({ sessionId: "n1", isPinned: false, displayName: "NormOne" }),
+        makeSession({ sessionId: "g1", groupId: "team-a", displayName: "InTeamA" }),
+        makeSession({ sessionId: "u1", displayName: "Unfiled" }),
       ],
       viewMode: "my",
+      groups: [{ id: "team-a", name: "Team A", sortOrder: 0 }],
     });
     render(<SessionListPanel />);
     const headers = screen.getAllByTestId("group-header").map((h) => h.textContent ?? "");
-    expect(headers.some((t) => t.startsWith("Pinned"))).toBe(true);
-    expect(headers.some((t) => t.startsWith("All Sessions"))).toBe(true);
+    expect(headers.some((t) => t.includes("Team A"))).toBe(true);
+    expect(headers.some((t) => t.includes("Ungrouped"))).toBe(true);
   });
 
   // WCAG 1.3.1 Info & Relationships / 2.4.6 Headings & Labels: group labels
@@ -81,10 +82,11 @@ describe("SessionListPanel", () => {
   it("group-header renders as an <h3> for screen-reader heading navigation", () => {
     useSessionStore.setState({
       sessions: [
-        makeSession({ sessionId: "p1", isPinned: true, displayName: "PinOne" }),
-        makeSession({ sessionId: "n1", isPinned: false, displayName: "NormOne" }),
+        makeSession({ sessionId: "p1", displayName: "One" }),
+        makeSession({ sessionId: "n1", displayName: "Two" }),
       ],
       viewMode: "my",
+      groups: [],
     });
     render(<SessionListPanel />);
     for (const h of screen.getAllByTestId("group-header")) {
@@ -277,22 +279,23 @@ describe("SessionListPanel", () => {
   it("non-virtual session groups wrap cards in <ul aria-labelledby>/<li>", () => {
     useSessionStore.setState({
       sessions: [
-        makeSession({ sessionId: "p1", isPinned: true, displayName: "PinOne" }),
-        makeSession({ sessionId: "p2", isPinned: true, displayName: "PinTwo" }),
-        makeSession({ sessionId: "n1", isPinned: false, displayName: "NormOne" }),
+        makeSession({ sessionId: "p1", displayName: "One" }),
+        makeSession({ sessionId: "p2", displayName: "Two" }),
+        makeSession({ sessionId: "n1", displayName: "Three" }),
       ],
       viewMode: "my",
+      groups: [],
     });
     render(<SessionListPanel />);
-    const pinnedList = screen.getByTestId("session-group-list-pinned");
-    expect(pinnedList.tagName).toBe("UL");
-    const pinnedHeader = pinnedList.getAttribute("aria-labelledby");
-    expect(pinnedHeader).toBe("session-group-pinned");
-    const headerEl = document.getElementById(pinnedHeader!);
+    const ungroupedList = screen.getByTestId("session-group-list-ungrouped");
+    expect(ungroupedList.tagName).toBe("UL");
+    const headerId = ungroupedList.getAttribute("aria-labelledby");
+    expect(headerId).toBe("session-group-ungrouped");
+    const headerEl = document.getElementById(headerId!);
     expect(headerEl?.tagName).toBe("H3");
-    expect(headerEl?.textContent).toContain("Pinned");
-    const items = pinnedList.querySelectorAll(":scope > li");
-    expect(items).toHaveLength(2);
+    expect(headerEl?.textContent).toContain("Ungrouped");
+    const items = ungroupedList.querySelectorAll(":scope > li");
+    expect(items).toHaveLength(3);
     items.forEach((li) => {
       expect(li.querySelector("[data-testid='session-card']")).not.toBeNull();
     });
