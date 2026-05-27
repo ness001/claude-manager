@@ -92,7 +92,7 @@ describe("SessionInfoBar", () => {
         "Resume",
         "Open CWD",
         "Open in VS Code",
-        "Archive",
+        "Delete",
       ],
       orphaned: ["Resume", "Open CWD", "Delete"],
       archived: ["Unarchive", "Delete"],

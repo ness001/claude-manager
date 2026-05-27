@@ -62,7 +62,6 @@ type ActionId =
   | "open-cwd"
   | "open-vscode"
   | "stop"
-  | "archive"
   | "unarchive"
   | "delete";
 
@@ -85,7 +84,7 @@ const ACTIONS: Record<SessionState, Action[]> = {
     { id: "resume", label: "Resume", variant: "primary" },
     { id: "open-cwd", label: "Open CWD" },
     { id: "open-vscode", label: "Open in VS Code" },
-    { id: "archive", label: "Archive" },
+    { id: "delete", label: "Delete", variant: "danger" },
   ],
   orphaned: [
     { id: "resume", label: "Resume", variant: "primary" },
@@ -106,7 +105,6 @@ const CWD_DEPENDENT: ReadonlySet<ActionId> = new Set([
 
 export function SessionInfoBar({ session }: SessionInfoBarProps) {
   const setSessionDisplayName = useSessionStore((s) => s.setSessionDisplayName);
-  const archiveSession = useSessionStore((s) => s.archiveSession);
   const unarchiveSession = useSessionStore((s) => s.unarchiveSession);
   const deleteSession = useSessionStore((s) => s.deleteSession);
   const stopSession = useSessionStore((s) => s.stopSession);
@@ -396,8 +394,6 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
                   await stopSession(session.pid);
                 }
                 return;
-              case "archive":
-                return archiveSession(session.sessionId);
               case "unarchive":
                 return unarchiveSession(session.sessionId);
               case "delete":

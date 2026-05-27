@@ -153,6 +153,7 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
   const [entries, setEntries] = useState<ConversationEntry[]>([]);
   const [corruptedCount, setCorruptedCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [allParsed, setAllParsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cancelChunkRef = useRef<(() => void) | null>(null);
 
@@ -164,6 +165,7 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
     setEntries([]);
     setAllLines(null);
     setCorruptedCount(0);
+    setAllParsed(false);
     invoke<string[]>("read_jsonl_file", { path })
       .then((lines) => {
         if (cancelled) return;
@@ -187,7 +189,10 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
   // 2) Parse the remainder in idle-time chunks; tally corrupted lines once.
   useEffect(() => {
     if (!allLines || allLines.length <= SYNC_BATCH) {
-      if (allLines) setCorruptedCount(countCorrupted(allLines));
+      if (allLines) {
+        setCorruptedCount(countCorrupted(allLines));
+        setAllParsed(true);
+      }
       return;
     }
     let pos = SYNC_BATCH;
@@ -206,6 +211,7 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
       } else {
         cancelChunkRef.current = null;
         setCorruptedCount(countCorrupted(allLines));
+        setAllParsed(true);
       }
     };
     cancelChunkRef.current = scheduleIdle(step);
@@ -262,12 +268,14 @@ export function ConversationViewer({ path, className }: ConversationViewerProps)
   // Auto-scroll to bottom once the conversation has finished loading for
   // this path. Chat UX convention: newest turn at bottom is visible first.
   useEffect(() => {
-    if (loading) return;
+    if (!allParsed) return;
     if (initialScrollFiredRef.current) return;
     if (rendered.length === 0) return;
     initialScrollFiredRef.current = true;
-    virtualizer.scrollToIndex(rendered.length - 1, { align: "end" });
-  }, [loading, rendered.length, virtualizer]);
+    requestAnimationFrame(() => {
+      virtualizer.scrollToIndex(rendered.length - 1, { align: "end" });
+    });
+  }, [allParsed, rendered.length, virtualizer]);
 
   const jumpToTurn = useCallback(
     (n: number) => {

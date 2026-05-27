@@ -36,6 +36,8 @@ describe("SessionListPanel", () => {
       viewMode: "my",
       searchQuery: "",
       isLoading: false,
+      groups: [],
+      collapsedGroups: new Set(),
     });
   });
 

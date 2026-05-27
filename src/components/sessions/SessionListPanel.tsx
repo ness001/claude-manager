@@ -8,7 +8,7 @@
 //   4. "+ Group" button (only in group view)
 //   5. Scrollable grouped list of SessionCards.
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -267,6 +267,17 @@ export function SessionListPanel() {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
 
+  // Default-collapse all groups except the first when groups are first populated.
+  const initialCollapseAppliedRef = useRef(false);
+  useEffect(() => {
+    if (groups.length > 1 && !initialCollapseAppliedRef.current) {
+      initialCollapseAppliedRef.current = true;
+      for (let i = 1; i < groups.length; i++) {
+        toggleGroup(groups[i].key);
+      }
+    }
+  }, [groups, toggleGroup]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -412,7 +423,7 @@ export function SessionListPanel() {
             collapsed,
           };
           return (
-            <div key={g.key} className="flex flex-col gap-1">
+            <div key={g.key} className="flex flex-col gap-0">
               {renderHeader(headerRow, findGroupIdForKey(g.key), undefined, headerId)}
               {!collapsed && (
                 <ul

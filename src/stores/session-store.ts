@@ -109,10 +109,15 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   createGroup: async (name) => {
     const id = crypto.randomUUID();
     const sortOrder = get().groups.length;
-    await dbExecute(
-      "INSERT INTO groups (id, name, sort_order) VALUES (?, ?, ?)",
-      [id, name, sortOrder],
-    );
+    try {
+      await dbExecute(
+        "INSERT INTO groups (id, name, sort_order) VALUES (?, ?, ?)",
+        [id, name, sortOrder],
+      );
+    } catch (err) {
+      console.error("[session-store] createGroup failed:", err);
+      throw err;
+    }
     await get().loadGroups();
   },
   deleteGroup: async (id) => {

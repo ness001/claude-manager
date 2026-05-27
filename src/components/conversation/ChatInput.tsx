@@ -17,6 +17,8 @@ interface ChatOutputPayload {
 
 interface ChatDonePayload {
   sessionId: string;
+  exitCode: number | null;
+  stderr: string;
 }
 
 export function ChatInput({ session, onMessageSent }: ChatInputProps) {
@@ -42,7 +44,13 @@ export function ChatInput({ session, onMessageSent }: ChatInputProps) {
         setStreamBuffer("");
         setIsSending(false);
         connectedRef.current = false;
-        onMessageSent();
+        const { exitCode, stderr } = e.payload;
+        if ((exitCode !== null && exitCode !== 0) || stderr.trim() !== "") {
+          const msg = stderr.trim() || `claude exited with code ${exitCode}`;
+          setError(msg);
+        } else {
+          onMessageSent();
+        }
       });
       if (cancelled) {
         off1();

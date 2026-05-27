@@ -36,6 +36,9 @@ struct ChatOutputPayload {
 struct ChatDonePayload {
     #[serde(rename = "sessionId")]
     session_id: String,
+    #[serde(rename = "exitCode")]
+    exit_code: Option<i32>,
+    stderr: String,
 }
 
 #[tauri::command]
@@ -74,9 +77,29 @@ pub fn start_chat_session(
         .stdout
         .take()
         .ok_or_else(|| "no stdout on child".to_string())?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| "no stderr on child".to_string())?;
+
+    // Drain stderr in a background thread into a shared buffer so it can
+    // be included in the chat:done payload when the child exits.
+    let stderr_buf: std::sync::Arc<Mutex<String>> =
+        std::sync::Arc::new(Mutex::new(String::new()));
+    let stderr_buf_thread = stderr_buf.clone();
+    thread::spawn(move || {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines().flatten() {
+            if let Ok(mut buf) = stderr_buf_thread.lock() {
+                buf.push_str(&line);
+                buf.push('\n');
+            }
+        }
+    });
 
     let sid_for_thread = session_id.clone();
     let app_for_thread = app.clone();
+    let stderr_buf_done = stderr_buf.clone();
     thread::spawn(move || {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
@@ -93,15 +116,26 @@ pub fn start_chat_session(
                 Err(_) => break,
             }
         }
+        // stdout EOF — wait for child to exit so we can report exit code.
+        let exit_code = if let Ok(mut map) = CHAT_PROCESSES.lock() {
+            map.remove(&sid_for_thread)
+                .and_then(|mut p| p.child.wait().ok())
+                .and_then(|s| s.code())
+        } else {
+            None
+        };
+        let stderr_text = stderr_buf_done
+            .lock()
+            .map(|s| s.clone())
+            .unwrap_or_default();
         let _ = app_for_thread.emit(
             "chat:done",
             ChatDonePayload {
                 session_id: sid_for_thread.clone(),
+                exit_code,
+                stderr: stderr_text,
             },
         );
-        if let Ok(mut map) = CHAT_PROCESSES.lock() {
-            map.remove(&sid_for_thread);
-        }
     });
 
     let mut map = CHAT_PROCESSES.lock().map_err(|e| e.to_string())?;
