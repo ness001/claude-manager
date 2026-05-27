@@ -302,4 +302,36 @@ describe("SessionListPanel", () => {
       expect(li.querySelector("[data-testid='session-card']")).not.toBeNull();
     });
   });
+
+  it("group container has no gap-1 class (Bug 1 fix: no blank space)", () => {
+    useSessionStore.setState({
+      sessions: [makeSession({ sessionId: "s1" })],
+      viewMode: "my",
+      groups: [],
+    });
+    render(<SessionListPanel />);
+    const header = screen.getByTestId("group-header");
+    const container = header.closest("div.flex.flex-col");
+    expect(container).not.toBeNull();
+    expect(container!.className).not.toContain("gap-1");
+  });
+
+  it("default collapse: only first group expanded when >1 groups exist", () => {
+    useSessionStore.setState({
+      sessions: [
+        makeSession({ sessionId: "a1", startedAt: Date.now() }),
+        makeSession({ sessionId: "a2", startedAt: Date.now() - 3600_000 }),
+        makeSession({ sessionId: "a3", startedAt: Date.now() - 86400_000 }),
+      ],
+      viewMode: "timeline",
+      collapsedGroups: new Set(),
+    });
+    render(<SessionListPanel />);
+    const headers = screen.getAllByTestId("group-header");
+    expect(headers.length).toBeGreaterThan(1);
+    // First group's sessions should be visible
+    const firstGroupCards = screen.getAllByTestId("session-card");
+    // Only sessions from the first (expanded) group should be rendered
+    expect(firstGroupCards.length).toBeLessThan(3);
+  });
 });

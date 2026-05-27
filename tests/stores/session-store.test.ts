@@ -14,6 +14,13 @@ vi.mock("../../src/lib/session-loader", () => ({
   loadAllSessions: (...args: unknown[]) => loadAllSessionsMock(...args),
 }));
 
+const dbExecuteMock = vi.fn();
+const dbSelectMock = vi.fn();
+vi.mock("../../src/lib/db", () => ({
+  dbExecute: (...args: unknown[]) => dbExecuteMock(...args),
+  dbSelect: (...args: unknown[]) => dbSelectMock(...args),
+}));
+
 /** Build a minimal SessionMeta — only fields the store cares about are set. */
 function makeSession(overrides: Partial<SessionMeta> = {}): SessionMeta {
   return {
@@ -47,6 +54,8 @@ describe("session-store", () => {
       isLoading: false,
     });
     loadAllSessionsMock.mockReset();
+    dbExecuteMock.mockReset();
+    dbSelectMock.mockReset();
   });
 
   afterEach(() => {
@@ -159,5 +168,41 @@ describe("session-store", () => {
     loadAllSessionsMock.mockRejectedValueOnce(new Error("boom"));
     await expect(useSessionStore.getState().loadSessions()).rejects.toThrow("boom");
     expect(useSessionStore.getState().isLoading).toBe(false);
+  });
+
+  it("toggleGroup adds and removes keys from collapsedGroups", () => {
+    useSessionStore.setState({ collapsedGroups: new Set() });
+    useSessionStore.getState().toggleGroup("today");
+    expect(useSessionStore.getState().collapsedGroups.has("today")).toBe(true);
+    useSessionStore.getState().toggleGroup("today");
+    expect(useSessionStore.getState().collapsedGroups.has("today")).toBe(false);
+  });
+
+  it("createGroup inserts into DB and reloads groups", async () => {
+    dbExecuteMock.mockResolvedValueOnce(undefined);
+    dbSelectMock.mockResolvedValueOnce([
+      { id: "new-id", name: "My Group", sort_order: 0 },
+    ]);
+    await useSessionStore.getState().createGroup("My Group");
+    expect(dbExecuteMock).toHaveBeenCalledWith(
+      "INSERT INTO groups (id, name, sort_order) VALUES (?, ?, ?)",
+      expect.arrayContaining(["My Group"]),
+    );
+    expect(dbSelectMock).toHaveBeenCalled();
+    expect(useSessionStore.getState().groups).toHaveLength(1);
+    expect(useSessionStore.getState().groups[0].name).toBe("My Group");
+  });
+
+  it("moveSessionToGroup updates session groupId in store", async () => {
+    dbExecuteMock.mockResolvedValueOnce(undefined);
+    useSessionStore.setState({
+      sessions: [makeSession({ sessionId: "s1" })],
+    });
+    await useSessionStore.getState().moveSessionToGroup("s1", "g1");
+    expect(dbExecuteMock).toHaveBeenCalledWith(
+      "UPDATE sessions SET group_id = ? WHERE session_id = ?",
+      ["g1", "s1"],
+    );
+    expect(useSessionStore.getState().sessions[0].groupId).toBe("g1");
   });
 });
