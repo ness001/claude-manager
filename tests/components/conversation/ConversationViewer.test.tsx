@@ -510,6 +510,39 @@ describe("ConversationViewer", () => {
     expect(scrollToIndexMock.mock.calls[0][1]).toEqual({ align: "end" });
   });
 
+  // Bug 6: when a JSONL file is large enough to spill past SYNC_BATCH (50)
+  // and trigger the idle-time chunked parser, auto-scroll must wait for
+  // every chunk to be parsed before firing — otherwise scrollToIndex
+  // targets an index from the partially-rendered list and lands above the
+  // true bottom turn. Asserting scrollToIndex's first call targets the
+  // full count - 1 proves the scroll fired after allParsed flipped true.
+  it("auto-scroll waits for chunked parse to complete before scrolling (Bug 6)", async () => {
+    const oneLine = JSON.stringify({
+      type: "user",
+      message: { role: "user", content: "x" },
+      uuid: "u",
+      timestamp: "2026-05-04T09:00:00.000Z",
+    });
+    const TOTAL = 120; // > SYNC_BATCH (50), forces chunked parsing
+    const lines = Array.from({ length: TOTAL }, () => oneLine);
+    invokeMock.mockResolvedValue(lines);
+    scrollToIndexMock.mockClear();
+
+    render(<ConversationViewer path="/big.jsonl" />);
+    await waitFor(
+      () => {
+        expect(scrollToIndexMock).toHaveBeenCalled();
+      },
+      { timeout: 3000 },
+    );
+    // First scroll call must target the final entry (TOTAL - 1), proving
+    // the auto-scroll effect waited for allParsed instead of firing on
+    // the sync-batch slice (which would have targeted index 49).
+    const firstCall = scrollToIndexMock.mock.calls[0];
+    expect(firstCall[0]).toBe(TOTAL - 1);
+    expect(firstCall[1]).toEqual({ align: "end" });
+  });
+
   // WCAG 2.1.1 Keyboard — the conversation pane is the largest scrollable
   // region in the app. Without tabIndex={0} keyboard users cannot focus it
   // to arrow/Page-Down through prior turns; they're stuck in the turn input
