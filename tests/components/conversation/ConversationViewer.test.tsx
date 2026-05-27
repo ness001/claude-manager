@@ -33,6 +33,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 // it to render every row — sufficient for assertion-level testing while
 // preserving the public API surface (the production code still calls into
 // the real library). We never stub `ConversationViewer` itself.
+const scrollToIndexMock = vi.fn();
 vi.mock("@tanstack/react-virtual", () => {
   return {
     useVirtualizer: ({ count }: { count: number }) => ({
@@ -44,7 +45,7 @@ vi.mock("@tanstack/react-virtual", () => {
           key: i,
         })),
       getTotalSize: () => count * 100,
-      scrollToIndex: vi.fn(),
+      scrollToIndex: scrollToIndexMock,
       measureElement: () => undefined,
     }),
   };
@@ -487,29 +488,26 @@ describe("ConversationViewer", () => {
     }, { timeout: 2000 });
   });
 
-  // Cross-session leak (scroll position): same shape as the currentTurn
-  // leak above. The browser preserves the scroller's scrollTop across
-  // re-renders that change `path` — without an explicit reset, switching
-  // from a long session (scrolled deep) to a short one opens the new
-  // session at whatever pixel offset the previous one happened to be at,
-  // leaving the actual conversation invisible above the viewport. The
-  // user sees blank space and has to scroll up to find their content.
-  it("scroller resets scrollTop to 0 when the session path changes", async () => {
+  // Chat UX convention: when a conversation finishes loading (initial open
+  // or session switch), auto-scroll to the bottom so the newest turn is
+  // visible without manual scrolling.
+  it("auto-scrolls to bottom once loading completes for a path", async () => {
     invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
+    scrollToIndexMock.mockClear();
     const { rerender } = render(<ConversationViewer path="/sessionA.jsonl" />);
-    const scrollerA = await screen.findByTestId("conversation-scroller");
-    // jsdom doesn't lay out pixels, so scrollTop assignment / reads are
-    // backed by a regular property — that's enough to verify the effect
-    // writes 0 to it. Seed a non-zero value as if the user had scrolled.
-    scrollerA.scrollTop = 500;
-    expect(scrollerA.scrollTop).toBe(500);
+    await waitFor(() => {
+      expect(scrollToIndexMock).toHaveBeenCalled();
+    });
+    const firstCall = scrollToIndexMock.mock.calls[0];
+    expect(firstCall[1]).toEqual({ align: "end" });
 
+    scrollToIndexMock.mockClear();
     invokeMock.mockResolvedValue(readFixture("renderable.jsonl"));
     rerender(<ConversationViewer path="/sessionB.jsonl" />);
     await waitFor(() => {
-      const scrollerB = screen.getByTestId("conversation-scroller");
-      expect(scrollerB.scrollTop).toBe(0);
+      expect(scrollToIndexMock).toHaveBeenCalled();
     });
+    expect(scrollToIndexMock.mock.calls[0][1]).toEqual({ align: "end" });
   });
 
   // WCAG 2.1.1 Keyboard — the conversation pane is the largest scrollable
