@@ -184,6 +184,22 @@ describe("Plugins section — UI vs spec §6 gap audit", () => {
     record("§6.5 search box exists", await search.isExisting());
   });
 
+  // ─── Layout: plugin-list-view fills available width ─────────────────────
+
+  it("§6.5 plugin-list-view fills the full width of the content area", async () => {
+    const main = await browser.$("main");
+    const listView = await browser.$('[data-testid="plugin-list-view"]');
+    const mainSize = await main.getSize();
+    const listSize = await listView.getSize();
+    const fills = listSize.width >= mainSize.width * 0.95;
+    record(
+      "§6.5 plugin-list-view width ≥ 95% of content area",
+      fills,
+      `main=${mainSize.width}px, list=${listSize.width}px`,
+    );
+    expect(fills).toBe(true);
+  });
+
   // ─── §6.7 [Install Plugin] functional behavior (A2) ─────────────────────
 
   it("§6.7 [Install Plugin] click opens a name prompt and is NOT a CLI-only stub", async () => {
