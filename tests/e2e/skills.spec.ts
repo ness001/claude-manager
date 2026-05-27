@@ -238,6 +238,46 @@ describe("Skills section — UI vs spec §7.1", () => {
     record("§7.1 [Open in File Browser] button exists", await folder.isExisting());
   });
 
+  // ─── §7.1 Open in File Browser click does not error ────────────────────
+
+  it("§7.1 [Open in File Browser] click does not surface an error", async () => {
+    const cards = await browser.$$('[data-testid="skill-card"]');
+    if (cards.length === 0) {
+      skip("§7.1 Open in File Browser functional", "no skill cards rendered");
+      return;
+    }
+    const card = cards[0];
+    const folder = await card.$('[data-testid="open-folder-btn"]');
+    if (!(await folder.isExisting())) {
+      skip("§7.1 Open in File Browser functional", "button not found");
+      return;
+    }
+    await folder.click();
+    await browser.pause(1_000);
+    const err = await card.$('[data-testid="skill-open-error"]');
+    const hasError = await err.isExisting();
+    record(
+      "§7.1 [Open in File Browser] click does not produce inline error",
+      !hasError,
+      hasError ? `error: ${await err.getText()}` : undefined,
+    );
+  });
+
+  // ─── §7.1 Create Skill click does not error ────────────────────────────
+
+  it("§7.1 [Create Skill] click does not surface an error", async () => {
+    const btn = await browser.$('[data-testid="create-skill-btn"]');
+    await btn.click();
+    await browser.pause(1_000);
+    const err = await browser.$('[data-testid="skill-create-error"]');
+    const hasError = await err.isExisting();
+    record(
+      "§7.1 [Create Skill] click does not produce inline error",
+      !hasError,
+      hasError ? `error: ${await err.getText()}` : undefined,
+    );
+  });
+
   // ─── §7.1 / §17.7 Search filter ────────────────────────────────────────
 
   it("§17.7 search filters by name (typing reduces visible cards)", async () => {
