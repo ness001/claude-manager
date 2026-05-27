@@ -104,7 +104,7 @@ export function PluginListView() {
     <section
       data-testid="plugin-list-view"
       aria-labelledby="plugin-list-view-heading"
-      className="flex h-full flex-col gap-4 p-6"
+      className="flex h-full w-full flex-col gap-4 p-6"
     >
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between">

@@ -201,12 +201,16 @@ pub struct RealStatusRunner;
 
 impl StatusRunner for RealStatusRunner {
     fn run(&self) -> Result<String, String> {
-        let mut child = std::process::Command::new("claude")
-            .args(["mcp", "list"])
+        let mut cmd = std::process::Command::new("claude");
+        cmd.args(["mcp", "list"])
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::null())
-            .spawn()
-            .map_err(|e| e.to_string())?;
+            .stderr(std::process::Stdio::null());
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
+        let mut child = cmd.spawn().map_err(|e| e.to_string())?;
 
         let stdout = child.stdout.take();
         let (tx, rx) = std::sync::mpsc::channel();

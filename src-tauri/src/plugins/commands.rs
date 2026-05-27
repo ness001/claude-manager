@@ -408,11 +408,16 @@ fn spawn_claude_plugin(
 
     super::log::log_event(app, op, Some(arg), "start", &format!("claude plugins {} {}", op, arg));
 
-    let mut child = Command::new(claude_cli_name())
-        .args(["plugins", op, arg])
+    let mut cmd = Command::new(claude_cli_name());
+    cmd.args(["plugins", op, arg])
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+        .stderr(Stdio::piped());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    let mut child = cmd.spawn()
         .map_err(|e| {
             let msg = format!("failed to spawn claude: {}", e);
             super::log::log_event(app, op, Some(arg), "error", &msg);
@@ -517,10 +522,17 @@ pub fn check_plugin_updates(marketplaces: Vec<String>) -> Result<std::collection
         if !dir.join(".git").exists() {
             continue;
         }
-        let output = std::process::Command::new("git")
-            .args(["ls-remote", "origin", "HEAD"])
-            .current_dir(&dir)
-            .output();
+        let output = {
+            let mut cmd = std::process::Command::new("git");
+            cmd.args(["ls-remote", "origin", "HEAD"])
+                .current_dir(&dir);
+            #[cfg(windows)]
+            {
+                use std::os::windows::process::CommandExt;
+                cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+            }
+            cmd.output()
+        };
         let Ok(output) = output else { continue };
         if !output.status.success() {
             continue;

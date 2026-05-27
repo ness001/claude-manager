@@ -135,8 +135,10 @@ fn claude_cli_name() -> &'static str {
 pub fn kill_session_process(pid: u32) -> Result<(), String> {
     #[cfg(windows)]
     {
+        use std::os::windows::process::CommandExt;
         let status = std::process::Command::new("taskkill")
             .args(["/PID", &pid.to_string(), "/T", "/F"])
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
             .output()
             .map_err(|e| format!("failed to run taskkill: {}", e))?;
         if !status.status.success() {
