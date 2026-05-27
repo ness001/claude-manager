@@ -73,13 +73,17 @@ impl ProcessProbe for PowerShellProbe {
              $p=Get-WmiObject Win32_Process -Filter \"ProcessId = {pid}\";\
              if($p){{\"$($p.CommandLine)|$($p.CreationDate)\"}}"
         );
-        let mut child = Command::new("powershell.exe")
-            .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        let mut cmd = Command::new("powershell.exe");
+        cmd.args(["-NoProfile", "-NonInteractive", "-Command", &script])
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()
-            .ok()?;
+            .stderr(Stdio::null());
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
+        let mut child = cmd.spawn().ok()?;
 
         // Manual 5s wall clock — `Command` has no built-in timeout.
         let deadline = std::time::Instant::now() + Duration::from_secs(5);

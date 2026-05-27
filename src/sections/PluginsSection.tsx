@@ -58,7 +58,7 @@ export function PluginsSection() {
     <section
       data-testid="plugins-section"
       aria-label="Plugins"
-      className="flex h-full"
+      className="flex h-full w-full"
     >
       <PluginListView />
     </section>
