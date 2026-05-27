@@ -57,15 +57,11 @@ const STATE_PILL: Record<SessionState, { dot: string; label: string }> = {
 
 /** Action-button identifiers used by tests + future wiring. */
 type ActionId =
-  | "view-live"
   | "resume-terminal"
   | "resume"
-  | "view-conversation"
   | "open-cwd"
   | "open-vscode"
-  | "tag-rename"
   | "stop"
-  | "archive"
   | "unarchive"
   | "delete";
 
@@ -79,20 +75,16 @@ interface Action {
 /** Per-state action lists exactly per spec §5.3. */
 const ACTIONS: Record<SessionState, Action[]> = {
   alive: [
-    { id: "view-live", label: "View Live", variant: "primary" },
-    { id: "resume-terminal", label: "Resume in Terminal" },
+    { id: "resume-terminal", label: "Resume in Terminal", variant: "primary" },
     { id: "open-cwd", label: "Open CWD" },
     { id: "open-vscode", label: "Open in VS Code" },
-    { id: "tag-rename", label: "Tag/Rename" },
     { id: "stop", label: "Stop", variant: "danger" },
   ],
   ended: [
     { id: "resume", label: "Resume", variant: "primary" },
-    { id: "view-conversation", label: "View Conversation" },
     { id: "open-cwd", label: "Open CWD" },
     { id: "open-vscode", label: "Open in VS Code" },
-    { id: "tag-rename", label: "Tag/Rename" },
-    { id: "archive", label: "Archive" },
+    { id: "delete", label: "Delete", variant: "danger" },
   ],
   orphaned: [
     { id: "resume", label: "Resume", variant: "primary" },
@@ -101,7 +93,6 @@ const ACTIONS: Record<SessionState, Action[]> = {
   ],
   archived: [
     { id: "unarchive", label: "Unarchive", variant: "primary" },
-    { id: "view-conversation", label: "View Conversation" },
     { id: "delete", label: "Delete", variant: "danger" },
   ],
 };
@@ -114,12 +105,10 @@ const CWD_DEPENDENT: ReadonlySet<ActionId> = new Set([
 
 export function SessionInfoBar({ session }: SessionInfoBarProps) {
   const setSessionDisplayName = useSessionStore((s) => s.setSessionDisplayName);
-  const archiveSession = useSessionStore((s) => s.archiveSession);
   const unarchiveSession = useSessionStore((s) => s.unarchiveSession);
   const deleteSession = useSessionStore((s) => s.deleteSession);
   const stopSession = useSessionStore((s) => s.stopSession);
   const launchSession = useSessionStore((s) => s.launchSession);
-  const nameInputRef = useRef<HTMLInputElement | null>(null);
   // Local controlled state for the editable name. We mirror the canonical
   // store value via a useEffect so switching sessions resets the input.
   const [name, setName] = useState(
@@ -266,7 +255,6 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
         * span so users (and SR users) know edits won't survive reload. */}
       <div className="flex items-center gap-3 min-w-0">
         <input
-          ref={nameInputRef}
           data-testid="session-name-input"
           type="text"
           value={name}
@@ -397,25 +385,15 @@ export function SessionInfoBar({ session }: SessionInfoBarProps) {
                 return openCwd();
               case "open-vscode":
                 return openInVsCode();
-              case "view-live":
-                return launchSession(["--continue", session.sessionId], session.cwd || undefined);
               case "resume-terminal":
+                return launchSession(["--continue", session.sessionId], session.cwd || undefined);
               case "resume":
                 return launchSession(["--resume", session.sessionId], session.cwd || undefined);
-              case "view-conversation":
-                document.querySelector('[data-testid="session-detail-panel"]')?.scrollTo(0, 0);
-                return;
-              case "tag-rename":
-                nameInputRef.current?.focus();
-                nameInputRef.current?.select();
-                return;
               case "stop":
                 if (session.pid && window.confirm(`Stop session (PID ${session.pid})?`)) {
                   await stopSession(session.pid);
                 }
                 return;
-              case "archive":
-                return archiveSession(session.sessionId);
               case "unarchive":
                 return unarchiveSession(session.sessionId);
               case "delete":

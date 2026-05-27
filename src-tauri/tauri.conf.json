@@ -28,7 +28,7 @@
   },
   "plugins": {
     "shell": {
-      "open": "^((mailto:\\w+)|(tel:\\w+)|(https?://\\w+)|(vscode://\\w+)|([a-zA-Z]:\\\\)|(/)).+"
+      "open": ".*"
     }
   },
   "bundle": {

@@ -11,10 +11,16 @@ import { create } from "zustand";
 
 import { invoke } from "@tauri-apps/api/core";
 import { loadAllSessions } from "../lib/session-loader";
-import { dbExecute } from "../lib/db";
+import { dbExecute, dbSelect } from "../lib/db";
 import type { SessionMeta } from "../lib/session-types";
 
 export type SessionViewMode = "my" | "project" | "timeline";
+
+export interface SessionGroup {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
 
 interface SessionState {
   sessions: SessionMeta[];
@@ -22,11 +28,18 @@ interface SessionState {
   viewMode: SessionViewMode;
   searchQuery: string;
   isLoading: boolean;
+  collapsedGroups: Set<string>;
+  groups: SessionGroup[];
 
   loadSessions: () => Promise<void>;
+  loadGroups: () => Promise<void>;
   selectSession: (id: string | null) => void;
   setViewMode: (mode: SessionViewMode) => void;
   setSearchQuery: (query: string) => void;
+  toggleGroup: (key: string) => void;
+  createGroup: (name: string) => Promise<void>;
+  deleteGroup: (id: string) => Promise<void>;
+  moveSessionToGroup: (sessionId: string, groupId: string | null) => Promise<void>;
   /**
    * Update a session's user-managed `displayName` in-memory. SQLite
    * persistence is wired up in a later phase; this keeps the editable name
@@ -40,27 +53,91 @@ interface SessionState {
   launchSession: (args: string[], cwd?: string) => Promise<void>;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
+export const useSessionStore = create<SessionState>((set, get) => ({
   sessions: [],
   selectedId: null,
   viewMode: "my",
   searchQuery: "",
   isLoading: false,
+  collapsedGroups: new Set<string>(),
+  groups: [],
 
   loadSessions: async () => {
     set({ isLoading: true });
     try {
       const sessions = await loadAllSessions();
       set({ sessions, isLoading: false });
+      // Best-effort — never let group load failure break session load
+      // (e.g. in unit tests where db isn't mocked).
+      try {
+        await get().loadGroups();
+      } catch {
+        // swallow
+      }
     } catch (err) {
       // Surface the error to the caller, but never leave isLoading stuck.
       set({ isLoading: false });
       throw err;
     }
   },
+  loadGroups: async () => {
+    try {
+      const rows = await dbSelect<{ id: string; name: string; sort_order: number | null }>(
+        "SELECT id, name, sort_order FROM groups ORDER BY sort_order, name",
+      );
+      set({
+        groups: rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          sortOrder: r.sort_order ?? 0,
+        })),
+      });
+    } catch {
+      set({ groups: [] });
+    }
+  },
   selectSession: (id) => set({ selectedId: id }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setSearchQuery: (query) => set({ searchQuery: query }),
+  toggleGroup: (key) =>
+    set((state) => {
+      const next = new Set(state.collapsedGroups);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return { collapsedGroups: next };
+    }),
+  createGroup: async (name) => {
+    const id = crypto.randomUUID();
+    const sortOrder = get().groups.length;
+    try {
+      await dbExecute(
+        "INSERT INTO groups (id, name, sort_order) VALUES (?, ?, ?)",
+        [id, name, sortOrder],
+      );
+    } catch (err) {
+      console.error("[session-store] createGroup failed:", err);
+      throw err;
+    }
+    await get().loadGroups();
+  },
+  deleteGroup: async (id) => {
+    await dbExecute("UPDATE sessions SET group_id = NULL WHERE group_id = ?", [id]);
+    await dbExecute("DELETE FROM groups WHERE id = ?", [id]);
+    await get().loadGroups();
+    const sessions = await loadAllSessions();
+    set({ sessions });
+  },
+  moveSessionToGroup: async (sessionId, groupId) => {
+    await dbExecute(
+      "UPDATE sessions SET group_id = ? WHERE session_id = ?",
+      [groupId, sessionId],
+    );
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.sessionId === sessionId ? { ...s, groupId: groupId ?? undefined } : s,
+      ),
+    }));
+  },
   setSessionDisplayName: (id, name) =>
     set((state) => ({
       sessions: state.sessions.map((s) =>

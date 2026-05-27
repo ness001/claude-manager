@@ -411,7 +411,7 @@ describe("Sessions section — UI vs spec §5 gap audit", () => {
     // state-defining anchor action exists for whichever state we landed on.
     const requiredAction =
       pillState === "alive"
-        ? "view-live"
+        ? "resume-terminal"
         : pillState === "ended"
           ? "resume"
           : pillState === "orphaned"

@@ -83,23 +83,19 @@ describe("SessionInfoBar", () => {
   it("shows the right action set per spec §5.3", () => {
     const cases: Record<SessionState, string[]> = {
       alive: [
-        "View Live",
         "Resume in Terminal",
         "Open CWD",
         "Open in VS Code",
-        "Tag/Rename",
         "Stop",
       ],
       ended: [
         "Resume",
-        "View Conversation",
         "Open CWD",
         "Open in VS Code",
-        "Tag/Rename",
-        "Archive",
+        "Delete",
       ],
       orphaned: ["Resume", "Open CWD", "Delete"],
-      archived: ["Unarchive", "View Conversation", "Delete"],
+      archived: ["Unarchive", "Delete"],
     };
     for (const state of ALL_STATES) {
       cleanup();
@@ -111,7 +107,6 @@ describe("SessionInfoBar", () => {
   it("ALIVE never shows a plain 'Resume' button (spec §5.3)", () => {
     render(<SessionInfoBar session={makeSession({ state: "alive" })} />);
     expect(screen.queryByTestId("action-resume")).not.toBeInTheDocument();
-    expect(screen.getByTestId("action-view-live")).toBeInTheDocument();
     expect(screen.getByTestId("action-resume-terminal")).toBeInTheDocument();
   });
 
