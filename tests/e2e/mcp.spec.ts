@@ -131,6 +131,22 @@ describe("MCP section — spec §8 surface audit", () => {
     console.log("========== END GAP REPORT ==========\n");
   });
 
+  // ─── Layout: mcp-panel fills available width ────────────────────────────
+
+  it("§8.4 mcp-panel fills the full width of the content area", async () => {
+    const main = await browser.$("main");
+    const panel = await browser.$('[data-testid="mcp-panel"]');
+    const mainSize = await main.getSize();
+    const panelSize = await panel.getSize();
+    const fills = panelSize.width >= mainSize.width * 0.95;
+    record(
+      "§8.4 mcp-panel width ≥ 95% of content area",
+      fills,
+      `main=${mainSize.width}px, panel=${panelSize.width}px`,
+    );
+    expect(fills).toBe(true);
+  });
+
   // ─── §8.4 Panel header surface ──────────────────────────────────────────
 
   it("§8.4 header has title, [+ Add Server], [Refresh Status], search bar", async () => {

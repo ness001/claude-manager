@@ -66,7 +66,7 @@ export function SessionsSection() {
     <section
       data-testid="sessions-section"
       aria-labelledby="sessions-heading"
-      className="flex h-full"
+      className="flex h-full w-full"
     >
       {/* WCAG 1.3.1 / 2.4.6 — every other top-level section (Dashboard,
           Plugins, Skills, MCP, Settings) renders a top-level <h1> so SR
