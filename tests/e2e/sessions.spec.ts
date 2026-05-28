@@ -872,6 +872,8 @@ describe("Sessions section — UI vs spec §5 gap audit", () => {
       skip("§5.3.open-vscode", "no session with enabled Open VS Code button");
     }
   });
+
+  it("§5.6 [+ New Session] is wired or carries the documented coming-soon hint", async () => {
     const btn = await browser.$('[data-testid="new-session-btn"]');
     const disabled = await btn.getAttribute("disabled");
     const ariaLabel = await btn.getAttribute("aria-label");
