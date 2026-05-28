@@ -612,7 +612,266 @@ describe("Sessions section — UI vs spec §5 gap audit", () => {
 
   // ─── §5.6 New Session is currently a planned stub (T4.1/T4.2) ───────────
 
-  it("§5.6 [+ New Session] is wired or carries the documented coming-soon hint", async () => {
+  // ─── View mode labels renamed (Bug fix) ────────────────────────────────
+
+  it("§5.4.labels: view-mode toggle shows Group / Path / Timeline labels", async () => {
+    const my = await browser.$('[data-testid="view-mode-my"]');
+    const proj = await browser.$('[data-testid="view-mode-project"]');
+    const tl = await browser.$('[data-testid="view-mode-timeline"]');
+
+    const myText = await my.getText();
+    const projText = await proj.getText();
+    const tlText = await tl.getText();
+
+    record(
+      "§5.4.labels Group label (not My View)",
+      myText.trim() === "Group",
+      `text="${myText}"`,
+    );
+    record(
+      "§5.4.labels Path label (not Project)",
+      projText.trim() === "Path",
+      `text="${projText}"`,
+    );
+    record(
+      "§5.4.labels Timeline label unchanged",
+      tlText.trim() === "Timeline",
+      `text="${tlText}"`,
+    );
+  });
+
+  // ─── Expand/collapse group headers ──────────────────────────────────────
+
+  it("§5.4.collapse: group headers are clickable and toggle session visibility", async () => {
+    // Switch to Timeline view where we're guaranteed multiple groups.
+    const tl = await browser.$('[data-testid="view-mode-timeline"]');
+    await tl.click();
+    await browser.pause(300);
+
+    const headers = await browser.$$('[data-testid="group-header"]');
+    if (headers.length < 2) {
+      skip("§5.4.collapse", `need ≥2 group headers, have ${headers.length}`);
+      // Restore to Group view.
+      const my = await browser.$('[data-testid="view-mode-my"]');
+      await my.click();
+      await browser.pause(150);
+      return;
+    }
+
+    // Default collapse: only first group should be expanded.
+    // Count cards visible before any click.
+    const cardsBefore = await browser.$$('[data-testid="session-card"]');
+
+    // Click first header (should collapse it).
+    await headers[0].click();
+    await browser.pause(200);
+    const cardsAfterCollapse = await browser.$$('[data-testid="session-card"]');
+    record(
+      "§5.4.collapse clicking expanded header hides its sessions",
+      cardsAfterCollapse.length < cardsBefore.length,
+      `before=${cardsBefore.length}, after=${cardsAfterCollapse.length}`,
+    );
+
+    // Click it again to re-expand.
+    const headersRefresh = await browser.$$('[data-testid="group-header"]');
+    await headersRefresh[0].click();
+    await browser.pause(200);
+    const cardsAfterExpand = await browser.$$('[data-testid="session-card"]');
+    record(
+      "§5.4.collapse clicking collapsed header shows its sessions",
+      cardsAfterExpand.length >= cardsBefore.length,
+      `restored=${cardsAfterExpand.length}`,
+    );
+
+    // Restore to Group view.
+    const my = await browser.$('[data-testid="view-mode-my"]');
+    await my.click();
+    await browser.pause(150);
+  });
+
+  // ─── Default collapse: only first group expanded ────────────────────────
+
+  it("§5.4.default-collapse: only first group is expanded on initial view", async () => {
+    const tl = await browser.$('[data-testid="view-mode-timeline"]');
+    await tl.click();
+    await browser.pause(300);
+
+    const headers = await browser.$$('[data-testid="group-header"]');
+    if (headers.length < 2) {
+      skip("§5.4.default-collapse", `need ≥2 groups, have ${headers.length}`);
+      const my = await browser.$('[data-testid="view-mode-my"]');
+      await my.click();
+      await browser.pause(150);
+      return;
+    }
+
+    // Check chevron state: first header should have ChevronDown (expanded),
+    // subsequent headers should have ChevronRight (collapsed).
+    // We can infer from the SVG: ChevronDown has a different path than ChevronRight.
+    // Simpler: just count visible cards vs total sessions in all groups.
+    const firstHeaderText = await headers[0].getText();
+    const countMatch = firstHeaderText.match(/\((\d+)\)/);
+    const firstGroupCount = countMatch ? parseInt(countMatch[1], 10) : 0;
+
+    const allCards = await browser.$$('[data-testid="session-card"]');
+    // If default collapse works, visible cards should approximately equal
+    // the first group's count (not ALL sessions across ALL groups).
+    record(
+      "§5.4.default-collapse visible cards ≈ first group count",
+      firstGroupCount > 0 && allCards.length <= firstGroupCount + 2,
+      `firstGroup=${firstGroupCount}, visibleCards=${allCards.length}`,
+    );
+
+    const my = await browser.$('[data-testid="view-mode-my"]');
+    await my.click();
+    await browser.pause(150);
+  });
+
+  // ─── Ended session has Delete not Archive ───────────────────────────────
+
+  it("§5.3.no-archive: ended session shows Delete, not Archive", async () => {
+    // Find an ended session card.
+    const cards = await browser.$$('[data-testid="session-card"]');
+    let foundEnded = false;
+    for (let i = 0; i < Math.min(cards.length, 15); i++) {
+      const state = await cards[i].getAttribute("data-state");
+      if (state === "ended") {
+        await cards[i].click();
+        await browser.pause(300);
+        foundEnded = true;
+
+        const archiveBtn = await browser.$('[data-testid="action-archive"]');
+        const deleteBtn = await browser.$('[data-testid="action-delete"]');
+        record(
+          "§5.3.no-archive ended session has no Archive button",
+          !(await archiveBtn.isExisting()),
+        );
+        record(
+          "§5.3.no-archive ended session has Delete button",
+          await deleteBtn.isExisting(),
+        );
+        break;
+      }
+    }
+    if (!foundEnded) {
+      skip("§5.3.no-archive", "no ended session found in first 15 cards");
+    }
+  });
+
+  // ─── Chat input exists ─────────────────────────────────────────────────
+
+  it("§5.7.chat-input: selected session shows chat input with send button", async () => {
+    const cards = await browser.$$('[data-testid="session-card"]');
+    if (cards.length === 0) {
+      skip("§5.7.chat-input", "no session cards");
+      return;
+    }
+    await cards[0].click();
+    await browser.pause(500);
+
+    const chatInput = await browser.$('[data-testid="chat-input"]');
+    const sendBtn = await browser.$('[data-testid="chat-send-button"]');
+    record(
+      "§5.7.chat-input textarea exists",
+      await chatInput.isExisting(),
+    );
+    record(
+      "§5.7.chat-input send button exists",
+      await sendBtn.isExisting(),
+    );
+  });
+
+  // ─── Auto-scroll to bottom ─────────────────────────────────────────────
+
+  it("§5.7.auto-scroll: conversation viewer scrolled near bottom after load", async () => {
+    // A card should already be selected from previous tests.
+    const viewer = await browser.$('[data-testid="conversation-viewer"]');
+    if (!(await viewer.isExisting())) {
+      skip("§5.7.auto-scroll", "no conversation viewer rendered");
+      return;
+    }
+
+    const scroller = await browser.$('[data-testid="conversation-scroller"]');
+    if (!(await scroller.isExisting())) {
+      skip("§5.7.auto-scroll", "no conversation scroller rendered");
+      return;
+    }
+
+    // Wait for parsing to settle.
+    await browser.pause(2_000);
+
+    const scrollTop = await browser.execute(
+      (sel: string) => {
+        const el = document.querySelector(sel);
+        if (!el) return { top: 0, height: 0, scrollHeight: 0 };
+        return {
+          top: el.scrollTop,
+          height: el.clientHeight,
+          scrollHeight: el.scrollHeight,
+        };
+      },
+      '[data-testid="conversation-scroller"]',
+    );
+
+    // "Near bottom" means scrollTop + clientHeight is within 200px of scrollHeight.
+    const distFromBottom =
+      scrollTop.scrollHeight - (scrollTop.top + scrollTop.height);
+    record(
+      "§5.7.auto-scroll scroller is near bottom after load",
+      distFromBottom < 200,
+      `scrollTop=${scrollTop.top}, clientHeight=${scrollTop.height}, scrollHeight=${scrollTop.scrollHeight}, distFromBottom=${distFromBottom}`,
+    );
+  });
+
+  // ─── Open VS Code no shell scope error ─────────────────────────────────
+
+  it("§5.3.open-vscode: Open in VS Code does not show shell scope error", async () => {
+    const cards = await browser.$$('[data-testid="session-card"]');
+    if (cards.length === 0) {
+      skip("§5.3.open-vscode", "no session cards");
+      return;
+    }
+
+    let foundEnabled = false;
+    for (let i = 0; i < Math.min(cards.length, 10); i++) {
+      await cards[i].click();
+      const infoBar = await browser.$('[data-testid="session-info-bar"]');
+      const ready = await infoBar
+        .waitForExist({ timeout: 3_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!ready) continue;
+
+      const vscodeBtn = await browser.$('[data-testid="action-open-vscode"]');
+      if (!(await vscodeBtn.isExisting())) continue;
+
+      const disabled = await vscodeBtn.getAttribute("disabled");
+      const ariaDisabled = await vscodeBtn.getAttribute("aria-disabled");
+      if (disabled !== null || ariaDisabled === "true") continue;
+
+      foundEnabled = true;
+      await vscodeBtn.click();
+      await browser.pause(1_500);
+
+      const errorEl = await browser.$('[data-testid="session-open-error"]');
+      const errorShown = await errorEl.isExisting();
+      if (errorShown) {
+        const errorText = await errorEl.getText();
+        record(
+          "§5.3.open-vscode no shell scope error",
+          false,
+          `error: "${errorText}"`,
+        );
+      } else {
+        record("§5.3.open-vscode no shell scope error", true);
+      }
+      break;
+    }
+
+    if (!foundEnabled) {
+      skip("§5.3.open-vscode", "no session with enabled Open VS Code button");
+    }
+  });
     const btn = await browser.$('[data-testid="new-session-btn"]');
     const disabled = await btn.getAttribute("disabled");
     const ariaLabel = await btn.getAttribute("aria-label");
