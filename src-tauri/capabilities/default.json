@@ -3,6 +3,9 @@
   "identifier": "default",
   "description": "Default capabilities for the Claude Manager main window",
   "windows": ["main", "plugins-log"],
+  "remote": {
+    "urls": ["http://localhost:1420/*"]
+  },
   "permissions": [
     "core:default",
     "sql:allow-load",

@@ -78,7 +78,7 @@ describe("ChatInput — Bug 7 chat:done error handling", () => {
     expect(alert.textContent).toContain("claude exited with code 1");
     expect(onMessageSent).not.toHaveBeenCalled();
     // Textarea must be re-enabled (isSending=false) so the user can retry.
-    const textarea = screen.getByTestId("chat-input-textarea") as HTMLTextAreaElement;
+    const textarea = screen.getByTestId("chat-message-input") as HTMLTextAreaElement;
     expect(textarea.disabled).toBe(false);
   });
 

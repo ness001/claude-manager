@@ -55,8 +55,8 @@ export function SessionsSection() {
   const sessionsLoaded = useSessionStore((s) => s.sessions.length > 0);
 
   useEffect(() => {
-    void loadSessions().catch(() => {
-      // Empty state is rendered by SessionListPanel when sessions stays empty.
+    void loadSessions().catch((err) => {
+      console.error("[SessionsSection] loadSessions failed:", err);
     });
   }, [loadSessions]);
 

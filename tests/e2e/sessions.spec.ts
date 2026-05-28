@@ -155,12 +155,114 @@ describe("Sessions section — UI vs spec §5 gap audit", () => {
       },
       { timeout: 30_000, timeoutMsg: "session list skeleton never resolved" },
     );
+
+    // Wait for session cards to actually render. The skeleton disappears when
+    // isLoading goes false, but the session list may still be empty if the
+    // SQLite pipeline is slow (127 upserts on first scan). Wait up to 15s
+    // for at least 1 card to appear. If still 0, attempt a manual reload
+    // via the store to surface any swallowed errors.
+    const cardsAppeared = await browser.waitUntil(
+      async () => {
+        const cards = await browser.$$('[data-testid="session-card"]');
+        return cards.length > 0;
+      },
+      { timeout: 15_000 },
+    ).then(() => true).catch(() => false);
+
+    if (!cardsAppeared) {
+      console.log("[diag] No cards after 15s — attempting manual reload via store");
+      const reloadResult = await browser.execute(async () => {
+        try {
+          // @ts-expect-error — Tauri invoke
+          const { invoke } = window.__TAURI_INTERNALS__;
+          const discovered = await invoke("discover_sessions");
+          const pids = await invoke("read_pid_files");
+          return { discovered: discovered.length, pids: pids.length, error: null };
+        } catch (e: unknown) {
+          return { discovered: 0, pids: 0, error: String(e) };
+        }
+      });
+      console.log(`[diag] Manual IPC check: discovered=${reloadResult.discovered}, pids=${reloadResult.pids}, error=${reloadResult.error}`);
+
+      // Try triggering a reload by directly calling the session loader
+      const loaderResult = await browser.execute(async () => {
+        try {
+          // @ts-expect-error — Tauri invoke
+          const { invoke } = window.__TAURI_INTERNALS__;
+          const dbPath = await invoke("get_db_path");
+          // Use the sql plugin's IPC directly
+          const loadResult = await invoke("plugin:sql|load", { db: `sqlite:${dbPath}` });
+          const selectResult = await invoke("plugin:sql|select", {
+            db: `sqlite:${dbPath}`,
+            query: "SELECT COUNT(*) as cnt FROM sessions",
+            values: [],
+          });
+          return { dbPath, loadResult: JSON.stringify(loadResult), selectResult: JSON.stringify(selectResult), error: null };
+        } catch (e: unknown) {
+          return { dbPath: null, loadResult: null, selectResult: null, error: String(e) };
+        }
+      });
+      console.log(`[diag] DB direct: path=${loaderResult.dbPath}, select=${loaderResult.selectResult}, error=${loaderResult.error}`);
+    }
   });
 
   after(async () => {
     console.log("\n========== SESSIONS GAP REPORT (machine-readable) ==========");
     console.log(JSON.stringify(results, null, 2));
     console.log("========== END GAP REPORT ==========\n");
+  });
+
+  // ─── Diagnostic: check if discover_sessions IPC works ──────────────────
+
+  it("[diag] discover_sessions IPC returns sessions from within the browser", async () => {
+    const result = await browser.execute(async () => {
+      try {
+        // @ts-expect-error — Tauri globals are injected at runtime
+        const { invoke } = window.__TAURI_INTERNALS__;
+        const sessions = await invoke("discover_sessions");
+        return { count: sessions.length, error: null, step: "discover" };
+      } catch (e: unknown) {
+        return { count: 0, error: String(e), step: "discover" };
+      }
+    });
+    console.log(`[diag] discover_sessions: count=${result.count}, error=${result.error}`);
+
+    // Also check the full loadAllSessions pipeline
+    const storeResult = await browser.execute(async () => {
+      try {
+        // @ts-expect-error — Zustand store on window for debug
+        const store = window.__ZUSTAND_SESSION_STORE__;
+        if (store) {
+          const state = store.getState();
+          return { sessions: state.sessions.length, isLoading: state.isLoading, error: null };
+        }
+        return { sessions: -1, isLoading: false, error: "store not exposed on window" };
+      } catch (e: unknown) {
+        return { sessions: -1, isLoading: false, error: String(e) };
+      }
+    });
+    console.log(`[diag] store state: sessions=${storeResult.sessions}, isLoading=${storeResult.isLoading}, error=${storeResult.error}`);
+
+    // Try calling loadAllSessions directly
+    const loadResult = await browser.execute(async () => {
+      try {
+        // @ts-expect-error — Tauri globals
+        const { invoke } = window.__TAURI_INTERNALS__;
+        // Simulate what loadAllSessions does: discover + read_pid_files
+        const discovered = await invoke("discover_sessions");
+        const pids = await invoke("read_pid_files");
+        return { discovered: discovered.length, pids: pids.length, error: null };
+      } catch (e: unknown) {
+        return { discovered: 0, pids: 0, error: String(e) };
+      }
+    });
+    console.log(`[diag] IPC: discovered=${loadResult.discovered}, pids=${loadResult.pids}, error=${loadResult.error}`);
+
+    record(
+      "[diag] discover_sessions IPC returns >0 sessions",
+      result.count > 0,
+      `count=${result.count}, error=${result.error}`,
+    );
   });
 
   // ─── §5.5 List panel header structure ───────────────────────────────────
@@ -770,7 +872,7 @@ describe("Sessions section — UI vs spec §5 gap audit", () => {
     await browser.pause(500);
 
     const chatInput = await browser.$('[data-testid="chat-input"]');
-    const sendBtn = await browser.$('[data-testid="chat-send-button"]');
+    const sendBtn = await browser.$('[data-testid="chat-send"]');
     record(
       "§5.7.chat-input textarea exists",
       await chatInput.isExisting(),

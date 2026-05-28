@@ -268,15 +268,25 @@ export function SessionListPanel() {
   const [newGroupName, setNewGroupName] = useState("");
 
   // Default-collapse all groups except the first when groups are first populated.
-  const initialCollapseAppliedRef = useRef(false);
+  const prevViewModeRef = useRef(viewMode);
   useEffect(() => {
-    if (groups.length > 1 && !initialCollapseAppliedRef.current) {
-      initialCollapseAppliedRef.current = true;
-      for (let i = 1; i < groups.length; i++) {
-        toggleGroup(groups[i].key);
+    if (prevViewModeRef.current !== viewMode) {
+      prevViewModeRef.current = viewMode;
+      // Reset collapse state when view mode changes — old keys are meaningless
+      if (groups.length > 1) {
+        const toCollapse = new Set(groups.slice(1).map((g) => g.key));
+        useSessionStore.setState({ collapsedGroups: toCollapse });
+      } else {
+        useSessionStore.setState({ collapsedGroups: new Set() });
+      }
+    } else if (groups.length > 1) {
+      const currentCollapsed = useSessionStore.getState().collapsedGroups;
+      if (currentCollapsed.size === 0) {
+        const toCollapse = new Set(groups.slice(1).map((g) => g.key));
+        useSessionStore.setState({ collapsedGroups: toCollapse });
       }
     }
-  }, [groups, toggleGroup]);
+  }, [groups, viewMode]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),

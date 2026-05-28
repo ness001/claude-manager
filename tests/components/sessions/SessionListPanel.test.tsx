@@ -384,22 +384,21 @@ describe("SessionListPanel", () => {
 
     it("collapse state persists across re-renders", () => {
       const { unmount } = render(<SessionListPanel />);
-      const headers = screen.getAllByTestId("group-header");
       // Default: Today expanded (2 cards), Yesterday collapsed (0 cards)
       expect(screen.getAllByTestId("session-card")).toHaveLength(2);
 
       // Collapse the first group (Today) via click
+      const headers = screen.getAllByTestId("group-header");
       fireEvent.click(headers[0]);
       expect(screen.queryAllByTestId("session-card")).toHaveLength(0);
 
       // Unmount and re-mount without resetting the store
       unmount();
       render(<SessionListPanel />);
-      // The initial-collapse effect only toggles groups at index >= 1,
-      // so the first group's manually-collapsed state survives re-mount.
-      // Yesterday gets toggled again (was collapsed → now uncollapsed → 1 card).
-      // Today stays collapsed (0 cards). Total = 1.
-      expect(screen.getAllByTestId("session-card")).toHaveLength(1);
+      // collapsedGroups persists in the store: both Today and Yesterday
+      // are collapsed. The default-collapse effect skips because
+      // collapsedGroups.size > 0. All groups remain collapsed.
+      expect(screen.queryAllByTestId("session-card")).toHaveLength(0);
     });
   });
 });
