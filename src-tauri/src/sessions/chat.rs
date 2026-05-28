@@ -169,3 +169,92 @@ pub fn stop_chat_session(session_id: String) -> Result<(), String> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn send_message_errors_when_no_session() {
+        let id = "test_send_no_session_1".to_string();
+        let result = send_chat_message(id, "hello".into());
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("no chat session"));
+    }
+
+    #[test]
+    fn stop_session_is_idempotent_for_missing_id() {
+        let id = "test_stop_missing_2".to_string();
+        let result = stop_chat_session(id.clone());
+        assert!(result.is_ok());
+        // Calling again is still Ok
+        assert!(stop_chat_session(id).is_ok());
+    }
+
+    #[test]
+    fn stop_session_removes_from_map() {
+        let id = "test_stop_removes_3".to_string();
+
+        // Spawn a real throwaway process so we have a valid Child + ChildStdin.
+        let mut child = Command::new("cmd")
+            .args(["/c", "pause"])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("failed to spawn cmd");
+
+        let stdin = child.stdin.take().expect("no stdin");
+
+        {
+            let mut map = CHAT_PROCESSES.lock().unwrap();
+            map.insert(id.clone(), ChatProcess { child, stdin });
+            assert!(map.contains_key(&id));
+        }
+
+        let result = stop_chat_session(id.clone());
+        assert!(result.is_ok());
+
+        let map = CHAT_PROCESSES.lock().unwrap();
+        assert!(!map.contains_key(&id));
+    }
+
+    #[test]
+    fn chat_output_payload_serializes_camel_case() {
+        let payload = ChatOutputPayload {
+            session_id: "s1".into(),
+            text: "hello".into(),
+        };
+        let json = serde_json::to_value(&payload).unwrap();
+        assert_eq!(json["sessionId"], "s1");
+        assert_eq!(json["text"], "hello");
+        // snake_case key must NOT appear
+        assert!(json.get("session_id").is_none());
+    }
+
+    #[test]
+    fn chat_done_payload_serializes_camel_case() {
+        let payload = ChatDonePayload {
+            session_id: "s2".into(),
+            exit_code: Some(0),
+            stderr: "warn".into(),
+        };
+        let json = serde_json::to_value(&payload).unwrap();
+        assert_eq!(json["sessionId"], "s2");
+        assert_eq!(json["exitCode"], 0);
+        assert_eq!(json["stderr"], "warn");
+        assert!(json.get("session_id").is_none());
+        assert!(json.get("exit_code").is_none());
+    }
+
+    #[test]
+    fn chat_done_payload_exit_code_none_is_null() {
+        let payload = ChatDonePayload {
+            session_id: "s3".into(),
+            exit_code: None,
+            stderr: String::new(),
+        };
+        let json = serde_json::to_value(&payload).unwrap();
+        assert!(json["exitCode"].is_null());
+    }
+}

@@ -547,6 +547,71 @@ describe("Sessions section — UI vs spec §5 gap audit", () => {
 
   // ─── §5.6 New Session is currently a planned stub (T4.1/T4.2) ───────────
 
+  // ─── §5.3 Open CWD does not trigger shell scope error (Bug 4) ──────────
+
+  it("§5.3.open-cwd: Open CWD does not show shell scope error", async () => {
+    // Find a session card whose CWD is still valid on disk. If none exist
+    // (all CWDs are dead), SKIP rather than FAIL — the machine state is
+    // the constraint, not a bug.
+    const cards = await browser.$$('[data-testid="session-card"]');
+    if (cards.length === 0) {
+      skip("§5.3.open-cwd", "no session cards rendered — cannot verify");
+      return;
+    }
+
+    // Click cards until we find one with an enabled Open CWD button.
+    let foundEnabled = false;
+    for (let i = 0; i < Math.min(cards.length, 10); i++) {
+      await cards[i].click();
+
+      // Wait for info bar to render after selection.
+      const infoBar = await browser.$('[data-testid="session-info-bar"]');
+      const infoReady = await infoBar
+        .waitForExist({ timeout: 5_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!infoReady) continue;
+
+      const openCwd = await browser.$('[data-testid="action-open-cwd"]');
+      if (!(await openCwd.isExisting())) continue;
+
+      const disabled = await openCwd.getAttribute("disabled");
+      const ariaDisabled = await openCwd.getAttribute("aria-disabled");
+      if (disabled !== null || ariaDisabled === "true") continue;
+
+      // Found an enabled Open CWD button — click it and check for error.
+      foundEnabled = true;
+      await openCwd.click();
+
+      // Wait briefly for any error message to appear.
+      await browser.pause(1_500);
+
+      const errorEl = await browser.$('[data-testid="session-open-error"]');
+      const errorShown = await errorEl.isExisting();
+
+      if (errorShown) {
+        const errorText = await errorEl.getText();
+        record(
+          "§5.3.open-cwd Open CWD no shell scope error",
+          false,
+          `error appeared: "${errorText}"`,
+        );
+      } else {
+        record("§5.3.open-cwd Open CWD no shell scope error", true);
+      }
+      break;
+    }
+
+    if (!foundEnabled) {
+      skip(
+        "§5.3.open-cwd",
+        "no session with an enabled Open CWD button found (all CWDs dead on disk)",
+      );
+    }
+  });
+
+  // ─── §5.6 New Session is currently a planned stub (T4.1/T4.2) ───────────
+
   it("§5.6 [+ New Session] is wired or carries the documented coming-soon hint", async () => {
     const btn = await browser.$('[data-testid="new-session-btn"]');
     const disabled = await btn.getAttribute("disabled");

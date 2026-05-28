@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { SessionListPanel } from "../../../src/components/sessions/SessionListPanel";
 import { useSessionStore } from "../../../src/stores/session-store";
@@ -333,5 +333,73 @@ describe("SessionListPanel", () => {
     const firstGroupCards = screen.getAllByTestId("session-card");
     // Only sessions from the first (expanded) group should be rendered
     expect(firstGroupCards.length).toBeLessThan(3);
+  });
+
+  describe("integration: expand/collapse", () => {
+    const fixedNow = new Date(2026, 4, 15, 12, 0, 0);
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(fixedNow);
+      const now = fixedNow.getTime();
+      useSessionStore.setState({
+        sessions: [
+          makeSession({ sessionId: "t1", startedAt: now - 60_000 }),
+          makeSession({ sessionId: "t2", startedAt: now - 120_000 }),
+          makeSession({ sessionId: "y1", startedAt: now - 26 * 3600_000 }),
+        ],
+        viewMode: "timeline",
+        collapsedGroups: new Set(),
+      });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("click a group header collapses its sessions", () => {
+      render(<SessionListPanel />);
+      const headers = screen.getAllByTestId("group-header");
+      // Default collapse: first group expanded, second collapsed
+      // First group ("Today") has 2 sessions visible
+      expect(screen.getAllByTestId("session-card")).toHaveLength(2);
+
+      // Click first group header to collapse it
+      fireEvent.click(headers[0]);
+      expect(screen.queryAllByTestId("session-card")).toHaveLength(0);
+    });
+
+    it("click a collapsed header expands its sessions", () => {
+      render(<SessionListPanel />);
+      const headers = screen.getAllByTestId("group-header");
+      // Second group ("Yesterday") is collapsed by default — 0 of its cards visible
+      // Only first group's 2 cards are shown
+      expect(screen.getAllByTestId("session-card")).toHaveLength(2);
+
+      // Click second group header to expand it
+      fireEvent.click(headers[1]);
+      // Now both groups' sessions are visible: 2 + 1 = 3
+      expect(screen.getAllByTestId("session-card")).toHaveLength(3);
+    });
+
+    it("collapse state persists across re-renders", () => {
+      const { unmount } = render(<SessionListPanel />);
+      const headers = screen.getAllByTestId("group-header");
+      // Default: Today expanded (2 cards), Yesterday collapsed (0 cards)
+      expect(screen.getAllByTestId("session-card")).toHaveLength(2);
+
+      // Collapse the first group (Today) via click
+      fireEvent.click(headers[0]);
+      expect(screen.queryAllByTestId("session-card")).toHaveLength(0);
+
+      // Unmount and re-mount without resetting the store
+      unmount();
+      render(<SessionListPanel />);
+      // The initial-collapse effect only toggles groups at index >= 1,
+      // so the first group's manually-collapsed state survives re-mount.
+      // Yesterday gets toggled again (was collapsed → now uncollapsed → 1 card).
+      // Today stays collapsed (0 cards). Total = 1.
+      expect(screen.getAllByTestId("session-card")).toHaveLength(1);
+    });
   });
 });
