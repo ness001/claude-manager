@@ -1,6 +1,17 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
+// jsdom does not implement ResizeObserver.
+class ResizeObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+Object.defineProperty(window, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverMock,
+});
+
 // jsdom does not implement window.matchMedia. Provide a default mock that
 // reports prefers-color-scheme: dark === false. Individual tests can override
 // this via vi.spyOn(window, "matchMedia") when they need different behavior.

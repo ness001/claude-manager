@@ -9,6 +9,30 @@ vi.mock("@tauri-apps/plugin-fs", () => ({
   exists: vi.fn(async () => true),
 }));
 
+vi.mock("@xterm/xterm", () => {
+  const Terminal = vi.fn().mockImplementation(() => ({
+    loadAddon: vi.fn(),
+    open: vi.fn(),
+    write: vi.fn(),
+    writeln: vi.fn(),
+    onData: vi.fn(),
+    dispose: vi.fn(),
+    rows: 24,
+    cols: 80,
+  }));
+  return { Terminal };
+});
+
+vi.mock("@xterm/addon-fit", () => {
+  const FitAddon = vi.fn().mockImplementation(() => ({
+    fit: vi.fn(),
+    dispose: vi.fn(),
+  }));
+  return { FitAddon };
+});
+
+vi.mock("@xterm/xterm/css/xterm.css", () => ({}));
+
 function makeSession(overrides: Partial<SessionMeta> = {}): SessionMeta {
   return {
     sessionId: overrides.sessionId ?? "id-x",
@@ -76,19 +100,19 @@ describe("SessionDetailPanel", () => {
     expect(screen.queryByTestId("session-detail-empty")).not.toBeInTheDocument();
   });
 
+  it("renders the TerminalPanel when a session is selected", () => {
+    const s = makeSession({ sessionId: "selected", state: "ended" });
+    useSessionStore.setState({ sessions: [s], selectedId: "selected" });
+    render(<SessionDetailPanel />);
+    expect(screen.getByTestId("terminal-panel")).toBeInTheDocument();
+  });
+
   it("falls back to empty state when selectedId points at an unknown session", () => {
     useSessionStore.setState({ sessions: [], selectedId: "ghost" });
     render(<SessionDetailPanel />);
     expect(screen.getByTestId("session-detail-empty")).toBeInTheDocument();
   });
 
-  // a11y: the empty-state copy ("Select a session to view its conversation")
-  // and the no-jsonl placeholder ("No conversation file available…") both
-  // appear/disappear based on user actions (selecting/deselecting a session,
-  // or selecting one with no JSONL). Without role="status" + aria-live="polite",
-  // screen-reader users get NO feedback that the right pane changed — they'd
-  // only discover the new copy by tab-hunting. Mirrors PRs #154 (PluginListView),
-  // #155 (McpPanel), #207 (SkillsListView).
   it("empty state is a polite live region (a11y: pane-change announce)", () => {
     render(<SessionDetailPanel />);
     const empty = screen.getByTestId("session-detail-empty");
@@ -96,21 +120,6 @@ describe("SessionDetailPanel", () => {
     expect(empty.getAttribute("aria-live")).toBe("polite");
   });
 
-  it("no-jsonl placeholder is a polite live region (a11y: pane-change announce)", () => {
-    const s = makeSession({ sessionId: "selected", state: "ended" });
-    // jsonlPath omitted → triggers the placeholder branch.
-    useSessionStore.setState({ sessions: [s], selectedId: "selected" });
-    render(<SessionDetailPanel />);
-    const ph = screen.getByTestId("conversation-viewer-placeholder");
-    expect(ph.getAttribute("role")).toBe("status");
-    expect(ph.getAttribute("aria-live")).toBe("polite");
-  });
-
-  // WCAG 2.4.1 (Bypass Blocks) + 1.3.1 (Info and Relationships):
-  // SessionListPanel exposes <aside aria-label="Session list">. Its sibling
-  // detail pane was just a <div> — no landmark, no name — so SR users
-  // could jump to the list region but not the detail region. Promote
-  // wrapper to <section aria-label="Session detail">.
   it("detail pane is a named region landmark (<section aria-label='Session detail'>)", () => {
     const s = makeSession({ sessionId: "selected", state: "ended" });
     useSessionStore.setState({ sessions: [s], selectedId: "selected" });

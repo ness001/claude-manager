@@ -1,15 +1,6 @@
-// Session detail panel — see spec §5.6.
-//
-// Right side of the Sessions split-pane. When no session is selected we show
-// the empty state from §17.6. When a session is selected we render the
-// SessionInfoBar at the top and the ConversationViewer below (T2.13 wires
-// the JSONL path on SessionMeta so this works end-to-end).
-
-import { useCallback, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { SessionInfoBar } from "./SessionInfoBar";
-import { ConversationViewer } from "../conversation/ConversationViewer";
-import { ChatInput } from "../conversation/ChatInput";
+import { TerminalPanel } from "../conversation/TerminalPanel";
 import { useSessionStore } from "../../stores/session-store";
 
 export function SessionDetailPanel() {
@@ -17,10 +8,6 @@ export function SessionDetailPanel() {
   const session = useSessionStore((s) =>
     selectedId ? s.sessions.find((x) => x.sessionId === selectedId) : undefined,
   );
-  const [reloadKey, setReloadKey] = useState(0);
-  const handleMessageSent = useCallback(() => {
-    setReloadKey((k) => k + 1);
-  }, []);
 
   if (!session) {
     return (
@@ -37,34 +24,13 @@ export function SessionDetailPanel() {
   }
 
   return (
-    // WCAG 2.4.1 (Bypass Blocks) + 1.3.1 (Info and Relationships): the
-    // detail pane sits as a sibling of <aside aria-label="Session list">
-    // inside SessionsSection. The list pane already exposes a named
-    // landmark — without one here, SR users navigating regions (NVDA "D",
-    // VoiceOver rotor → Landmarks) could jump to "Session list" but had
-    // no way to jump to the detail pane by name. Promote the wrapper to
-    // <section aria-label="Session detail"> so the rotor surfaces "region,
-    // Session detail" alongside its sibling. Mirrors the SessionListPanel
-    // <aside aria-label="Session list"> binding.
     <section
       data-testid="session-detail-panel"
       aria-label="Session detail"
       className="flex flex-1 flex-col min-w-0"
     >
       <SessionInfoBar session={session} />
-      {session.jsonlPath ? (
-        <ConversationViewer key={reloadKey} path={session.jsonlPath} />
-      ) : (
-        <div
-          data-testid="conversation-viewer-placeholder"
-          role="status"
-          aria-live="polite"
-          className="flex-1 overflow-auto p-4 text-sm text-text-muted"
-        >
-          No conversation file available for this session.
-        </div>
-      )}
-      <ChatInput session={session} onMessageSent={handleMessageSent} />
+      <TerminalPanel session={session} />
     </section>
   );
 }
